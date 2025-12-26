@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ မြင်သာကြက်ကင် - Premium POS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --premium-gold: #D4AF37;
+            --deep-black: #1a1a1a;
+            --soft-white: #ffffff;
+            --accent-orange: #ff6b00;
+            --bg-gray: #f4f4f9;
+        }
+        body { 
+            font-family: 'Pyidaungsu', sans-serif; 
+            background: var(--bg-gray); 
+            margin: 0; padding: 0; 
+            color: var(--deep-black);
+        }
+        .header { 
+            background: var(--deep-black); 
+            color: var(--premium-gold); 
+            padding: 40px 20px; 
+            text-align: center; 
+            border-bottom: 3px solid var(--premium-gold);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .header h2 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; margin-bottom: 120px; }
+        
+        /* Menu Cards */
+        .menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .menu-card { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            border-left: 5px solid var(--premium-gold);
+        }
+        .menu-card:active { transform: scale(0.98); }
+        .item-info h3 { margin: 0; font-size: 18px; }
+        .item-price { color: var(--accent-orange); font-weight: bold; font-size: 16px; margin-top: 5px; }
+
+        /* Qty Controls */
+        .qty-box { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 5px 10px; border-radius: 50px; }
+        .btn-qty { 
+            width: 35px; height: 35px; border: none; 
+            background: white; color: var(--deep-black); 
+            border-radius: 50%; cursor: pointer; 
+            font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Footer Bar */
+        .footer-bar { 
+            position: fixed; bottom: 0; width: 100%; max-width: 600px; 
+            background: var(--deep-black); padding: 20px; 
+            box-sizing: border-box; display: flex; justify-content: space-between; 
+            align-items: center; color: white; border-radius: 25px 25px 0 0;
+        }
+        .btn-checkout { 
+            background: var(--premium-gold); color: var(--deep-black); 
+            border: none; padding: 15px 30px; border-radius: 12px; 
+            font-weight: bold; font-size: 16px; cursor: pointer;
+        }
+
+        /* Modal Styles */
+        #checkout-modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; 
+        }
+        .modal-content { 
+            background: white; width: 90%; max-width: 400px; padding: 30px; 
+            border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        input { 
+            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; 
+            border-radius: 12px; font-size: 15px; background: #fafafa;
+        }
+        .app-btn { 
+            width: 100%; padding: 15px; border: none; border-radius: 12px; 
+            color: white; font-weight: bold; margin-top: 10px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>🍗 MYIN THAR ROAST</h2>
+    <p style="font-size: 14px; opacity: 0.8; margin-top: 5px;">Premium Taste, Traditional Recipe</p>
+</div>
+
+<div class="container">
+    <div id="menu-grid" class="menu-grid">Loading Luxury Menu...</div>
+</div>
+
+<div class="footer-bar">
+    <div>
+        <small style="opacity: 0.7;">TOTAL AMOUNT</small><br>
+        <b style="font-size:22px; color: var(--premium-gold);"><span id="total-price">0</span> K</b>
+    </div>
+    <button class="btn-checkout" onclick="openCheckout()">Order Now ➔</button>
+</div>
+
+<div id="checkout-modal">
+    <div class="modal-content">
+        <h2 style="text-align:center; color: var(--deep-black);">Checkout</h2>
+        <input type="text" id="cust-name" placeholder="သင့်အမည်">
+        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်">
+        <input type="datetime-local" id="pickup-datetime">
+        
+        <button class="app-btn" style="background:#7360f2;" onclick="submitOrder('viber')">🟣 Send via Viber</button>
+        <button class="app-btn" style="background:#0088cc;" onclick="submitOrder('telegram')">🔵 Send via Telegram</button>
+        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; margin-top:15px; color:#666;">Cancel</button>
+    </div>
+</div>
+
+<audio id="click-sound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<audio id="success-sound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+
+<script>
+    const SB_URL = "https://deabtvqzxpkepgcdutzd.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlYWJ0dnF6eHBrZXBnY2R1dHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNzQzNDMsImV4cCI6MjA4MTg1MDM0M30.BbxmM65uoTDcf_nTP6w5siSF6Y5_eM4peqYJCAxR90I";
+    const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
+    const MY_PHONE = "959767287345";
+
+    let cart = {};
+    let menuData = [];
+
+    // Sound Play Functions
+    function playClick() { document.getElementById('click-sound').play(); }
+    function playSuccess() { document.getElementById('success-sound').play(); }
+
+    async function fetchMenu() {
+        const { data } = await _supabase.from('menu_items').select('*').order('name');
+        if (data) { menuData = data; renderMenu(); }
+    }
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-grid');
+        grid.innerHTML = menuData.map(item => `
+            <div class="menu-card">
+                <div class="item-info">
+                    <h3>${item.name}</h3>
+                    <div class="item-price">${item.price.toLocaleString()} MMK</div>
+                </div>
+                <div class="qty-box">
+                    <button class="btn-qty" onclick="updateQty('${item.name}', -1)">−</button>
+                    <span id="qty-${item.name}" style="font-weight:bold; min-width:20px; text-align:center;">0</span>
+                    <button class="btn-qty" onclick="updateQty('${item.name}', 1)">+</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function updateQty(name, change) {
+        playClick();
+        const item = menuData.find(i => i.name === name);
+        cart[name] = (cart[name] || 0) + change;
+        if (cart[name] < 0) cart[name] = 0;
+        document.getElementById(`qty-${name}`).innerText = cart[name];
+        
+        let total = 0;
+        menuData.forEach(i => total += (cart[i.name] || 0) * i.price);
+        document.getElementById('total-price').innerText = total.toLocaleString();
+    }
+
+    function openCheckout() {
+        if (document.getElementById('total-price').innerText === "0") return alert("ကျေးဇူးပြု၍ မီနူးအရင်ရွေးချယ်ပါ။");
+        document.getElementById('checkout-modal').style.display = 'flex';
+    }
+
+    function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
+
+    async function submitOrder(sendVia) {
+        // ... (သင်၏ မူလ Submit Logic ကို ဤနေရာတွင် ဆက်လက်အသုံးပြုနိုင်ပါသည်)
+        playSuccess();
+        alert("အော်ဒါတင်နေပါသည်... ခဏစောင့်ပါ။");
+        // မူလ Function ကို ဒီအောက်မှာ ဆက်ထည့်ပါ...
+    }
+
+    window.onload = fetchMenu;
+</script>
+</body>
+</html>
