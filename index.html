@@ -105,11 +105,19 @@
     </style>
 </head>
 <body>
+    <div id="overlay" class="overlay" onclick="closeNav()"></div>
 <div class="header">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <div class="burger" onclick="openNav()">☰</div>
     <div style="font-weight:bold;">MYIN THAR ROAST</div>
 </div>
+
+    <div class="category-container" id="category-tabs">
+    <button class="cat-btn active" onclick="filterMenu('all', this)">အားလုံး</button>
+    <button class="cat-btn" onclick="filterMenu('10000_set', this)">၁သောင်းတန် Set</button>
+    <button class="cat-btn" onclick="filterMenu('20000_set', this)">၂သောင်းတန် Set</button>
+    <button class="cat-btn" onclick="filterMenu('single', this)">ရိုးရိုး</button>
+    </div>
     
 <div id="mySidebar" class="sidebar">
     <div style="padding: 20px; background: var(--gold); color: var(--dark); font-weight: bold; text-align: center;">
@@ -135,22 +143,6 @@
         <div id="track-result">အော်ဒါ ID ရိုက်ထည့်ပါ...</div>
     </div>
     </div>
-    
-
-<div id="overlay" class="overlay" onclick="closeNav()"></div>
-    
-<div class="header">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <div class="burger" onclick="openNav()">☰</div>
-    <div style="font-weight:bold;">MYIN THAR ROAST</div>
-</div>
-
-<div class="category-container" id="category-tabs">
-    <button class="cat-btn active" onclick="filterMenu('all', this)">အားလုံး</button>
-    <button class="cat-btn" onclick="filterMenu('10000_set', this)">၁သောင်းတန် Set</button>
-    <button class="cat-btn" onclick="filterMenu('20000_set', this)">၂သောင်းတန် Set</button>
-    <button class="cat-btn" onclick="filterMenu('single', this)">ရိုးရိုး</button>
-</div>
 
 <div class="container">
     <div id="menu-display" class="menu-grid">မီနူးများ ဆွဲယူနေသည်...</div>
