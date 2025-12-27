@@ -12,105 +12,46 @@
 
     <style>
         :root {
-            --gold: #D4AF37;
-            --dark-gold: #996515;
-            --black: #0F0F0F;
-            --dark-grey: #1C1C1C;
-            --white: #F5F5F5;
+            --gold: #D4AF37; --dark-gold: #996515; --black: #0F0F0F;
+            --dark-grey: #1C1C1C; --white: #F5F5F5;
             --luxury-gradient: linear-gradient(145deg, #D4AF37, #996515);
         }
 
         body {
             font-family: 'Pyidaungsu', sans-serif;
-            background-color: var(--black);
-            color: var(--white);
-            margin: 0;
-            padding-bottom: 100px;
-            overflow-x: hidden;
+            background-color: var(--black); color: var(--white);
+            margin: 0; padding-bottom: 100px;
         }
 
-        /* Luxury Header */
         .header {
-            background: rgba(15, 15, 15, 0.95);
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid var(--dark-gold);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
+            background: rgba(15, 15, 15, 0.95); padding: 20px; text-align: center;
+            border-bottom: 1px solid var(--dark-gold); position: sticky; top: 0; z-index: 1000;
         }
 
-        .header h1 {
-            font-family: 'Playfair Display', serif;
-            color: var(--gold);
-            margin: 0;
-            font-size: 22px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+        .header h1 { font-family: 'Playfair Display', serif; color: var(--gold); margin: 0; font-size: 22px; text-transform: uppercase; }
 
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 15px;
-        }
-
-        .menu-card {
-            background: var(--dark-grey);
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid #333;
-            transition: transform 0.3s ease;
-        }
-
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
+        .menu-card { background: var(--dark-grey); border-radius: 20px; overflow: hidden; border: 1px solid #333; }
         .menu-card img { width: 100%; height: 140px; object-fit: cover; }
-
         .card-info { padding: 12px; }
         .price-tag { color: var(--gold); font-weight: bold; margin: 5px 0; }
 
-        /* Buttons & UI */
         .footer-bar {
-            position: fixed;
-            bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px;
-            background: rgba(28, 28, 28, 0.95);
-            border: 1px solid var(--gold);
-            border-radius: 50px;
-            padding: 12px 25px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 1001;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; background: rgba(28, 28, 28, 0.95);
+            border: 1px solid var(--gold); border-radius: 50px; padding: 12px 25px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 1001;
         }
 
-        .btn-gold {
-            background: var(--luxury-gradient);
-            color: black; font-weight: bold;
-            border: none; padding: 12px 20px;
-            border-radius: 12px; cursor: pointer;
-            text-transform: uppercase;
-        }
+        .btn-gold { background: var(--luxury-gradient); color: black; font-weight: bold; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; }
 
-        .app-btn {
-            width: 100%; padding: 15px; border-radius: 12px;
-            border: none; color: white; font-weight: bold;
-            margin-top: 10px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
+        .app-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .viber-bg { background: #7360f2; }
         .tele-bg { background: #0088cc; }
 
-        input, textarea {
-            background: #252525; border: 1px solid #444; color: white;
-            padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px;
-        }
+        input { background: #252525; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
 
-        /* Voucher Styling */
-        #invoice-card {
-            background: #fff; color: #000; padding: 40px; width: 350px;
-            border: 10px double var(--gold); text-align: center;
-        }
+        #invoice-card { background: #fff; color: #000; padding: 40px; width: 350px; border: 10px double var(--gold); text-align: center; }
     </style>
 </head>
 <body>
@@ -123,11 +64,7 @@
     <p style="font-size: 12px; margin-top: 5px;">📍 Pick Up Only | 📞 09767287345</p>
 </div>
 
-<div class="container">
-    <div id="page-customer" class="section active">
-        <div id="menu-display" class="menu-grid"></div>
-    </div>
-</div>
+<div class="container"><div id="menu-display" class="menu-grid"></div></div>
 
 <div class="footer-bar">
     <div>Total: <span id="total-price" style="color:var(--gold); font-size:18px;">0</span> K</div>
@@ -172,8 +109,7 @@
     const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
     const MY_PHONE = "959767287345";
 
-    let cart = {};
-    let allItems = [];
+    let cart = {}; let allItems = [];
 
     function playSound(id) { document.getElementById(id).play(); }
     function openCheckout() { document.getElementById('checkout-modal').style.display = 'flex'; }
@@ -192,7 +128,7 @@
             <div class="menu-card">
                 <img src="${i.image_url}">
                 <div class="card-info">
-                    <div style="font-weight:bold; height:40px; font-size:14px;">${i.name}</div>
+                    <div style="font-weight:bold; height:40px;">${i.name}</div>
                     <div class="price-tag">${i.price.toLocaleString()} K</div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <button onclick="updateQty('${i.name}', -1, ${i.price})" style="background:#333; color:white; border:none; border-radius:5px; width:30px; height:30px;">-</button>
@@ -209,7 +145,6 @@
         cart[name] = (cart[name] || 0) + change;
         if (cart[name] < 0) cart[name] = 0;
         document.getElementById(`qty-${name}`).innerText = cart[name];
-        
         let total = 0;
         for(let key in cart) {
             let item = allItems.find(i => i.name === key);
@@ -225,12 +160,10 @@
         const total = document.getElementById('total-price').innerText;
 
         if(!name || !phone) return alert("အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ။");
-
         let orderList = [];
         for(let k in cart) { if(cart[k] > 0) orderList.push(`${k} x ${cart[k]}`); }
-        if(orderList.length === 0) return alert("မီနူး အရင်ရွေးပါ။");
+        if(orderList.length === 0) return alert("မီနူး ရွေးချယ်ပေးပါ။");
 
-        // 1. Save to Database (Hidden)
         const { data, error } = await _supabase.from('orders').insert([{
             customer_name: name, phone: phone, items: orderList.join(", "), total: total, status: 'pending'
         }]).select();
@@ -238,8 +171,6 @@
         if(!error) {
             playSound('successSound');
             const orderId = data[0].id;
-
-            // 2. Prepare Voucher & Download
             document.getElementById('v-id').innerText = orderId;
             document.getElementById('v-name').innerText = name;
             document.getElementById('v-total').innerText = total;
@@ -255,24 +186,18 @@
                 });
             }, 500);
 
-            // 3. Messaging Link Preparation
-            const msg = `🔥 PREMIUM ORDER 🔥\nID: #${orderId}\nCustomer: ${name}\nPhone: ${phone}\nTime: ${time || 'ASAP'}\nItems:\n${orderList.join("\n")}\nTotal: ${total} MMK`;
+            const msg = `🔥 PREMIUM ORDER 🔥\nID: #${orderId}\nဝယ်သူ: ${name}\nဖုန်း: ${phone}\nအချိန်: ${time || 'ချက်ချင်း'}\nပစ္စည်းများ:\n${orderList.join("\n")}\nစုစုပေါင်း: ${total} MMK`;
 
             if(platform === 'viber') {
-                // Clipboard copy for backup
                 navigator.clipboard.writeText(msg).then(() => {
-                alert("အော်ဒါစာသားကို Copy ယူပြီးပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။");
-                window.location.href = `viber://contact?number=${MY_PHONE}`;
-            }).catch(err => {
-                // Clipboard error backup
-                window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)}`;
-            });
+                    alert("အော်ဒါစာသားကို ကူးယူပြီးပါပြီ။ Viber တွင် Paste လုပ်၍ ပို့ပေးပါ။");
+                    window.location.href = `viber://contact?number=${MY_PHONE}`;
+                });
+            } else {
+                window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
+            }
         } else {
-                const teleMsg = msg.replace(/\*/g, ''); // Telegram link formats can be sensitive
-            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
-        });
-        } else {
-            alert("Error saving order: " + error.message);
+            alert("Error: " + error.message);
         }
     }
 </script>
