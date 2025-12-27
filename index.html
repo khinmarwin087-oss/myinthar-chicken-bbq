@@ -107,6 +107,14 @@
 <body>
 
 <div id="mySidebar" class="sidebar">
+    <div style="padding: 20px; background: var(--gold); color: var(--dark); font-weight: bold; text-align: center;">
+        MYIN THAR ROAST
+    </div>
+    <a href="#" onclick="showPage('customer')">🍗 မှာယူရန်</a>
+    <a href="#" onclick="showPage('admin')">⚙️ Admin Dashboard</a>
+    <a href="#" onclick="showPage('tracking')">📍 အော်ဒါစစ်ဆေးရန်</a>
+</div>
+    
     <div class="container">
     <div id="page-customer" class="section active">
         <div id="menu-display" class="menu-grid">မီနူးများ ဆွဲယူနေသည်...</div>
@@ -219,11 +227,6 @@ function closeNav() {
 }
 
 // စာမျက်နှာများ ပြောင်းလဲခြင်း (လိုအပ်ပါက သုံးရန်)
-function showPage(pageId) {
-    closeNav();
-    alert(pageId + " စာမျက်နှာသို့ သွားနေသည်...");
-    // ဤနေရာတွင် အခြား section များကို ဖော်ပြ/ဖျောက်သည့် logic ထည့်နိုင်သည်
-}
 
 // ၁။ စာမျက်နှာကူးရန် Function
 function showPage(pageName) {
