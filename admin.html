@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - MYIN THAR ROAST</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --blue: #001f3f; --gold: #D4AF37; --bg: #f4f7f6; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; display: flex; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: var(--blue); color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main-content { margin-left: 290px; padding: 30px; width: 100%; }
+
+        /* Order Cards */
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; border-left: 5px solid var(--gold); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* Order Table */
+        .order-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
+        .order-table th { background: var(--blue); color: white; padding: 15px; text-align: left; }
+        .order-table td { padding: 15px; border-bottom: 1px solid #ddd; }
+        
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .pending { background: #ffeaa7; color: #d35400; }
+        .confirmed { background: #55efc4; color: #00b894; }
+
+        .btn-action { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px; }
+        .btn-call { background: #00b894; color: white; }
+        .btn-update { background: var(--blue); color: white; }
+
+        /* Menu Management Section */
+        .menu-section { margin-top: 50px; background: white; padding: 20px; border-radius: 10px; }
+        .menu-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+
+        /* Notification Alarm Styling */
+        #alarm-banner { display: none; background: #e74c3c; color: white; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 9999; }
+    </style>
+</head>
+<body>
+
+<audio id="orderAlarm" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" loop></audio>
+
+<div id="alarm-banner">
+    ⚠️ အော်ဒါအသစ်ဝင်လာပါပြီ! <button onclick="stopAlarm()" style="margin-left:20px;">ပိတ်မည်</button>
+</div>
+
+<div class="sidebar">
+    <h2 style="color:var(--gold)">ADMIN PANEL</h2>
+    <p>Myin Thar Roast</p>
+    <hr>
+    <div style="margin-top:20px;">
+        <p><i class="fas fa-shopping-cart"></i> Orders</p>
+        <p><i class="fas fa-utensils"></i> Menu Editor</p>
+        <p><i class="fas fa-chart-line"></i> Sales Report</p>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="stat-grid">
+        <div class="stat-card"><h3>ယနေ့ရောင်းရငွေ</h3><h2 id="today-sales" style="color:var(--blue)">0 K</h2></div>
+        <div class="stat-card"><h3>အော်ဒါအသစ်</h3><h2 id="pending-count" style="color:#e67e22">0</h2></div>
+        <div class="stat-card"><h3>ပြီးစီးမှု</h3><h2 id="total-orders" style="color:#27ae60">0</h2></div>
+    </div>
+
+    <h2>📦 လတ်တလောအော်ဒါများ</h2>
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>ဝယ်သူ</th>
+                <th>မှာယူမှု</th>
+                <th>စုစုပေါင်း</th>
+                <th>အခြေအနေ</th>
+                <th>လုပ်ဆောင်ချက်</th>
+            </tr>
+        </thead>
+        <tbody id="order-list">
+            </tbody>
+    </table>
+
+    <div class="menu-section">
+        <h2>🍴 Menu Management (ဈေးနှုန်းပြင်ရန်)</h2>
+        <div id="admin-menu-list"></div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://iogpnvljnhsxuzzdltpb.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Njc1OTYwNiwiZXhwIjoyMDgyMzM1NjA2fQ.rNXHHO8PKO58ZXR4Eqzi6Bl0vzCIwH24jiwOVwbVPoc"; // မှတ်ချက်- Service Role Key သုံးမှ Update လုပ်လို့ရပါမယ်
+    const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
+    let lastOrderId = 0;
+
+    window.onload = () => {
+        fetchOrders();
+        fetchAdminMenu();
+        // ၅ စက္ကန့်တစ်ခါ အော်ဒါအသစ်စစ်မည်
+        setInterval(fetchOrders, 5000);
+    };
+
+    async function fetchOrders() {
+        const { data, error } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if(data) {
+            renderOrders(data);
+            checkNewOrder(data);
+            calculateStats(data);
+        }
+    }
+
+    function renderOrders(orders) {
+        document.getElementById('order-list').innerHTML = orders.map(o => `
+            <tr>
+                <td>#${o.id.toString().slice(-4)}</td>
+                <td><b>${o.customer_name}</b><br><small>${o.phone}</small></td>
+                <td><small>${o.items}</small></td>
+                <td>${o.total} K</td>
+                <td><span class="status-badge ${o.status}">${o.status.toUpperCase()}</span></td>
+                <td>
+                    <button class="btn-action btn-call" onclick="window.location.href='tel:${o.phone}'"><i class="fas fa-phone"></i></button>
+                    <button class="btn-action btn-update" onclick="updateStatus(${o.id}, 'confirmed')">Confirm</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // အော်ဒါအသစ်ဝင်ရင် Alarm မြည်စေရန်
+    function checkNewOrder(orders) {
+        if (orders.length > 0) {
+            const latestId = orders[0].id;
+            if (lastOrderId !== 0 && latestId > lastOrderId) {
+                startAlarm();
+            }
+            lastOrderId = latestId;
+        }
+    }
+
+    function startAlarm() {
+        document.getElementById('orderAlarm').play();
+        document.getElementById('alarm-banner').style.display = 'block';
+    }
+
+    function stopAlarm() {
+        document.getElementById('orderAlarm').pause();
+        document.getElementById('orderAlarm').currentTime = 0;
+        document.getElementById('alarm-banner').style.display = 'none';
+    }
+
+    async function updateStatus(id, newStatus) {
+        const { error } = await _supabase.from('orders').update({ status: newStatus }).eq('id', id);
+        if(!error) fetchOrders();
+    }
+
+    // Menu Management Section
+    async function fetchAdminMenu() {
+        const { data } = await _supabase.from('menu_items').select('*');
+        if(data) {
+            document.getElementById('admin-menu-list').innerHTML = data.map(i => `
+                <div class="menu-item-row">
+                    <span>${i.name}</span>
+                    <div>
+                        <input type="number" value="${i.price}" id="price-${i.id}" style="width:80px; padding:5px;"> K
+                        <button onclick="updatePrice(${i.id})" class="btn-action btn-update">Update</button>
+                        <button onclick="toggleStock(${i.id}, ${i.is_available})" style="background:${i.is_available ? '#2ecc71':'#e74c3c'}; color:white;" class="btn-action">
+                            ${i.is_available ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    async function updatePrice(id) {
+        const newPrice = document.getElementById(`price-${id}`).value;
+        const { error } = await _supabase.from('menu_items').update({ price: parseInt(newPrice) }).eq('id', id);
+        if(!error) alert("ဈေးနှုန်း ပြောင်းလဲပြီးပါပြီ");
+    }
+
+    function calculateStats(orders) {
+        const pending = orders.filter(o => o.status === 'pending').length;
+        document.getElementById('pending-count').innerText = pending;
+        document.getElementById('total-orders').innerText = orders.length;
+        // ဈေးနှုန်းပေါင်းခြင်း logic (MMK format ဖြုတ်ပြီးပေါင်းရန်)
+        let totalVal = orders.reduce((acc, o) => acc + parseInt(o.total.replace(/,/g, '')), 0);
+        document.getElementById('today-sales').innerText = totalVal.toLocaleString() + " K";
+    }
+</script>
+</body>
+</html>
