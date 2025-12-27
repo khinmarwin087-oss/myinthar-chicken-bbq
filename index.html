@@ -10,26 +10,109 @@
     <style>
         :root { --primary: #f26522; --bg: #fffbf8; --text: #2d3436; --card-bg: #ffffff; --gold: #ffc107; }
         body { font-family: 'Pyidaungsu', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; overflow-x: hidden; }
-        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .brand-name { font-size: 20px; font-weight: bold; color: var(--primary); }
+
+        /* --- Header Section --- */
+        .header { 
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 20px; 
+            display: flex; 
+            align-items: center; 
+            background: white; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+            z-index: 1000;
+        }
+        
+        .menu-trigger {
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--text);
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-name { 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: var(--primary); 
+            flex: 1;
+        }
+
+        /* --- Sidebar Section --- */
+        .sidebar { 
+            position: fixed; 
+            top: 0; 
+            left: -280px; 
+            width: 280px; 
+            height: 100%; 
+            background: white; 
+            z-index: 6000; 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1); 
+        }
+
+        /* Sidebar ပွင့်လာစေမည့် Class */
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .sidebar-header {
+            padding: 30px 20px;
+            background: var(--primary);
+            color: white;
+        }
+
+        .sidebar-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--text);
+            transition: 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background: #fff5f0;
+            color: var(--primary);
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 5999;
+        }
+
+        /* --- Common UI --- */
         .search-bar { margin: 15px 20px; background: #f1f2f6; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px; }
         .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 14px; }
+        
         .categories { display: flex; overflow-x: auto; padding: 10px 20px; gap: 15px; scrollbar-width: none; }
         .cat-btn { padding: 8px 20px; background: white; border-radius: 20px; border: 1px solid #eee; white-space: nowrap; cursor: pointer; font-size: 13px; font-weight: 600; }
         .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 20px; }
         .menu-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
         .menu-card img { width: 100%; height: 100px; object-fit: contain; margin-bottom: 8px; border-radius: 10px; }
         .price-tag { color: var(--primary); font-weight: 800; font-size: 15px; margin: 5px 0; }
         .qty-control { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 10px; }
         .qty-control button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #ddd; background: white; cursor: pointer; }
+
         .checkout-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: var(--primary); color: white; padding: 15px 25px; border-radius: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; border: none; font-size: 16px; font-weight: bold; box-shadow: 0 10px 20px rgba(242,101,34,0.3); }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 5001; padding: 20px; box-sizing: border-box; }
         .modal-content { background: white; padding: 25px; border-radius: 25px; width: 100%; max-width: 400px; }
-        .input-group { margin-bottom: 15px; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
-
-        /* Drawer */
+        
+        /* Drawer & Invoice Styles (ကျန်တာတွေက ရှေ့ကအတိုင်းပဲမို့ မပြောင်းလဲပါ) */
         .cart-drawer { position: fixed; bottom: -100%; left: 0; width: 100%; height: 75%; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2001; display: flex; flex-direction: column; }
         .cart-drawer.active { bottom: 0; }
         .drawer-header { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
@@ -39,8 +122,6 @@
         .cart-item-row img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; }
         .summary-card { background: #f9f9f9; padding: 20px; border-radius: 20px; margin: 0 20px 20px; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-
-        /* Invoice */
         #voucher-wrap { position: absolute; left: -9999px; top: 0; }
         #invoice-card { background: #fff; width: 450px; border: 1px solid #ddd; font-family: 'Pyidaungsu', sans-serif; }
         .inv-header { background: #001f3f; color: white; padding: 30px 20px; display: flex; justify-content: space-between; }
@@ -48,55 +129,6 @@
         .inv-table th { background: #f1c40f; padding: 10px; text-align: left; }
         .inv-table td { padding: 10px; border-bottom: 1px solid #eee; }
         .inv-total { font-size: 18px; color: #001f3f; font-weight: bold; border-top: 2px solid #001f3f; }
-        
-       * Header ကို အပေါ်ဆုံးမှာ Fixed ဖြစ်အောင်နဲ့ Sidebar Icon နေရာမှန်အောင် ပြင်ထားတာပါ */
-    .header { 
-        position: sticky;
-        top: 0;
-        left: 0;
-        right: 0;
-        padding: 15px 20px; 
-        display: flex; 
-        align-items: center; 
-        background: white; 
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-        z-index: 1000;
-    }
-    
-    .menu-trigger {
-        font-size: 22px;
-        cursor: pointer;
-        color: var(--text);
-        margin-right: 15px; /* နာမည်နဲ့ icon ကြား အကွာအဝေး */
-    }
-
-    .brand-name { 
-        font-size: 20px; 
-        font-weight: bold; 
-        color: var(--primary); 
-        flex: 1; /* နာမည်ကို အလယ်ပို့ဖို့ မဟုတ်ဘဲ နေရာအပြည့်ယူခိုင်းတာပါ */
-    }
-
-   / /* Sidebar ကို ပိုသေသပ်အောင် ပြင်ဆင်ချက် */
-    .sidebar { 
-        position: fixed; 
-        top: 0; 
-        left: -280px; 
-        width: 280px; 
-        height: 100%; 
-        background: white; 
-        z-index: 6000; 
-        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-        box-shadow: 2px 0 15px rgba(0,0,0,0.1); 
-        padding: 0; /* padding ကို အတွင်းထဲမှာပဲ သုံးမယ် */
-    }
-    
-    .sidebar-header {
-        padding: 30px 20px;
-        background: var(--primary);
-        color: white;
-    }
-
         #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 7000; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
@@ -105,31 +137,6 @@
 <div id="loader">
     <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
     <p>လုပ်ဆောင်နေပါသည်...</p>
-</div>
-
-<div id="voucher-wrap">
-    <div id="invoice-card">
-        <div class="inv-header">
-            <div><h2>INVOICE</h2><p>Myin Thar Roast Premium</p></div>
-            <div style="text-align:right;"><p>ID: #<span id="v-id"></span></p><p id="v-date"></p></div>
-        </div>
-        <div style="padding:20px; display:flex; justify-content:space-between;">
-            <div><b>Bill To:</b><p id="v-name" style="font-weight:bold;"></p><p id="v-phone-display"></p></div>
-            <div style="text-align:right;"><b>Payment:</b><p>Cash on Pickup</p></div>
-        </div>
-        <table class="inv-table">
-            <thead><tr><th>No</th><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
-            <tbody id="v-items-table"></tbody>
-        </table>
-        <div style="padding:20px; text-align:right;">
-            <p>Subtotal: <span id="v-subtotal"></span></p>
-            <p class="inv-total">Total: <span id="v-total"></span> K</p>
-        </div>
-        <div style="background:#001f3f; color:white; padding:15px; font-size:11px; display:flex; justify-content:space-between;">
-            <p>📍 မြင်သာ၊ တောင်ဥက္ကလာပ <br> 📞 09 767 287 345</p>
-            <p>ကျေးဇူးတင်ပါသည်</p>
-        </div>
-    </div>
 </div>
 
 <div class="header">
@@ -143,28 +150,28 @@
     </select>
 </div>
 
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h2 style="margin:0; font-size: 22px;">Myin Thar Roast</h2>
         <p style="margin:5px 0 0 0; font-size: 13px; opacity: 0.8;">Premium Delivery Service</p>
     </div>
-    <div style="padding: 15px;">
+    <div style="padding: 10px 0;">
         <div class="sidebar-item" onclick="toggleSidebar()"><i class="fas fa-home"></i> ပင်မစာမျက်နှာ</div>
         <div class="sidebar-item" onclick="showHistory()"><i class="fas fa-history"></i> မှာယူမှုမှတ်တမ်း</div>
         <div class="sidebar-item" onclick="trackOrder()"><i class="fas fa-truck"></i> အော်ဒါခြေရာခံမည်</div>
         <div class="sidebar-item" onclick="window.location.href='tel:09767287345'"><i class="fas fa-phone"></i> ဆက်သွယ်ရန်</div>
         
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
         <div class="sidebar-item" onclick="toggleSidebar()" style="color: #ff7675;"><i class="fas fa-times"></i> ပိတ်မည်</div>
     </div>
 </div>
-    
 
 <div class="search-bar">
     <i class="fas fa-search"></i>
     <input type="text" id="search" oninput="filterMenu()" placeholder="ရှာဖွေရန်...">
 </div>
+    
 
 <div class="categories">
     <button class="cat-btn active" onclick="filterCat('All')">အားလုံး</button>
