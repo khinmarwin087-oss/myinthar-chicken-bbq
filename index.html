@@ -1,149 +1,311 @@
+
 <!DOCTYPE html>
 <html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Myin Thar Roast - Order Now</title>
+    <title>Myin Thar Roast - မှာယူရန်</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #f26522; --bg: #fffbf8; --card: #ffffff; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: #333; }
-        
-        /* Layout Design */
-        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: white; sticky: top; z-index: 100; }
-        .brand { font-size: 22px; font-weight: 800; color: var(--primary); }
-        
-        .categories { display: flex; overflow-x: auto; padding: 15px 20px; gap: 12px; scrollbar-width: none; }
-        .cat-card { min-width: 70px; background: white; padding: 10px; border-radius: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .cat-card img { width: 35px; height: 35px; }
-        
-        /* Product Cards */
-        .food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
-        .food-card { background: white; border-radius: 20px; padding: 15px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .food-card img { width: 100%; height: 110px; object-fit: contain; }
-        .food-card h4 { margin: 10px 0 5px; font-size: 14px; }
-        .price-tag { color: var(--primary); font-weight: bold; }
-        .add-btn { background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 12px; cursor: pointer; margin-top: 10px; }
+        :root {
+            --primary: #f26522; /* အစားအသောက်အတွက် ဆွဲဆောင်မှုရှိသော အရောင် */
+            --bg: #fffbf8;
+            --text: #2d3436;
+            --card-bg: #ffffff;
+        }
 
-        /* Cart View */
-        #cart-panel { position: fixed; bottom: 0; width: 100%; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); padding: 20px; display: none; z-index: 2000; box-sizing: border-box; }
-        .cart-item { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        
-        .checkout-btn { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 16px; margin-top: 15px; }
-        
-        /* Floating Cart Badge */
-        .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 15px 30px; border-radius: 30px; display: flex; gap: 15px; align-items: center; cursor: pointer; box-shadow: 0 10px 20px rgba(242, 101, 34, 0.3); z-index: 1500; }
+        body { font-family: 'Pyidaungsu', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+
+        /* Header Style */
+        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: white; }
+        .brand-name { font-size: 24px; font-weight: bold; color: var(--text); }
+        .search-bar { 
+            margin: 10px 20px; background: #f1f2f6; border-radius: 12px; 
+            padding: 12px; display: flex; align-items: center; gap: 10px;
+        }
+        .search-bar input { border: none; background: transparent; width: 100%; outline: none; }
+
+        /* Category Scroll */
+        .categories { display: flex; overflow-x: auto; padding: 20px; gap: 15px; scrollbar-width: none; }
+        .cat-item { 
+            min-width: 80px; text-align: center; padding: 10px; 
+            background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .cat-item img { width: 40px; height: 40px; object-fit: contain; }
+        .cat-item span { display: block; font-size: 12px; margin-top: 5px; font-weight: 600; }
+
+        /* Food Grid Layout */
+        .food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px; }
+        .food-card { 
+            background: var(--card-bg); border-radius: 20px; padding: 15px; 
+            position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center;
+        }
+        .food-card img { width: 100%; height: 120px; object-fit: contain; transition: 0.3s; }
+        .food-card:hover img { transform: scale(1.1); }
+        .food-card .price { color: var(--primary); font-weight: 800; font-size: 16px; margin-top: 10px; display: block; }
+        .add-btn { 
+            position: absolute; bottom: 10px; right: 10px; background: var(--primary); 
+            color: white; border: none; width: 30px; height: 30px; border-radius: 10px; cursor: pointer;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav { 
+            position: fixed; bottom: 0; width: 100%; background: white; 
+            display: flex; justify-content: space-around; padding: 15px 0;
+            border-top: 1px solid #eee; z-index: 1000;
+        }
+        .nav-link { color: #ccc; text-align: center; font-size: 20px; text-decoration: none; }
+        .nav-link.active { color: var(--primary); }
+
+        /* Cart Badge */
+        .cart-count { 
+            position: absolute; top: -5px; right: -5px; background: var(--primary); 
+            color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; 
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="brand">MYIN THAR</div>
-    <div onclick="toggleCart()"><i class="fas fa-shopping-basket" style="font-size:20px;"></i></div>
+    <div class="brand-name">Myin Thar Roast</div>
+    <div style="position:relative;">
+        <i class="fas fa-shopping-cart" style="font-size: 22px;"></i>
+        <span class="cart-count">3</span>
+    </div>
+</div>
+
+<div class="search-bar">
+    <i class="fas fa-search" style="color:#aaa;"></i>
+    <input type="text" placeholder="သင်နှစ်သက်ရာ အစားအစာကို ရှာဖွေပါ...">
 </div>
 
 <div class="categories">
-    <div class="cat-card"><img src="https://cdn-icons-png.flaticon.com/512/1046/1046786.png"><span>All</span></div>
-    <div class="cat-card"><img src="https://cdn-icons-png.flaticon.com/512/1046/1046771.png"><span>Spicy</span></div>
-    <div class="cat-card"><img src="https://cdn-icons-png.flaticon.com/512/3132/3132693.png"><span>Drink</span></div>
+    <div class="cat-item">
+        <img src="https://cdn-icons-png.flaticon.com/512/1046/1046786.png">
+        <span>အကင်</span>
+    </div>
+    <div class="cat-item">
+        <img src="https://cdn-icons-png.flaticon.com/512/1046/1046771.png">
+        <span>အစပ်</span>
+    </div>
+    <div class="cat-item">
+        <img src="https://cdn-icons-png.flaticon.com/512/3132/3132693.png">
+        <span>အအေး</span>
+    </div>
+    <div class="cat-item">
+        <img src="https://cdn-icons-png.flaticon.com/512/706/706164.png">
+        <span>အသုပ်</span>
+    </div>
 </div>
 
-<div class="food-grid" id="menu-container">
-    </div>
+<h3 style="padding: 0 20px; margin-bottom: 10px;">Best Sellers ⭐</h3>
 
-<div class="cart-float" id="cart-bar" onclick="toggleCart()" style="display:none;">
-    <span id="item-count">0 items</span>
-    <span id="total-price">0 K</span>
+<div class="food-grid" id="food-list">
+    <div class="food-card">
+        <img src="https://images.rawpixel.com/image_png_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2YtcmVtb3ZlYmctam9iNzM5LTMwLnBuZw.png" alt="BBQ Chicken">
+        <h4 style="margin:10px 0 5px; font-size:14px;">မြင်းသာကြက်ကင် (Full)</h4>
+        <span class="price">15,000 K</span>
+        <button class="add-btn"><i class="fas fa-plus"></i></button>
+    </div>
+    <div class="food-card">
+        <img src="https://images.rawpixel.com/image_png_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA4L3Jhd3BpeGVsX29mZmljZV8yNl9waG90b19vZl9iZWVfX2J1cmdlcl9pc29sYXRlZF9vbl93aGl0ZV9iYWNrZ3JvdV81ZjBjZDY1MS1mYzVlLTRjMzAtYmYyYy02ZGRjYTMwYTdmZTFfMS5wbmc.png" alt="Burger">
+        <h4 style="margin:10px 0 5px; font-size:14px;">Special Burger</h4>
+        <span class="price">5,500 K</span>
+        <button class="add-btn"><i class="fas fa-plus"></i></button>
+    </div>
 </div>
 
-<div id="cart-panel">
-    <h3 style="margin-top:0;">သင့်အော်ဒါစာရင်း</h3>
-    <div id="cart-items-list"></div>
-    <div style="margin-top:20px;">
-        <input type="text" id="customer-name" placeholder="နာမည်" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
-        <input type="text" id="customer-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
-    </div>
-    <button class="checkout-btn" onclick="confirmOrder()">Confirm Order</button>
+<div class="bottom-nav">
+    <a href="#" class="nav-link active"><i class="fas fa-home"></i></a>
+    <a href="#" class="nav-link"><i class="fas fa-th-large"></i></a>
+    <a href="#" class="nav-link" style="position:relative;">
+        <i class="fas fa-shopping-basket"></i>
+    </a>
+    <a href="#" class="nav-link"><i class="fas fa-user"></i></a>
 </div>
 
 <script>
     const SB_URL = "https://iogpnvljnhsxuzzdltpb.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Njc1OTYwNiwiZXhwIjoyMDgyMzM1NjA2fQ.rNXHHO8PKO58ZXR4Eqzi6Bl0vzCIwH24jiwOVwbVPoc";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NTk2MDYsImV4cCI6MjA4MjMzNTYwNn0.Kxy3QW1gq-J-tzUF2fxQd0l989Wr7BI2uRTbWDTNL6k";
     const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-    let cart = [];
+    const MY_PHONE = "959767287345";
 
-    // 1. Load Menu from Supabase
-    async function loadMenu() {
-        const { data } = await _supabase.from('menu_items').select('*').eq('is_available', true);
-        if(data) {
-            document.getElementById('menu-container').innerHTML = data.map(item => `
-                <div class="food-card">
-                    <img src="${item.image_url || 'https://via.placeholder.com/150'}" alt="${item.name}">
-                    <h4>${item.name}</h4>
-                    <span class="price-tag">${item.price.toLocaleString()} K</span>
-                    <br>
-                    <button class="add-btn" onclick="addToCart('${item.name}', ${item.price})">+</button>
+    let cart = {}; let allItems = []; let currentCat = 'All';
+
+    window.onload = () => { fetchMenu(); loadCart(); };
+
+    async function fetchMenu() {
+        const { data } = await _supabase.from('menu_items').select('*');
+        allItems = data  [];
+        renderMenu(allItems);
+    }
+
+    function renderMenu(items) {
+        document.getElementById('menu-display').innerHTML = items.map(i => `
+            <div class="menu-card">
+                <img src="${i.image_url}">
+                <div class="card-info">
+                    <div style="font-size:14px; height:35px; overflow:hidden;">${i.name}</div>
+                    <div class="price-tag">${i.price.toLocaleString()} K</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                        <button onclick="updateQty('${i.name}', -1, ${i.price})" style="width:25px;">-</button>
+                        <span id="qty-${i.name}">${cart[i.name]  0}</span>
+                        <button onclick="updateQty('${i.name}', 1, ${i.price})" style="width:25px; background:var(--gold); border:none;">+</button>
+                    </div>
                 </div>
-            `).join('');
-        }
-    }
-
-    // 2. Add to Cart Logic
-    function addToCart(name, price) {
-        cart.push({ name, price });
-        updateCartUI();
-    }
-
-    function updateCartUI() {
-        if(cart.length > 0) {
-            document.getElementById('cart-bar').style.display = 'flex';
-            document.getElementById('item-count').innerText = `${cart.length} items`;
-            let total = cart.reduce((sum, item) => sum + item.price, 0);
-            document.getElementById('total-price').innerText = `${total.toLocaleString()} K`;
-        }
-    }
-
-    function toggleCart() {
-        const panel = document.getElementById('cart-panel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        
-        document.getElementById('cart-items-list').innerHTML = cart.map(item => `
-            <div class="cart-item">
-                <span>${item.name}</span>
-                <span>${item.price.toLocaleString()} K</span>
             </div>
         `).join('');
     }
 
-    // 3. Confirm & Push to Admin Dashboard
-    async function confirmOrder() {
-        const name = document.getElementById('customer-name').value;
-        const phone = document.getElementById('customer-phone').value;
-        let total = cart.reduce((sum, item) => sum + item.price, 0);
-        let itemsStr = cart.map(i => i.name).join(', ');
-
-        if(!name || !phone) return alert("ကျေးဇူးပြု၍ နာမည်နှင့် ဖုန်းနံပါတ် ထည့်ပါ။");
-
-        const { error } = await _supabase.from('orders').insert([{
-            customer_name: name,
-            phone: phone,
-            items: itemsStr,
-            total: total.toLocaleString(),
-            status: 'pending'
-        }]);
-
-        if(!error) {
-            alert("အော်ဒါတင်ခြင်း အောင်မြင်ပါသည်။ ဆိုင်မှ ပြန်လည်ဆက်သွယ်ပေးပါမည်။");
-            cart = [];
-            window.location.reload();
-        } else {
-            alert("အမှားအယွင်းရှိနေပါသည်။");
-        }
+    function updateQty(name, change, price) {
+        cart[name] = (cart[name]  0) + change;
+        if (cart[name] <= 0) delete cart[name];
+        document.getElementById(`qty-${name}`).innerText = cart[name]  0;
+        updateTotal();
+        saveCart();
     }
 
-    window.onload = loadMenu;
+    function updateTotal() {
+        let total = 0;
+        for(let name in cart) {
+            let item = allItems.find(i => i.name === name);
+            if(item) total += cart[name] * item.price;
+        }
+        document.getElementById('total-price').innerText = total.toLocaleString();
+    }
+
+    // Save/Load Cart to prevent loss on refresh
+    function saveCart() { localStorage.setItem('roast_cart', JSON.stringify(cart)); }
+    function loadCart() {
+        let saved = localStorage.getItem('roast_cart');
+        if(saved) { cart = JSON.parse(saved); updateTotal(); }
+    }
+
+    function filterMenu() {
+        let q = document.getElementById('search').value.toLowerCase();
+        let filtered = allItems.filter(i => i.name.toLowerCase().includes(q));
+        renderMenu(filtered);
+    }
+
+
+function filterCat(cat) {
+        currentCat = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        if(cat === 'All') renderMenu(allItems);
+        else renderMenu(allItems.filter(i => i.category === cat));
+    }
+
+    function toggleTheme() { document.body.classList.toggle('light-mode'); }
+
+    function openCheckout() { document.getElementById('checkout-modal').style.display = 'flex'; }
+    function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
+
+   async function submitOrder(platform) {
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+    const timeInput = document.getElementById('pickup-time').value;
+    const total = document.getElementById('total-price').innerText;
+
+    if(!name || !phone) return alert("ဝယ်သူအမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ။");
+    
+    let items = [];
+    for(let k in cart) items.push(`${k} (${cart[k]} ခု)`);
+    if(items.length === 0) return alert("မီနူး ရွေးချယ်ပေးပါ။");
+
+    // English Format Date & Time
+    let dateObj = timeInput ? new Date(timeInput) : new Date();
+    let formattedTime = dateObj.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+    let formattedDate = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Show Loading
+    document.getElementById('loader').style.display = 'flex';
+
+    // 1. Save to Supabase
+    const { data, error } = await _supabase.from('orders').insert([{
+        customer_name: name, phone: phone, items: items.join(", "), total: total, status: 'pending'
+    }]).select();
+
+    if(!error) {
+        const orderId = data[0].id;
+        
+       // Voucher Info injection
+document.getElementById('v-id').innerText = orderId;
+document.getElementById('v-name').innerText = name;
+document.getElementById('v-phone').innerText = "Phone: " + phone;
+document.getElementById('v-date').innerText = formattedDate;
+document.getElementById('v-total').innerText = total;
+document.getElementById('v-subtotal').innerText = total + " K";
+
+// Table Items Injection
+let tableHtml = "";
+let count = 1;
+for(let k in cart) {
+    let itemPrice = allItems.find(i => i.name === k).price;
+    tableHtml += `
+        <tr>
+            <td>${count++}</td>
+            <td>${k}</td>
+            <td>${cart[k]}</td>
+            <td>${(itemPrice * cart[k]).toLocaleString()} K</td>
+        </tr>`;
+}
+document.getElementById('v-items-table').innerHTML = tableHtml;
+        // 3. Generate Voucher & Messaging
+        html2canvas(document.querySelector("#invoice-card")).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Roast_Voucher_${orderId}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            // Order Message Format
+            const msg = 🍗 *MYIN THAR ROAST (Order #${orderId})*\n +
+                        ━━━━━━━━━━━━━━━━━━\n +
+                        👤 *Customer:* ${name}\n +
+                        📞 *Phone:* ${phone}\n +
+                        📅 *Pick-up:* ${formattedDate} | ${formattedTime}\n +
+                        ━━━━━━━━━━━━━━━━━━\n +
+                        📦 *Items:*\n${items.map(i => "▪️ " + i).join("\n")}\n\n +
+                        💰 *Total:* *${total} MMK*\n +
+                        ━━━━━━━━━━━━━━━━━━\n +
+                        ⚠️ After ordering, please call 09767287345.;
+
+            // Reset Everything
+            cart = {};
+            localStorage.removeItem('roast_cart');
+            renderMenu(allItems);
+            updateTotal();
+            document.getElementById('loader').style.display = 'none';
+            closeCheckout();
+
+
+// 4. Messaging Logic
+            if (platform === 'viber') {
+                navigator.clipboard.writeText(msg).then(() => {
+                    alert("Voucher ကို ဒေါင်းလုဒ်လုပ်နေပါသည်။ အော်ဒါစာသားကို Copy ယူပြီးပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။");
+                    window.location.href = viber://contact?number=${MY_PHONE};
+                }).catch(err => {
+                    // Backup if clipboard fails
+                    window.location.href = viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)};
+                });
+            } else {
+                // Telegram logic
+                const teleMsg = msg.replace(/\*/g, ''); // Remove stars for cleaner Telegram link
+                window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(teleMsg)}`;
+            }
+        });
+    } else {
+        alert("Error saving order. Please check internet.");
+        document.getElementById('loader').style.display = 'none';
+    }
+}
+    function changeLang() {
+        let l = document.getElementById('lang').value;
+        document.getElementById('search').placeholder = (l==='en') ? "Search..." : "ရှာဖွေရန်...";
+        document.getElementById('checkout-btn').innerText = (l==='en') ? "Checkout" : "အော်ဒါတင်မည်";
+    }
 </script>
 </body>
 </html>
