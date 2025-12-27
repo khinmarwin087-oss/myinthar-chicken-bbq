@@ -107,13 +107,22 @@
 <body>
 
 <div id="mySidebar" class="sidebar">
-    <div style="padding: 20px; background: var(--gold); color: var(--dark); font-weight: bold;">
-        MENU စာရင်း
+    <div class="container">
+    <div id="page-customer" class="section active">
+        <div id="menu-display" class="menu-grid">မီနူးများ ဆွဲယူနေသည်...</div>
     </div>
-    <a href="#" onclick="showPage('customer')">🍗 မှာယူရန်</a>
-    <a href="#" onclick="showPage('tracking')">📍 အော်ဒါစစ်ဆေးရန်</a>
-    <a href="#" onclick="showPage('admin')">⚙️ Admin Panel</a>
-</div>
+
+    <div id="page-admin" class="section" style="display:none;">
+        <h2>⚙️ Admin Dashboard</h2>
+        <div id="admin-orders-list">အော်ဒါစာရင်း ဆွဲယူနေသည်...</div>
+    </div>
+
+    <div id="page-tracking" class="section" style="display:none;">
+        <h2>📍 အော်ဒါအခြေအနေ</h2>
+        <div id="track-result">အော်ဒါ ID ရိုက်ထည့်ပါ...</div>
+    </div>
+    </div>
+    
 
 <div id="overlay" class="overlay" onclick="closeNav()"></div>
     
@@ -139,18 +148,40 @@
 <button style="background:var(--gold); border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="openCheckout()">မှာယူမည်</button>
 </div>
 
-    <div id="checkout-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:white; padding:20px; border-radius:15px; width:90%; max-width:400px;">
-        <h3>📋 မှာယူမှုအတည်ပြုရန်</h3>
-        <input type="text" id="cust-name" placeholder="သင့်အမည်">
-        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်">
-        <label>လာယူမည့်အချိန်:</label>
-        <input type="datetime-local" id="pickup-time">
-        <button class="btn-main" style="background:#e67e22; color:white;" onclick="submitOrder()">Viber သို့ ပို့မည်</button>
-        <button onclick="document.getElementById('checkout-modal').style.display='none'" style="width:100%; background:none; border:none; margin-top:10px; color:gray;">ပိတ်မည်</button>
+<div id="checkout-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:25px; border-radius:20px; width:90%; max-width:400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; text-align:center;">📋 အော်ဒါတင်ရန်</h3>
+        
+        <label style="font-size:12px; font-weight:bold;">ဝယ်သူအမည်</label>
+        <input type="text" id="cust-name" placeholder="အမည်ဖြည့်ပါ" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+        
+        <label style="font-size:12px; font-weight:bold;">ဖုန်းနံပါတ်</label>
+        <input type="tel" id="cust-phone" placeholder="၀၉xxxxxxxxx" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+        
+        <label style="font-size:12px; font-weight:bold;">လာယူမည့်အချိန်</label>
+        <input type="datetime-local" id="pickup-datetime" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+
+        <p style="font-size: 13px; font-weight: bold; margin: 10px 0 5px 0;">ပို့မည့်နည်းလမ်း ရွေးချယ်ပါ</p>
+        
+        <button class="app-btn viber-bg" onclick="submitOrder('viber')" style="width:100%; background:#7360f2; color:white; border:none; padding:12px; border-radius:8px; margin-bottom:8px; cursor:pointer;">
+            🟣 Viber ဖြင့်ပို့မည် (Copy ယူမည်)
+        </button>
+        <button class="app-btn tele-bg" onclick="submitOrder('telegram')" style="width:100%; background:#0088cc; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">
+            🔵 Telegram ဖြင့် တိုက်ရိုက်ပို့မည်
+        </button>
+
+        <div class="guide-box" id="viber-guide" style="display:none; font-size:12px; background:#f0f0f0; padding:10px; border-radius:8px; margin-top:10px;">
+            <b>💡 Viber ဖြင့် ပို့နည်းလမ်းညွှန်:</b><br>
+            ၁။ ခလုတ်နှိပ်လိုက်လျှင် အော်ဒါစာသားများကို Copy အလိုအလျောက် ယူသွားပါမည်။<br>
+            ၂။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် ခဏဖိနှိပ်ပြီး <b>Paste (ကူးထည့်)</b> လုပ်၍ ပို့ပေးပါ။
+        </div>
+        
+        <div style="font-size:12px; color:#64748b; text-align:center; margin-top:10px;">⚠️ အော်ဒါတင်ပြီးပါက <b>09767287345</b> သို့ <br>ဖုန်းဖြင့် အကြောင်းကြားပေးပါ။</div>
+        <button onclick="closeCheckout()" style="width:100%; border:none; background:none; color:#94a3b8; margin-top:15px; cursor:pointer;">မမှာသေးပါ (ပိတ်မည်)</button>
     </div>
 </div>
-
+    
+    
 <div id="voucher-capture" style="position:absolute; left:-9999px; background:white; width:350px; padding:30px; border:1px solid #eee; text-align:center; color:#333;">
     <h2 style="margin:0;">မြတ်သာကြက်ကင်</h2>
     <p>Premium BBQ Service</p>
@@ -193,6 +224,61 @@ function showPage(pageId) {
     alert(pageId + " စာမျက်နှာသို့ သွားနေသည်...");
     // ဤနေရာတွင် အခြား section များကို ဖော်ပြ/ဖျောက်သည့် logic ထည့်နိုင်သည်
 }
+
+// ၁။ စာမျက်နှာကူးရန် Function
+function showPage(pageName) {
+    // Page အားလုံးကို အရင်ဖျောက်မယ်
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    
+    // ရွေးထားတဲ့ Page ကိုပဲ ပြမယ်
+    document.getElementById('page-' + pageName).style.display = 'block';
+    
+    // Sidebar ကို ပြန်ပိတ်မယ်
+    if(typeof closeNav === "function") closeNav();
+
+    // Admin Page ဆိုရင် အော်ဒါတွေ လှမ်းခေါ်မယ်
+    if(pageName === 'admin') fetchAdminOrders();
+}
+
+// ၂။ Viber သို့မဟုတ် Telegram သို့ ပို့ရန် Function
+async function submitOrder(platform) {
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+    const pickup = document.getElementById('pickup-datetime').value;
+    const total = document.getElementById('total-price').innerText;
+
+    if(!name || !phone) return alert("အမည်နှင့် ဖုန်းဖြည့်ပါ");
+
+    let itemsArr = [];
+    for (let item in cart) {
+        if(cart[item] > 0) itemsArr.push(`${item} [${cart[item]}ခု]`);
+    }
+
+    // Supabase (Hidden Admin Update)
+    const { data, error } = await _supabase.from('orders').insert([{
+        customer_name: name, phone: phone, items: itemsArr.join(", "), total: total, status: 'pending'
+    }]).select();
+
+    if(!error) {
+        const orderId = data[0].id;
+        const msg = `🆔 Order ID: #${orderId}\n👤 ဝယ်သူ: ${name}\n📞 ဖုန်း: ${phone}\n🍗 မှာယူမှု:\n${itemsArr.join("\n")}\n💰 စုစုပေါင်း: ${total} K`;
+
+        // Viber အတွက် Auto Copy & Guide ပြခြင်း
+        if(platform === 'viber') {
+            navigator.clipboard.writeText(msg);
+            document.getElementById('viber-guide').style.display = 'block';
+            setTimeout(() => {
+                window.location.href = `viber://forward?text=${encodeURIComponent(msg)}`;
+            }, 1500);
+        } 
+        // Telegram အတွက် တိုက်ရိုက်ပို့ခြင်း
+        else {
+            const teleNumber = "959767287345";
+            window.location.href = `https://t.me/+${teleNumber}?text=${encodeURIComponent(msg)}`;
+        }
+    }
+}
+    
     
     function renderMenu(items) {
         const grid = document.getElementById('menu-display');
