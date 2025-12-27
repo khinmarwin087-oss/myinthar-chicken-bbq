@@ -3,202 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍗 မြင်သာကြက်ကင် - Grid Menu</title>
+    <title>🍗 မြင်သာကြက်ကင် - Premium Menu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --dark: #121212; --orange: #ff6b00; --bg: #f8f9fa; }
         body { font-family: 'Pyidaungsu', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; }
-
-        /* Header & Sidebar */
         .header { background: var(--dark); color: white; padding: 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; }
         .burger { font-size: 24px; cursor: pointer; color: var(--gold); margin-right: 15px; }
-
-        /* Category Scroll */
-        .category-container {
-            display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px;
-            background: white; border-bottom: 1px solid #eee; sticky; top: 55px; z-index: 999;
-        }
-        .cat-btn {
-            white-space: nowrap; padding: 8px 18px; border-radius: 20px;
-            border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px;
-        }
+        .category-container { display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px; background: white; border-bottom: 1px solid #eee; position: sticky; top: 55px; z-index: 999; }
+        .cat-btn { white-space: nowrap; padding: 8px 18px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; }
         .cat-btn.active { background: var(--dark); color: var(--gold); border-color: var(--dark); }
-
-        /* 2-Column Grid Layout */
         .container { padding: 10px; }
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* ၂ ခုတွဲ ပြသခြင်း */
-            gap: 12px;
-        }
-        .menu-card {
-            background: white; border-radius: 15px; overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column;
-        }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .menu-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         .menu-card img { width: 100%; height: 120px; object-fit: cover; }
-        .card-content { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; height: 40px; overflow: hidden; }
-        .card-price { color: var(--orange); font-weight: bold; font-size: 15px; margin-bottom: 10px; }
-
-        /* Qty Controls */
-        .qty-control { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; border-radius: 8px; padding: 5px; }
-        .qty-btn { border: none; background: white; width: 25px; height: 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-
-        /* Footer Bar */
-        .footer-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--dark); padding: 15px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; color: white; border-radius: 20px 20px 0 0; left: 50%; transform: translateX(-50%); }
-
-        /* Sidebar Style */
-.sidebar {
-    height: 100%;
-    width: 0; /* စစချင်း ဖျောက်ထားမည် */
-    position: fixed;
-    z-index: 2001;
-    top: 0;
-    left: 0;
-    background-color: var(--dark);
-    overflow-x: hidden;
-    transition: 0.3s;
-    padding-top: 0;
-}
-.sidebar a {
-    padding: 15px 25px;
-    text-decoration: none;
-    font-size: 16px;
-    color: white;
-    display: block;
-    border-bottom: 1px solid #333;
-}
-.sidebar a:hover { background: #333; color: var(--gold); }
-
-/* Overlay Background */
-.overlay {
-    display: none;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 2000;
-}
-
-        #checkout-modal input {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    box-sizing: border-box;
-}
-.btn-submit {
-    background: #ff6b00;
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 10px;
-    width: 100%;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-        
+        .card-content { padding: 10px; flex-grow: 1; }
+        .card-price { color: var(--orange); font-weight: bold; }
+        .qty-control { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; border-radius: 8px; padding: 5px; margin-top: 5px; }
+        .qty-btn { border: none; background: white; width: 25px; height: 25px; border-radius: 5px; cursor: pointer; }
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 2001; top: 0; left: 0; background-color: var(--dark); overflow-x: hidden; transition: 0.3s; }
+        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 16px; color: white; display: block; border-bottom: 1px solid #333; }
+        .overlay { display: none; position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; top:0; left:0; }
+        .footer-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--dark); padding: 15px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; color: white; border-radius: 20px 20px 0 0; left: 50%; transform: translateX(-50%); z-index: 1001; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
-    <div id="overlay" class="overlay" onclick="closeNav()"></div>
+
+<div id="overlay" class="overlay" onclick="closeNav()"></div>
+
+<div id="mySidebar" class="sidebar">
+    <div style="padding: 20px; background: var(--gold); color: var(--dark); font-weight: bold; text-align: center;">MYIN THAR ROAST</div>
+    <a href="#" onclick="showPage('customer')">🍗 မှာယူရန်</a>
+    <a href="#" onclick="showPage('tracking')">📍 အော်ဒါစစ်ဆေးရန်</a>
+    <a href="#" onclick="showPage('admin')">⚙️ Admin Dashboard</a>
+</div>
+
 <div class="header">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <div class="burger" onclick="openNav()">☰</div>
     <div style="font-weight:bold;">MYIN THAR ROAST</div>
 </div>
 
-    <div class="category-container" id="category-tabs">
-    <button class="cat-btn active" onclick="filterMenu('all', this)">အားလုံး</button>
-    <button class="cat-btn" onclick="filterMenu('10000_set', this)">၁သောင်းတန် Set</button>
-    <button class="cat-btn" onclick="filterMenu('20000_set', this)">၂သောင်းတန် Set</button>
-    <button class="cat-btn" onclick="filterMenu('single', this)">ရိုးရိုး</button>
-    </div>
-    
-<div id="mySidebar" class="sidebar">
-    <div style="padding: 20px; background: var(--gold); color: var(--dark); font-weight: bold; text-align: center;">
-        MYIN THAR ROAST
-    </div>
-    <a href="#" onclick="showPage('customer')">🍗 မှာယူရန်</a>
-    <a href="#" onclick="showPage('admin')">⚙️ Admin Dashboard</a>
-    <a href="#" onclick="showPage('tracking')">📍 အော်ဒါစစ်ဆေးရန်</a>
-</div>
-    
-    <div class="container">
+<div class="container">
     <div id="page-customer" class="section active">
-        <div id="menu-display" class="menu-grid">မီနူးများ ဆွဲယူနေသည်...</div>
+        <div class="category-container">
+            <button class="cat-btn active" onclick="filterMenu('all', this)">အားလုံး</button>
+            <button class="cat-btn" onclick="filterMenu('10000_set', this)">၁သောင်းတန် Set</button>
+            <button class="cat-btn" onclick="filterMenu('20000_set', this)">၂သောင်းတန် Set</button>
+            <button class="cat-btn" onclick="filterMenu('single', this)">ရိုးရိုး</button>
+        </div>
+        <div id="menu-display" class="menu-grid" style="margin-top:15px;">မီနူးများ ဆွဲယူနေသည်...</div>
     </div>
 
-    <div id="page-admin" class="section" style="display:none;">
-        <h2>⚙️ Admin Dashboard</h2>
+    <div id="page-tracking" class="section">
+        <div class="card">
+            <h3>📍 အော်ဒါအခြေအနေစစ်ဆေးရန်</h3>
+            <input type="number" id="track-id" placeholder="Order ID ရိုက်ထည့်ပါ (ဥပမာ- 123)" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
+            <button onclick="trackOrder()" style="width:100%; background:var(--dark); color:var(--gold); border:none; padding:12px; border-radius:8px; margin-top:10px; font-weight:bold; cursor:pointer;">စစ်ဆေးမည်</button>
+            <div id="track-result" style="margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <div id="page-admin" class="section">
+        <h2 style="margin-bottom:15px;">⚙️ Admin Dashboard</h2>
         <div id="admin-orders-list">အော်ဒါစာရင်း ဆွဲယူနေသည်...</div>
     </div>
-
-    <div id="page-tracking" class="section" style="display:none;">
-        <h2>📍 အော်ဒါအခြေအနေ</h2>
-        <div id="track-result">အော်ဒါ ID ရိုက်ထည့်ပါ...</div>
-    </div>
-    </div>
-
-<div class="container">
-    <div id="menu-display" class="menu-grid">မီနူးများ ဆွဲယူနေသည်...</div>
 </div>
 
 <div class="footer-bar">
     <div>Total: <b id="total-price" style="color:var(--gold);">0</b> K</div>
-<button style="background:var(--gold); border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="openCheckout()">မှာယူမည်</button>
+    <button style="background:var(--gold); border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="openCheckout()">မှာယူမည်</button>
 </div>
 
 <div id="checkout-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:white; padding:25px; border-radius:20px; width:90%; max-width:400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <div style="background:white; padding:25px; border-radius:20px; width:90%; max-width:400px;">
         <h3 style="margin-top:0; text-align:center;">📋 အော်ဒါတင်ရန်</h3>
-        
         <label style="font-size:12px; font-weight:bold;">ဝယ်သူအမည်</label>
         <input type="text" id="cust-name" placeholder="အမည်ဖြည့်ပါ" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
-        
         <label style="font-size:12px; font-weight:bold;">ဖုန်းနံပါတ်</label>
         <input type="tel" id="cust-phone" placeholder="၀၉xxxxxxxxx" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
-        
         <label style="font-size:12px; font-weight:bold;">လာယူမည့်အချိန်</label>
         <input type="datetime-local" id="pickup-datetime" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
 
-        <p style="font-size: 13px; font-weight: bold; margin: 10px 0 5px 0;">ပို့မည့်နည်းလမ်း ရွေးချယ်ပါ</p>
-        
-        <button class="app-btn viber-bg" onclick="submitOrder('viber')" style="width:100%; background:#7360f2; color:white; border:none; padding:12px; border-radius:8px; margin-bottom:8px; cursor:pointer;">
-            🟣 Viber ဖြင့်ပို့မည် (Copy ယူမည်)
-        </button>
-        <button class="app-btn tele-bg" onclick="submitOrder('telegram')" style="width:100%; background:#0088cc; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">
-            🔵 Telegram ဖြင့် တိုက်ရိုက်ပို့မည်
-        </button>
+        <button onclick="submitOrder('viber')" style="width:100%; background:#7360f2; color:white; border:none; padding:12px; border-radius:8px; margin-bottom:10px; font-weight:bold; cursor:pointer;">🟣 Viber ဖြင့်ပို့မည် (Copy ယူမည်)</button>
+        <button onclick="submitOrder('telegram')" style="width:100%; background:#0088cc; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">🔵 Telegram ဖြင့်ပို့မည်</button>
 
-        <div class="guide-box" id="viber-guide" style="display:none; font-size:12px; background:#f0f0f0; padding:10px; border-radius:8px; margin-top:10px;">
-            <b>💡 Viber ဖြင့် ပို့နည်းလမ်းညွှန်:</b><br>
-            ၁။ ခလုတ်နှိပ်လိုက်လျှင် အော်ဒါစာသားများကို Copy အလိုအလျောက် ယူသွားပါမည်။<br>
-            ၂။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် ခဏဖိနှိပ်ပြီး <b>Paste (ကူးထည့်)</b> လုပ်၍ ပို့ပေးပါ။
+        <div id="viber-guide" style="display:none; font-size:12px; background:#f0f0f0; padding:10px; border-radius:8px; margin-top:10px;">
+            <b>💡 Viber လမ်းညွှန်:</b> စာသားကို Copy ယူသွားပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။
         </div>
-        
-        <div style="font-size:12px; color:#64748b; text-align:center; margin-top:10px;">⚠️ အော်ဒါတင်ပြီးပါက <b>09767287345</b> သို့ <br>ဖုန်းဖြင့် အကြောင်းကြားပေးပါ။</div>
-        <button onclick="closeCheckout()" style="width:100%; border:none; background:none; color:#94a3b8; margin-top:15px; cursor:pointer;">မမှာသေးပါ (ပိတ်မည်)</button>
+        <button onclick="closeCheckout()" style="width:100%; border:none; background:none; color:gray; margin-top:15px; cursor:pointer;">ပိတ်မည်</button>
     </div>
 </div>
-    
-    
-<div id="voucher-capture" style="position:absolute; left:-9999px; background:white; width:350px; padding:30px; border:1px solid #eee; text-align:center; color:#333;">
-    <h2 style="margin:0;">မြတ်သာကြက်ကင်</h2>
-    <p>Premium BBQ Service</p>
-    <hr>
-    <p><b>Order ID:</b> #<span id="v-id"></span></p>
-    <p><b>Customer:</b> <span id="v-name"></span></p>
-    <div id="v-items" style="text-align:left; margin:20px 0;"></div>
-    <hr>
-    <h3>Total: <span id="v-total"></span> MMK</h3>
-    <p>ကျေးဇူးတင်ပါသည်!</p>
-</div>
-    
+
 <script>
     const SB_URL = "https://iogpnvljnhsxuzzdltpb.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NTk2MDYsImV4cCI6MjA4MjMzNTYwNn0.Kxy3QW1gq-J-tzUF2fxQd0l989Wr7BI2uRTbWDTNL6k";
@@ -207,90 +106,25 @@
     let allMenuItems = [];
     let cart = {};
 
+    window.onload = fetchMenu;
+
     async function fetchMenu() {
         const { data } = await _supabase.from('menu_items').select('*').order('created_at', {ascending: false});
         allMenuItems = data || [];
         renderMenu(allMenuItems);
     }
 
-function openNav() {
-    document.getElementById("mySidebar").style.width = "260px";
-    document.getElementById("overlay").style.display = "block";
-}
-
-function closeNav() {
-    document.getElementById("mySidebar").style.width = "0";
-    document.getElementById("overlay").style.display = "none";
-}
-
-// စာမျက်နှာများ ပြောင်းလဲခြင်း (လိုအပ်ပါက သုံးရန်)
-
-// ၁။ စာမျက်နှာကူးရန် Function
-function showPage(pageName) {
-    // Page အားလုံးကို အရင်ဖျောက်မယ်
-    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-    
-    // ရွေးထားတဲ့ Page ကိုပဲ ပြမယ်
-    document.getElementById('page-' + pageName).style.display = 'block';
-    
-    // Sidebar ကို ပြန်ပိတ်မယ်
-    if(typeof closeNav === "function") closeNav();
-
-    // Admin Page ဆိုရင် အော်ဒါတွေ လှမ်းခေါ်မယ်
-    if(pageName === 'admin') fetchAdminOrders();
-}
-
-// ၂။ Viber သို့မဟုတ် Telegram သို့ ပို့ရန် Function
-async function submitOrder(platform) {
-    const name = document.getElementById('cust-name').value;
-    const phone = document.getElementById('cust-phone').value;
-    const pickup = document.getElementById('pickup-datetime').value;
-    const total = document.getElementById('total-price').innerText;
-
-    if(!name || !phone) return alert("အမည်နှင့် ဖုန်းဖြည့်ပါ");
-
-    let itemsArr = [];
-    for (let item in cart) {
-        if(cart[item] > 0) itemsArr.push(`${item} [${cart[item]}ခု]`);
-    }
-
-    // Supabase (Hidden Admin Update)
-    const { data, error } = await _supabase.from('orders').insert([{
-        customer_name: name, phone: phone, items: itemsArr.join(", "), total: total, status: 'pending'
-    }]).select();
-
-    if(!error) {
-        const orderId = data[0].id;
-        const msg = `🆔 Order ID: #${orderId}\n👤 ဝယ်သူ: ${name}\n📞 ဖုန်း: ${phone}\n🍗 မှာယူမှု:\n${itemsArr.join("\n")}\n💰 စုစုပေါင်း: ${total} K`;
-
-        // Viber အတွက် Auto Copy & Guide ပြခြင်း
-        if(platform === 'viber') {
-            navigator.clipboard.writeText(msg);
-            document.getElementById('viber-guide').style.display = 'block';
-            setTimeout(() => {
-                window.location.href = `viber://forward?text=${encodeURIComponent(msg)}`;
-            }, 1500);
-        } 
-        // Telegram အတွက် တိုက်ရိုက်ပို့ခြင်း
-        else {
-            const teleNumber = "959767287345";
-            window.location.href = `https://t.me/+${teleNumber}?text=${encodeURIComponent(msg)}`;
-        }
-    }
-}
-    
-    
     function renderMenu(items) {
         const grid = document.getElementById('menu-display');
         grid.innerHTML = items.map(item => `
             <div class="menu-card">
                 <img src="${item.image_url || 'https://via.placeholder.com/150'}">
                 <div class="card-content">
-                    <div class="card-title">${item.name}</div>
+                    <div style="font-weight:bold; font-size:14px; height:40px; overflow:hidden;">${item.name}</div>
                     <div class="card-price">${item.price.toLocaleString()} K</div>
                     <div class="qty-control">
                         <button class="qty-btn" onclick="updateQty('${item.name}', -1, ${item.price})">-</button>
-                        <span id="qty-${item.name}" style="font-size:14px; font-weight:bold;">0</span>
+                        <span id="qty-${item.name}">0</span>
                         <button class="qty-btn" onclick="updateQty('${item.name}', 1, ${item.price})">+</button>
                     </div>
                 </div>
@@ -298,121 +132,101 @@ async function submitOrder(platform) {
         `).join('');
     }
 
-    function filterMenu(category, btn) {
-        // Active Button ပြောင်းခြင်း
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // Filter Logic
-        if (category === 'all') {
-            renderMenu(allMenuItems);
-        } else {
-            const filtered = allMenuItems.filter(item => item.category === category);
-            renderMenu(filtered);
-        }
-    }
-
     function updateQty(name, change, price) {
         cart[name] = (cart[name] || 0) + change;
         if (cart[name] < 0) cart[name] = 0;
-        
-        // Update UI
-        const qtyEl = document.getElementById(`qty-${name}`);
-        if(qtyEl) qtyEl.innerText = cart[name];
-
+        document.getElementById(`qty-${name}`).innerText = cart[name];
         updateTotal();
     }
 
     function updateTotal() {
         let total = 0;
-        allMenuItems.forEach(item => {
-            if(cart[item.name]) total += cart[item.name] * item.price;
-        });
+        allMenuItems.forEach(item => { if(cart[item.name]) total += cart[item.name] * item.price; });
         document.getElementById('total-price').innerText = total.toLocaleString();
     }
 
+    function openNav() { document.getElementById("mySidebar").style.width = "260px"; document.getElementById("overlay").style.display = "block"; }
+    function closeNav() { document.getElementById("mySidebar").style.width = "0"; document.getElementById("overlay").style.display = "none"; }
+
+    function showPage(pageName) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('page-' + pageName).classList.add('active');
+        closeNav();
+        if(pageName === 'admin') fetchAdminOrders();
+    }
+
     function openCheckout() {
-    let total = document.getElementById('total-price').innerText;
-    if(total === "0") return alert("မီနူး အရင်ရွေးပါဦး");
-    document.getElementById('checkout-modal').style.display = 'flex';
-}
-
-async function submitOrder() {
-    const name = document.getElementById('cust-name').value.trim();
-    const phone = document.getElementById('cust-phone').value.trim();
-    const pickup = document.getElementById('pickup-time').value;
-    const total = document.getElementById('total-price').innerText;
-
-    if(!name || !phone) return alert("အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
-
-    let itemsArr = [];
-    for (let item in cart) {
-        if(cart[item] > 0) itemsArr.push(`${item} [${cart[item]} ခု]`);
+        if(document.getElementById('total-price').innerText === "0") return alert("မီနူး အရင်ရွေးပါ");
+        document.getElementById('checkout-modal').style.display = 'flex';
     }
 
-    // ၁။ Hidden System: Admin Panel ဆီသို့ အချက်အလက် ပို့ခြင်း (Supabase)
-    const { data, error } = await _supabase.from('orders').insert([{
-        customer_name: name,
-        phone: phone,
-        items: itemsArr.join(", "),
-        total: total,
-        status: 'pending'
-    }]).select();
+    function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
 
-    if(!error) {
-        const orderId = data[0].id;
+    async function submitOrder(platform) {
+        const name = document.getElementById('cust-name').value;
+        const phone = document.getElementById('cust-phone').value;
+        const pickup = document.getElementById('pickup-datetime').value;
+        const total = document.getElementById('total-price').innerText;
 
-        // ၂။ Auto Copy Format: ပို့မည့် စာသားပုံစံ
-        const message = `🔥 အော်ဒါအသစ် ရောက်ရှိပါသည်။\n\n🆔 Order ID: #${orderId}\n👤 ဝယ်သူ: ${name}\n📞 ဖုန်း: ${phone}\n⏰ လာယူမည့်အချိန်: ${pickup || 'ချက်ချင်း'}\n----------------\n📦 ပစ္စည်းများ:\n${itemsArr.join("\n")}\n----------------\n💰 စုစုပေါင်း: ${total} K`;
+        if(!name || !phone) return alert("အမည်နှင့် ဖုန်းဖြည့်ပါ");
 
-        // ၃။ Clipboard ထဲသို့ Auto Copy ကူးထည့်ခြင်း
-        navigator.clipboard.writeText(message);
+        let itemsArr = [];
+        for (let item in cart) { if(cart[item] > 0) itemsArr.push(`${item} [${cart[item]}ခု]`); }
 
-        alert("မှာယူမှု အောင်မြင်ပါသည်။ Viber သို့ ကူးပြောင်းနေသည်... (စာသားကို Auto Copy ကူးထားပြီးဖြစ်သည်)");
+        const { data, error } = await _supabase.from('orders').insert([{
+            customer_name: name, phone: phone, items: itemsArr.join(", "), total: total, status: 'pending'
+        }]).select();
 
-        // ၄။ Viber သို့ တိုက်ရိုက် ပို့ဆောင်ခြင်း (သင့်နံပါတ်သို့)
-        // မှတ်ချက် - Viber က ဖုန်းနံပါတ်ဆီ တိုက်ရိုက်စာပို့ဖို့အတွက် ဝယ်သူက သင့်ကို Contact ထဲ သိမ်းထားဖို့ လိုနိုင်ပါတယ်။
-        window.location.href = `viber://forward?text=${encodeURIComponent(message)}`;
-    } else {
-        alert("အော်ဒါတင်ခြင်း မအောင်မြင်ပါ: " + error.message);
+        if(!error) {
+            const orderId = data[0].id;
+            const msg = `🆔 Order ID: #${orderId}\n👤 ဝယ်သူ: ${name}\n📞 ဖုန်း: ${phone}\n⏰ လာယူမည့်အချိန်: ${pickup || 'ချက်ချင်း'}\n----------------\n📦 မှာယူသည့်ပစ္စည်းများ:\n${itemsArr.join("\n")}\n----------------\n💰 စုစုပေါင်း: ${total} K`;
+
+            if(platform === 'viber') {
+                navigator.clipboard.writeText(msg);
+                document.getElementById('viber-guide').style.display = 'block';
+                setTimeout(() => { window.location.href = `viber://forward?text=${encodeURIComponent(msg)}`; }, 1500);
+            } else {
+                window.location.href = `https://t.me/959767287345?text=${encodeURIComponent(msg)}`;
+            }
+        }
     }
-}
-    // html2canvas library ကို header မှာ ထည့်ဖို့မမေ့ပါနဲ့
-async function downloadVoucher(orderId) {
-    const { data } = await _supabase.from('orders').select('*').eq('id', orderId).single();
-    
-    document.getElementById('v-id').innerText = data.id;
-    document.getElementById('v-name').innerText = data.customer_name;
-    document.getElementById('v-items').innerText = data.items;
-    document.getElementById('v-total').innerText = data.total;
 
-    const capture = document.getElementById('voucher-capture');
-    html2canvas(capture).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Voucher_${orderId}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-    });
-}
-    // Admin Dashboard မှာ အော်ဒါတွေ ဆွဲပြတဲ့ Function
-async function fetchAdminOrders() {
-    const { data, error } = await _supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+    async function trackOrder() {
+        const id = document.getElementById('track-id').value;
+        const resDiv = document.getElementById('track-result');
+        if(!id) return alert("ID ရိုက်ထည့်ပါ");
 
-    const orderList = document.getElementById('admin-orders-list');
-    if(data) {
-        orderList.innerHTML = data.map(order => `
-            <div class="card" style="border-left: 5px solid ${order.status === 'pending' ? 'orange' : 'green'};">
-                <b>Order #${order.id}</b> - ${order.customer_name}<br>
-                <small>${order.items}</small><br>
-                <span style="color:red;">Total: ${order.total} K</span>
-            </div>
-        `).join('');
+        const { data, error } = await _supabase.from('orders').select('*').eq('id', id).single();
+        if(data) {
+            resDiv.innerHTML = `
+                <div class="card" style="border-left: 5px solid orange;">
+                    <b>🆔 Order #${data.id}</b><br>
+                    ဝယ်သူ: ${data.customer_name}<br>
+                    အခြေအနေ: <b style="color:orange;">${data.status}</b><br>
+                    စုစုပေါင်း: ${data.total} K
+                </div>`;
+        } else { resDiv.innerHTML = "❌ အော်ဒါမတွေ့ပါ။ ID ပြန်စစ်ပါ။"; }
     }
-}
-    window.onload = fetchMenu;
+
+    async function fetchAdminOrders() {
+        const { data } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if(data) {
+            document.getElementById('admin-orders-list').innerHTML = data.map(o => `
+                <div class="card">
+                    <b>#${o.id} - ${o.customer_name}</b> (${o.phone})<br>
+                    <small>${o.items}</small><br>
+                    စုစုပေါင်း: ${o.total} K - <small>${o.status}</small>
+                </div>`).join('');
+        }
+    }
+
+    function filterMenu(category, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (category === 'all') renderMenu(allMenuItems);
+        else renderMenu(allMenuItems.filter(item => item.category === category));
+    }
 </script>
 </body>
 </html>
+
