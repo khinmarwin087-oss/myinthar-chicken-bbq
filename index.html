@@ -288,29 +288,42 @@
         console.error("Unexpected Error:", err);
     }
 }
-    function renderMenu(items) {
-        document.getElementById('menu-display').innerHTML = items.map(i => `
+function renderMenu(items) {
+    const display = document.getElementById('menu-display');
+    if (items.length === 0) {
+        display.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>ရှာဖွေမှုမရှိပါ။</p>";
+        return;
+    }
+    display.innerHTML = items.map(i => {
+        // ID ထဲမှာ special characters တွေပါရင် error တက်တတ်လို့ replace လုပ်ပေးတာပါ
+        const safeId = i.name.replace(/[^a-zA-Z0-9]/g, '-');
+        return `
             <div class="menu-card">
-                <img src="${i.image_url || 'https://via.placeholder.com/150'}">
-                <div style="font-weight:600; font-size:14px; height:35px;">${i.name}</div>
-                <div class="price-tag">${i.price.toLocaleString()} K</div>
+                <img src="${i.image_url || 'https://via.placeholder.com/150'}" onerror="this.src='https://via.placeholder.com/150'">
+                <div style="font-weight:600; font-size:14px; height:35px; overflow:hidden;">${i.name}</div>
+                <div class="price-tag">${Number(i.price).toLocaleString()} K</div>
                 <div class="qty-control">
                     <button onclick="updateQty('${i.name}', -1, ${i.price})">-</button>
-                    <span id="qty-${i.name.replace(/\s+/g, '-')}">${cart[i.name] || 0}</span>
+                    <span id="qty-${safeId}">${cart[i.name] || 0}</span>
                     <button onclick="updateQty('${i.name}', 1, ${i.price})" style="background:var(--gold); border:none;">+</button>
                 </div>
             </div>
-        `).join('');
-    }
+        `;
+    }).join('');
+}
 
-    function updateQty(name, change, price) {
-        cart[name] = (cart[name] || 0) + change;
-        if (cart[name] <= 0) delete cart[name];
-        updateTotal();
-        const qEl = document.getElementById(`qty-${name.replace(/\s+/g, '-')}`);
-        if(qEl) qEl.innerText = cart[name] || 0;
-        saveCart();
-    }
+function updateQty(name, change, price) {
+    cart[name] = (cart[name] || 0) + change;
+    if (cart[name] <= 0) delete cart[name];
+    
+    updateTotal();
+    saveCart();
+
+    const safeId = name.replace(/[^a-zA-Z0-9]/g, '-');
+    const qEl = document.getElementById(`qty-${safeId}`);
+    if(qEl) qEl.innerText = cart[name] || 0;
+}
+
 
     function updateTotal() {
         let total = 0;
@@ -383,7 +396,7 @@
             document.getElementById('loader').style.display = 'none';
             closeCheckout();
             
-           if (sendVia === 'viber') {
+           if (platform === 'viber') {
             // Viber အတွက် စာသားကို Copy ယူခြင်း
             navigator.clipboard.writeText(msg).then(() => {
                 alert("အော်ဒါစာသားကို Copy ယူပြီးပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။");
