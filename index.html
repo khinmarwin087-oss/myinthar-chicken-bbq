@@ -252,7 +252,8 @@
 
 <div class="header">
     <div onclick="toggleSidebar()" style="margin-right:15px; cursor:pointer;"><i class="fas fa-bars fa-lg"></i></div>
-    <div class="brand-name">Myin Thar Roast</div>
+    <h1 class="brand-name" style="margin:0; font-size:22px;">Myin Thar Roast</h1>
+    
 </div>
 
 <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
@@ -341,7 +342,8 @@
         <p id="inv-date"></p>
         <div id="inv-items"></div>
         <hr>
-        <h3 id="inv-total" style="text-align:right;"></h3>
+        <h3 id="inv-total" style="text-align:right;">Total: 0 K</h3>
+        
         <p style="text-align:center; font-size:12px;">Thank you for your order!</p>
     </div>
 </div>
@@ -357,9 +359,21 @@
     window.onload = () => { fetchMenu(); loadCart(); };
 
     async function fetchMenu() {
-        const { data } = await _supabase.from('menu_items').select('*');
-        if (data) { allItems = data; renderMenu(data); }
+    console.log("Fetching data from Supabase..."); // ဒါလေး ထည့်စစ်ပါ
+    const { data, error } = await _supabase.from('menu_items').select('*');
+    
+    if (error) {
+        console.error("Supabase Error:", error); // Error ရှိရင် ဒီမှာ ပြပါလိမ့်မယ်
+        return;
     }
+    
+    if (data) { 
+        console.log("Data received:", data); // Data ရမရ စစ်ပါ
+        allItems = data; 
+        renderMenu(data); 
+    }
+}
+    
 
        // ၁။ Menu ပြသပေးသည့် Function (Variable Name နှင့် Syntax ပြင်ထားသည်)
 function renderMenu(items) {
