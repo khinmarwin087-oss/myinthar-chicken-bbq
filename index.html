@@ -261,7 +261,7 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NTk2MDYsImV4cCI6MjA4MjMzNTYwNn0.Kxy3QW1gq-J-tzUF2fxQd0l989Wr7BI2uRTbWDTNL6k";
     const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
     const MY_PHONE = "959767287345";
-
+  
     let cart = {}; let allItems = [];
 
     window.onload = () => { fetchMenu(); loadCart(); };
@@ -399,10 +399,10 @@
             msg += `💰 စုစုပေါင်း: ${total} K`;
 
             if(platform === 'viber') {
-                window.location.href = `viber://forward?text=${encodeURIComponent(msg)}`;
+                window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)}`;
             } else {
                 // Telegram Link အမှန်
-                window.open(`https://t.me/${admin_username}?text=${encodeURIComponent(msg)}`, '_blank');
+                window.open(`https://t.me/${@yenaingsoe}?text=${encodeURIComponent(msg)}`, '_blank');
             }
 
         } catch (err) {
