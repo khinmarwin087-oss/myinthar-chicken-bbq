@@ -155,6 +155,50 @@
     <p>လုပ်ဆောင်နေပါသည်...</p>
 </div>
 
+    <div id="voucher-wrap" style="position: absolute; left: -9999px; top: 0;">
+    <div id="invoice-card" style="background: #fff; width: 450px; border: 1px solid #ddd; font-family: 'Pyidaungsu', sans-serif;">
+        <div class="inv-header" style="background: #001f3f; color: white; padding: 30px 20px; display: flex; justify-content: space-between;">
+            <div>
+                <h2 style="margin:0;">INVOICE</h2>
+                <p style="margin:5px 0 0 0; font-size:12px; opacity:0.8;">Myin Thar Roast Premium</p>
+            </div>
+            <div style="text-align:right; font-size:12px;">
+                <p>Order ID: #<span id="v-id"></span></p>
+                <p>Date: <span id="v-date"></span></p>
+            </div>
+        </div>
+        <div style="padding: 20px; display: flex; justify-content: space-between; font-size: 13px;">
+            <div>
+                <p><b>Bill To:</b></p>
+                <p id="v-name" style="font-size:16px; font-weight:bold; margin:5px 0;"></p>
+                <p id="v-phone-display"></p>
+            </div>
+            <div style="text-align:right;">
+                <p><b>Payment:</b></p>
+                <p>Cash on Pickup</p>
+            </div>
+        </div>
+        <table class="inv-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f1c40f;">
+                    <th style="padding:10px; text-align:left;">Description</th>
+                    <th style="padding:10px;">Qty</th>
+                    <th style="padding:10px;">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="v-items-table"></tbody>
+        </table>
+        <div style="padding: 20px; text-align: right;">
+            <p class="inv-total" style="font-size: 18px; color: #001f3f; font-weight: bold; border-top: 2px solid #001f3f; padding-top: 10px;">
+                Total: <span id="v-total"></span> K
+            </p>
+        </div>
+        <div style="background: #001f3f; color: white; padding: 15px; font-size: 11px; text-align: center;">
+            <p>ပြန်လည်အားပေးမှုကို ကျေးဇူးတင်ပါသည်</p>
+        </div>
+    </div>
+    </div>
+    
 <div class="header">
     <div class="menu-trigger" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
@@ -211,49 +255,25 @@
     </div>
 </div>
 
-<div class="modal" id="checkout-modal">
-    <div class="modal-content" style="max-width: 500px; padding: 10px;">
-        <div class="pickup-form-container">
-            <h2 class="form-title">Curbside Pickup Order Form</h2>
-            
-            <label class="section-label">Name</label>
-            <div class="input-row">
-                <div>
-                    <input type="text" id="first-name" placeholder="">
-                    <span class="sub-text">First Name</span>
-                </div>
-                <div>
-                    <input type="text" id="last-name" placeholder="">
-                    <span class="sub-text">Last Name</span>
-                </div>
-            </div>
-
-            <label class="section-label">Email</label>
-            <div style="margin-bottom:15px;">
-                <input type="email" id="cust-email" class="full-input" placeholder="example@example.com">
-                <span class="sub-text">example@example.com</span>
-            </div>
-
-            <label class="section-label">Phone Number</label>
-            <div class="input-row">
-                <div style="flex: 0.4;">
-                    <input type="text" id="area-code" placeholder="">
-                    <span class="sub-text">Area Code</span>
-                </div>
-                <div>
-                    <input type="tel" id="cust-phone" placeholder="">
-                    <span class="sub-text">Phone Number</span>
-                </div>
-            </div>
-
-            <label class="section-label">Additional Notes</label>
-            <textarea id="notes" class="full-input" style="height:80px; margin-bottom:15px;"></textarea>
-
-            <button onclick="submitOrder('telegram')" style="width:100%; background:#5d50c6; color:white; border:none; padding:15px; border-radius:5px; font-weight:bold; cursor:pointer;">Submit</button>
-            <center><button onclick="closeCheckout()" style="margin-top:10px; background:none; border:none; color:gray; cursor:pointer;">Cancel</button></center>
-        </div>
+<div class="modal-content" style="max-width: 400px; padding: 25px;">
+    <h3 style="text-align:center; color:var(--primary);">အချက်အလက်ဖြည့်ပါ</h3>
+    <div style="margin-bottom: 15px;">
+        <input type="text" id="cust-name" placeholder="ဝယ်သူအမည်" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
     </div>
+    <div style="margin-bottom: 15px;">
+        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label style="font-size: 12px; color: #666;">လာယူမည့်အချိန် (သတ်မှတ်လိုလျှင်)</label>
+        <input type="datetime-local" id="pickup-time" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button onclick="submitOrder('viber')" style="flex:1; background:#7360f2; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Viber</button>
+        <button onclick="submitOrder('telegram')" style="flex:1; background:#0088cc; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Telegram</button>
+    </div>
+    <center><button onclick="closeCheckout()" style="margin-top:15px; background:none; border:none; color:gray; cursor:pointer;">ပယ်ဖျက်မည်</button></center>
 </div>
+    
     
     <script>
     const SB_URL = "https://iogpnvljnhsxuzzdltpb.supabase.co";
@@ -356,67 +376,83 @@ function updateQty(name, change, price) {
     }
 
     async function submitOrder(platform) {
-        const firstName = document.getElementById('first-name').value;
-        const lastName = document.getElementById('last-name').value;
-        const fullName = firstName + " " + lastName;
-        const phone = document.getElementById('cust-phone').value;
-        const email = document.getElementById('cust-email').value;
-        const notes = document.getElementById('notes').value;
-        const total = document.getElementById('total-price-display').innerText;
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+    const pickup = document.getElementById('pickup-time').value;
+    const total = document.getElementById('total-price-display').innerText;
+
+    if(!name || !phone) return alert("အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပါ။");
+    
+    let itemsList = "";
+    for(let n in cart) { itemsList += `- ${n} (${cart[n]} ခု)\n`; }
+    if(!itemsList) return alert("ပစ္စည်းရွေးချယ်ထားခြင်းမရှိပါ။");
+
+    document.getElementById('loader').style.display = 'flex';
+
+    try {
+                // --- ၁။ Database ထဲသိမ်းပြီး Order ID ရယူခြင်း ---
+        const { data, error } = await _supabase.from('orders').insert([
+            { customer_name: name, phone: phone, total: total, status: 'pending' }
+        ]).select();
+
+        if(error) throw error;
+        const orderId = data[0].id;
         const now = new Date().toLocaleString();
 
-        if(!firstName || !phone) return alert("အမည်နှင့် ဖုန်းဖြည့်ပါ။");
+        // --- ၂။ Voucher ထဲသို့ Data များ ထည့်သွင်းခြင်း ---
+        document.getElementById('v-id').innerText = orderId;
+        document.getElementById('v-name').innerText = name;
+        document.getElementById('v-phone-display').innerText = "Phone: " + phone;
+        document.getElementById('v-date').innerText = now;
+        document.getElementById('v-total').innerText = total;
+
+        let tableHtml = "";
+        for(let n in cart) {
+            let item = allItems.find(i => i.name === n);
+            tableHtml += `<tr>
+                <td style="padding:10px; border-bottom:1px solid #eee;">${n}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${cart[n]}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">${(item.price * cart[n]).toLocaleString()} K</td>
+            </tr>`;
+        }
+        document.getElementById('v-items-table').innerHTML = tableHtml;
+
+        // --- ၃။ HTML ကို ပုံ (Image) အဖြစ်ပြောင်းလဲခြင်း ---
+        const vWrap = document.getElementById('voucher-wrap');
+        vWrap.style.left = "0"; // ခဏဖော်လိုက်ခြင်း
+
+        const canvas = await html2canvas(document.querySelector("#invoice-card"), { scale: 2 });
+        vWrap.style.left = "-9999px"; // ပြန်ဖျောက်ခြင်း
+
+        const imageData = canvas.toDataURL("image/png");
         
-        document.getElementById('loader').style.display = 'flex';
+        // ပုံကို Download ဆွဲပေးခြင်း
+        const link = document.createElement('a');
+        link.download = `Voucher_MT_${orderId}.png`;
+        link.href = imageData;
+        link.click();
 
-        try {
-            const { data, error } = await _supabase.from('orders').insert([
-                { customer_name: fullName, phone: phone, total: total, status: 'pending' }
-            ]).select();
+        // --- ၄။ Viber/Telegram သို့ စာပို့ခြင်း ---
+        let msg = `🍗 *MYIN THAR ROAST*\nအော်ဒါနံပါတ်: #${orderId}\nဝယ်သူ: ${name}\nစုစုပေါင်း: ${total} K\n(ဘောင်ချာပုံကို ဖုန်းထဲတွင် သိမ်းဆည်းပေးထားပါသည်။)`;
+        
+        // Voucher ပုံထုတ်ခြင်း (Code 2 logic)
+        // ဒီနေရာမှာ Code 2 ရဲ့ Invoice HTML ရှိမှ အလုပ်လုပ်မှာဖြစ်ပါတယ်
+        
+        document.getElementById('loader').style.display = 'none';
+        closeCheckout();
+        cart = {}; saveCart(); updateTotal();
 
-            if(error) throw error;
-            const orderId = data[0].id;
-
-            let history = JSON.parse(localStorage.getItem('mt_history')) || [];
-            history.unshift({id: orderId, date: now, total: total, status: 'pending'});
-            localStorage.setItem('mt_history', JSON.stringify(history.slice(0, 10)));
-
-            let itemsList = "";
-            for(let n in cart) { itemsList += `- ${n} (${cart[n]} ခု)\n`; }
-
-            // စာသားပြင်ဆင်မှု
-            let msg = `🍗 *New Order: #${orderId}*\n\n`;
-            msg += `👤 ဝယ်သူ: ${fullName}\n`;
-            msg += `📞 ဖုန်း: ${phone}\n`;
-            msg += `📝 မှတ်ချက်: ${notes}\n\n`;
-            msg += `🛒 မှာယူသည့်ပစ္စည်းများ:\n${itemsList}\n`;
-            msg += `💰 စုစုပေါင်း: ${total} K`;
-
-            cart = {}; saveCart(); updateTotal();
-            document.getElementById('loader').style.display = 'none';
-            closeCheckout();
-            
-           if (platform === 'viber') {
-            // Viber အတွက် စာသားကို Copy ယူခြင်း
-            navigator.clipboard.writeText(msg).then(() => {
-                alert("အော်ဒါစာသားကို Copy ယူပြီးပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။");
-                window.location.href = `viber://contact?number=${MY_PHONE}`;
-            }).catch(err => {
-                // Clipboard error backup
-                window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)}`;
-            });
+        if (platform === 'viber') {
+            window.location.href = `viber://forward?text=${encodeURIComponent(msg)}`;
         } else {
-            // Telegram အတွက် Direct Send Link
-            const teleMsg = msg.replace(/\*/g, ''); // Telegram link formats can be sensitive
-            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
+            window.location.href = `https://t.me/share/url?url=${encodeURIComponent(msg)}`;
         }
+    } catch (err) {
+        alert("အော်ဒါတင်ခြင်း မအောင်မြင်ပါ။");
+        document.getElementById('loader').style.display = 'none';
     }
-
-        } catch (err) {
-            alert("အော်ဒါတင်ခြင်း မအောင်မြင်ပါ။");
-            document.getElementById('loader').style.display = 'none';
-        }
     }
+        
 
     function showHistory() {
         let history = JSON.parse(localStorage.getItem('mt_history')) || [];
@@ -426,14 +462,18 @@ function updateQty(name, change, price) {
     }
 
     async function trackOrder() {
-        const id = prompt("Order ID ရိုက်ပါ:");
-        if(!id) return;
-        document.getElementById('loader').style.display = 'flex';
-        const { data } = await _supabase.from('orders').select('status').eq('id', id).single();
-        document.getElementById('loader').style.display = 'none';
-        if(data) alert(`Order #${id} ၏ အခြေအနေမှာ: ${data.status} ဖြစ်ပါသည်။`);
-        else alert("ID မှားနေပါသည်။");
+    const id = prompt("Order ID ရိုက်ပါ:");
+    if(!id) return;
+    document.getElementById('loader').style.display = 'flex';
+    const { data, error } = await _supabase.from('orders').select('status').eq('id', id).single();
+    document.getElementById('loader').style.display = 'none';
+    if(data) {
+        alert(`Order #${id} ၏ အခြေအနေမှာ: ${data.status} ဖြစ်ပါသည်။`);
+    } else {
+        alert("ID မှားနေပါသည် သို့မဟုတ် ရှာမတွေ့ပါ။");
     }
+    }
+        
 
     function openCheckout() { document.getElementById('checkout-modal').style.display = 'flex'; }
     function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
