@@ -376,44 +376,32 @@
     
 
        // ၁။ Menu ပြသပေးသည့် Function (Variable Name နှင့် Syntax ပြင်ထားသည်)
-function renderMenu(items) {
-    const display = document.getElementById('menu-display');
-    if (!display) return;
-    
-    display.innerHTML = items.map(i => {
-        const safeId = i.name.replace(/\s+/g, '-');
-        return `
+function renderMenu() {
+        const grid = document.getElementById('menu-grid');
+        grid.innerHTML = menuData.map(item => `
             <div class="menu-card">
-                <img src="${i.image_url || 'https://via.placeholder.com/150'}">
-                <div style="font-weight:600; font-size:14px; margin-top:8px;">${i.name}</div>
-                <div class="price-tag">${Number(i.price).toLocaleString()} K</div>
-                <div class="qty-control">
-                    <button onclick="updateQty('${i.name}', -1, ${i.price})">-</button>
-                    <span id="qty-${safeId}">${cart[i.name] || 0}</span> 
-                    <button onclick="updateQty('${i.name}', 1, ${i.price})">+</button>
+                <div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">${item.price.toLocaleString()} K</div>
                 </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// ၂။ အရေအတွက် အတိုးအလျှော့လုပ်သည့် Function
-function updateQty(name, change, price) {
-    cart[name] = (cart[name] || 0) + change;
-    if (cart[name] <= 0) delete cart[name];
-    
-    // UI Update များ
-    updateTotal();
-    renderDrawerItems();
-    saveCart();
-    
-    // Menu ပေါ်က ဂဏန်းကို ရှာပြီး 0 ဖြစ်စေ၊ အရေအတွက်ဖြစ်စေ ပြောင်းလဲပေးရန်
-    const safeId = name.replace(/\s+/g, '-');
-    const qtyLabel = document.getElementById(`qty-${safeId}`);
-    if (qtyLabel) {
-        qtyLabel.innerText = cart[name] || 0;
+                <div class="qty-box">
+                    <button class="btn-qty" onclick="updateQty('${item.name}', -1)">-</button>
+                    <span id="qty-${item.name}" style="font-weight:bold;">0</span>
+                    <button class="btn-qty" onclick="updateQty('${item.name}', 1)">+</button>
+                </div>
+            </div>`).join('');
     }
-}
+
+    function updateQty(name, change) {
+        const item = menuData.find(i => i.name === name);
+        cart[name] = (cart[name] || 0) + change;
+        if (cart[name] < 0) cart[name] = 0;
+        if (cart[name] > item.stock_qty) cart[name] = item.stock_qty;
+        document.getElementById(`qty-${name}`).innerText = cart[name];
+        let total = 0;
+        menuData.forEach(i => total += (cart[i.name] || 0) * i.price);
+        document.getElementById('total-price').innerText = total.toLocaleString();
+    }
 
 // ၃။ ပစ္စည်းဖျက်သည့် Function
 function deleteItem(name) {
