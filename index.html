@@ -364,11 +364,12 @@
                     <img src="${i.image_url || 'https://via.placeholder.com/150'}">
                     <div style="font-weight:600; font-size:14px; margin-top:8px;">${i.name}</div>
                     <div class="price-tag">${Number(i.price).toLocaleString()} K</div>
+                    // ဥပမာ - Menu Card ထဲက Quantity ပြတဲ့ နေရာ
+`
                     <div class="qty-control">
-                        <button onclick="updateQty('${i.name}', -1, ${i.price})">-</button>
-                        <span id="qty-${safeId}">${cart[i.name] || 0}</span>
-                        <button onclick="updateQty('${i.name}', 1, ${i.price})" style="background:var(--gold); border:none;">+</button>
-                    </div>
+                    <button onclick="updateQty('${item.name}', -1, ${item.price})">-</button>
+                    <span id="qty-${item.name}">${cart[item.name] || 0}</span> <button onclick="updateQty('${item.name}', 1, ${item.price})">+</button>
+                   </div>
                 </div>
             `;
         }).join('');
@@ -501,6 +502,25 @@ function updateTotalDisplay(val) {
 
         if(error) throw error;
         const orderId = data[0].id;
+
+        // အော်ဒါတင်ခြင်း အောင်မြင်သွားတဲ့ အပိုင်းမှာ ထည့်ရန်
+cart = {}; // Cart ဒေတာကို အကုန်ဖျက်မယ်
+saveCart(); // LocalStorage မှာပါ သိမ်းမယ် (Refresh လုပ်ရင် ပြန်မပေါ်လာအောင်)
+
+// ၁။ Menu ပေါ်က Quantity တွေကို လိုက်ပြီး 0 (သုည) ပြန်လုပ်မယ်
+// (Menu card ထုတ်တဲ့နေရာမှာ id="qty-${item.name}" လို့ ပေးထားဖို့ လိုပါတယ်)
+document.querySelectorAll('[id^="qty-"]').forEach(el => {
+    el.innerText = '0';
+});
+
+// ၂။ UI တစ်ခုလုံးကို ပြန် Update လုပ်မယ်
+updateTotal();
+renderDrawerItems(); 
+
+// ၃။ Drawer နဲ့ Modal ကို ပိတ်မယ်
+if (typeof toggleDrawer === "function") toggleDrawer();
+if (typeof closeCheckout === "function") closeCheckout();
+        
 
         // ၄။ Voucher Image ထုတ်ရန်အတွက် Data ထည့်ခြင်း
         document.getElementById('inv-order-id').innerText = `Order ID: #${orderId}`;
