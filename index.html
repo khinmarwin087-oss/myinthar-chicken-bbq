@@ -255,24 +255,27 @@
     </div>
 </div>
 
-<div class="modal-content" style="max-width: 400px; padding: 25px;">
-    <h3 style="text-align:center; color:var(--primary);">အချက်အလက်ဖြည့်ပါ</h3>
-    <div style="margin-bottom: 15px;">
-        <input type="text" id="cust-name" placeholder="ဝယ်သူအမည်" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
+<div class="modal" id="checkout-modal">
+    <div class="modal-content" style="max-width: 400px; padding: 25px;">
+        <h3 style="text-align:center; color:var(--primary);">အချက်အလက်ဖြည့်ပါ</h3>
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="cust-name" placeholder="ဝယ်သူအမည်" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; color: #666;">လာယူမည့်အချိန် (သတ်မှတ်လိုလျှင်)</label>
+            <input type="datetime-local" id="pickup-time" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="submitOrder('viber')" style="flex:1; background:#7360f2; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Viber</button>
+            <button onclick="submitOrder('telegram')" style="flex:1; background:#0088cc; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Telegram</button>
+        </div>
+        <center><button onclick="closeCheckout()" style="margin-top:15px; background:none; border:none; color:gray; cursor:pointer;">ပယ်ဖျက်မည်</button></center>
     </div>
-    <div style="margin-bottom: 15px;">
-        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
-    </div>
-    <div style="margin-bottom: 15px;">
-        <label style="font-size: 12px; color: #666;">လာယူမည့်အချိန် (သတ်မှတ်လိုလျှင်)</label>
-        <input type="datetime-local" id="pickup-time" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; box-sizing:border-box;">
-    </div>
-    <div style="display:flex; gap:10px;">
-        <button onclick="submitOrder('viber')" style="flex:1; background:#7360f2; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Viber</button>
-        <button onclick="submitOrder('telegram')" style="flex:1; background:#0088cc; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;">Telegram</button>
-    </div>
-    <center><button onclick="closeCheckout()" style="margin-top:15px; background:none; border:none; color:gray; cursor:pointer;">ပယ်ဖျက်မည်</button></center>
 </div>
+    
     
     
     <script>
