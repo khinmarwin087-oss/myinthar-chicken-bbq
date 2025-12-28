@@ -125,26 +125,60 @@
         cursor: pointer; 
     }
 
-    /* Checkout Bar - Glowing Orange */
-    .checkout-bar { 
-        position: fixed; 
-        bottom: 25px; 
-        left: 50%; 
-        transform: translateX(-50%); 
-        width: 88%; 
-        background: linear-gradient(90deg, var(--primary), #FF8C42); 
-        color: white; 
-        padding: 18px 25px; 
-        border-radius: 22px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        z-index: 1001; 
-        border: none; 
-        font-size: 17px; 
-        font-weight: bold; 
-        box-shadow: 0 12px 30px var(--primary-glow); 
+    /* ခြင်းတောင်းကြည့်မည် (Bottom Bar) */
+    .checkout-bar {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        background: linear-gradient(90deg, #FF6B35, #FF8C42);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1001; /* အမြဲအပေါ်ဆုံးမှာရှိစေရန် */
+        border: none;
+        font-weight: bold;
+        box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+        cursor: pointer;
     }
+
+    /* ခြင်းတောင်း (Drawer) Animation */
+    .cart-drawer {
+        position: fixed;
+        bottom: -100%; /* ပထမတော့ အောက်မှာ ဖျောက်ထားမယ် */
+        left: 0;
+        width: 100%;
+        height: 75%;
+        background: white;
+        border-radius: 25px 25px 0 0;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+        transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2001;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .cart-drawer.active {
+        bottom: 0; /* နှိပ်လိုက်ရင် အပေါ်တက်လာမယ် */
+    }
+
+    /* Back Button Design */
+    .back-btn-circle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: #f1f2f6;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    
 
 /* Image တွေ ပျောက်နေရင် သို့မဟုတ် ကြီးနေရင် ထိန်းရန် */
 .cart-item-row img {
@@ -176,7 +210,16 @@
     }
     .input-label { font-size: 12px; font-weight: bold; color: #95A5A6; margin-left: 5px; margin-bottom: 6px; display: block; text-transform: uppercase; }
 
-    /* Modal & Loader */
+     @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+#app-guide > div {
+    animation: fadeIn 0.3s ease-out;
+}
+            
+            
+            /* Modal & Loader */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 5001; }
     .modal-content { background: white; padding: 30px; border-radius: 30px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
     
@@ -227,25 +270,26 @@
 </button>
 
 <div id="cart-drawer" class="cart-drawer">
-    <div class="drawer-header" style="display:flex; align-items:center; padding: 15px 20px; border-bottom: 1px solid #eee;">
-        <button class="back-btn" onclick="toggleDrawer()" style="margin-right: 15px; background: #f8f9fa; box-shadow: none;">
-            <i class="fas fa-arrow-down"></i>
+    <div class="drawer-header" style="display:flex; align-items:center; padding:15px 20px; border-bottom:1px solid #eee;">
+        <button class="back-btn-circle" onclick="toggleDrawer()">
+            <i class="fas fa-chevron-down"></i>
         </button>
-        <h3 style="margin:0; flex:1;">သင့်ခြင်းတောင်း</h3>
+        <h3 style="margin:0; flex:1; text-align:center;">သင့်ခြင်းတောင်း</h3>
     </div>
     
-    <div class="cart-items-container" id="drawer-items-list"></div>
-
-    <div class="summary-card">
-        <div class="summary-row"><span>စုစုပေါင်း:</span><span id="sub-total-text">0 K</span></div>
-        <div class="summary-row" style="font-weight:bold; font-size:18px; color:var(--primary); margin-top:10px;">
-            <span>ပေးချေရန်:</span><span id="grand-total-text">0 K</span>
+    <div class="cart-items-container" id="drawer-items-list" style="flex:1; overflow-y:auto; padding:15px;">
         </div>
-        <button onclick="openCheckout()" style="width:100%; background:var(--primary); color:white; border:none; padding:16px; border-radius:18px; font-weight:bold; cursor:pointer; margin-top:10px;">
+
+    <div class="summary-card" style="padding:20px; background:#f9f9f9; border-radius:20px 20px 0 0;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span>စုစုပေါင်း:</span><span id="sub-total-text">0 K</span>
+        </div>
+        <button onclick="openCheckout()" style="width:100%; background:#FF6B35; color:white; border:none; padding:16px; border-radius:15px; font-weight:bold;">
             အော်ဒါတင်မည်
         </button>
     </div>
 </div>
+    
 
 <div class="modal" id="checkout-modal">
     <div class="modal-content">
@@ -413,36 +457,39 @@ function updateTotalDisplay(val) {
     const notes = document.getElementById('notes').value;
     const total = document.getElementById('total-price-display').innerText;
 
-    // Validation - အချက်အလက်စစ်ဆေးခြင်း
+    // ၁။ အချက်အလက်စစ်ဆေးခြင်း
     if(!name || !phone || !date || !time) {
         return alert("အမည်၊ ဖုန်း၊ လာယူမည့်ရက်နှင့် အချိန်တို့ကို ပြည့်စုံစွာဖြည့်ပါ။");
     }
 
-    // ပစ္စည်းစာရင်းကို Bullet Point ပုံစံပြောင်းခြင်း
+    // ၂။ ပစ္စည်းစာရင်းကို Format ပြောင်းခြင်း (Database Error ကာကွယ်ရန်)
     let itemsBulletList = Object.keys(cart).map(name => `▪️ ${name} (${cart[name]} ခု)`).join('\n');
     let itemsDatabaseList = Object.keys(cart).map(name => `${name} x ${cart[name]}`).join(', ');
+
+    // ပစ္စည်းမရှိဘဲ အော်ဒါတင်ခြင်းကို တားဆီးရန်
+    if (Object.keys(cart).length === 0) {
+        return alert("ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိသေးပါ");
+    }
 
     document.getElementById('loader').style.display = 'flex';
 
     try {
-        // ၁။ Supabase ထဲသို့ သိမ်းဆည်းခြင်း
-        // submitOrder function ထဲတွင် ဤသို့ပါရမည်
-const { data, error } = await _supabase
-    .from('orders')
-    .insert([{ 
-        customer_name: name, 
-        phone: phone, 
-        total: total, 
-        items: itemsDatabaseList, // ဤနေရာတွင် null မဖြစ်အောင် သေချာထည့်ပါ
-        pickup_info: `${date} ${time}`,
-        status: 'pending' 
-    }]).select();
-        
+        // ၃။ Supabase ထဲသို့ သိမ်းဆည်းခြင်း
+        const { data, error } = await _supabase
+            .from('orders')
+            .insert([{ 
+                customer_name: name, 
+                phone: phone, 
+                total: total, 
+                items: itemsDatabaseList, // Null မဖြစ်အောင် အပေါ်မှာ Map လုပ်ထားပါတယ်
+                pickup_info: `${date} ${time}`, // Pickup Info ကို ဒီမှာ ပေါင်းထည့်ပါတယ်
+                status: 'pending' 
+            }]).select();
 
         if(error) throw error;
         const orderId = data[0].id;
 
-        // ၂။ Voucher Image ထုတ်ရန်အတွက် Data ထည့်ခြင်း
+        // ၄။ Voucher Image ထုတ်ရန်အတွက် Data ထည့်ခြင်း
         document.getElementById('inv-order-id').innerText = `Order ID: #${orderId}`;
         document.getElementById('inv-date').innerText = `Date: ${new Date().toLocaleString()}`;
         document.getElementById('inv-total').innerText = `Total: ${total} K`;
@@ -450,14 +497,14 @@ const { data, error } = await _supabase
         for(let n in cart) itemsHtml += `<p>${n} x ${cart[n]}</p>`;
         document.getElementById('inv-items').innerHTML = itemsHtml;
 
-        // Voucher ပုံဖမ်းခြင်း
+        // Voucher ပုံဖမ်းခြင်း (Animation မပျက်စေရန် အရေးကြီးသည်)
         const vWrap = document.getElementById('voucher-wrap');
         vWrap.style.left = "0";
         vWrap.style.top = "0";
         const canvas = await html2canvas(document.querySelector("#invoice-card"), { useCORS: true, scale: 2 });
         vWrap.style.left = "-9999px";
 
-        // ၃။ Premium Message Formatting (English Date Format)
+        // ၅။ Message Formatting
         let msg = `🍗 *မြင်သာကြက်ကင် (Order #${orderId})*
 ━━━━━━━━━━━━━━━━━━
 👤 *Customer:* ${name}
@@ -472,46 +519,104 @@ ${itemsBulletList}
 📝 *Notes:* ${notes || '-'}
 ⚠️ အော်ဒါတင်ပြီးပါက 09767287345 သို့ ဖုန်းဆက်ပေးပါ။`;
 
-        // ၄။ History သိမ်းခြင်း
-        saveToHistory({
-            id: orderId, 
-            total: total, 
-            status: 'pending', 
-            date: date, 
-            time: time 
-        });
+        // ၆။ History သိမ်းခြင်း
+        saveToHistory({ id: orderId, total: total, status: 'pending', date: date, time: time });
 
-        // submitOrder function ၏ Cart reset လုပ်သော နေရာတွင် ထည့်ရန်
-cart = {}; // Cart ကို အလွတ်လုပ်သည်
-saveCart();
-updateTotal();
+        // ၇။ Cart Reset & Menu UI Update (အရေအတွက်များ 0 ပြန်ဖြစ်စေရန်)
+        cart = {}; 
+        saveCart();
+        updateTotal();
+        document.querySelectorAll('[id^="qty-"]').forEach(el => { el.innerText = '0'; });
+        renderDrawerItems();
 
-// Menu ပေါ်က Quantity အရေအတွက် အားလုံးကို 0 (သို့မဟုတ် ဖျောက်ရန်)
-document.querySelectorAll('[id^="qty-"]').forEach(el => {
-    el.innerText = '0'; // ဂဏန်းအားလုံးကို 0 ပြန်လုပ်သည်
-});
+        // ... (msg ရေးထားတဲ့နေရာအောက်တွင်) ...
 
-renderDrawerItems(); // Drawer ကိုပါ ပျောက်သွားအောင်လုပ်သည်
+// Clipboard ထဲသို့ Message ကို Auto Copy ကူးခြင်း
+try {
+    await navigator.clipboard.writeText(msg);
+    console.log('Order detail copied to clipboard');
+} catch (err) {
+    // browser က auto-copy မရရင် manual copy လုပ်နိုင်အောင် fallback လုပ်ပါ
+    const textArea = document.createElement("textarea");
+    textArea.value = msg;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+}
+
+// ၆။ Viber/Telegram သို့ ပို့ဆောင်ခြင်း
+const encodedMsg = encodeURIComponent(msg);
+// Guide ပြပေးမည့် function ကို ခေါ်ခြင်း (Viber/Telegram မပွင့်ခင် ခဏပြပေးရန်)
+showAppGuide(platform);
+
+setTimeout(() => {
+    if (platform === 'viber') {
+        window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodedMsg}`;
+    } else {
+        window.location.href = `https://t.me/+${MY_PHONE}?text=${encodedMsg}`;
+    }
+}, 2000); // Guide ကို ၂ စက္ကန့်လောက် ဖတ်ချိန်ပေးပြီးမှ App ဖွင့်ပေးမယ်
         
-        // ၆။ Viber/Telegram သို့ ပို့ဆောင်ခြင်း
-        const encodedMsg = encodeURIComponent(msg);
-        if (platform === 'viber') {
-            window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodedMsg}`;
-        } else {
-            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodedMsg}`;
-        }
 
-        // ၇။ Voucher ပုံကို Download ချပေးခြင်း
+        // ၉။ Voucher ပုံကို Download ချပေးခြင်း
         const link = document.createElement('a');
         link.download = `Voucher_${orderId}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
 
+        // ၁၀။ Drawer နဲ့ Modal ကို ပိတ်ခြင်း (Animation ဖြင့်)
+        if (typeof toggleDrawer === "function") {
+            document.getElementById('cart-drawer').classList.remove('active');
+        }
+        if (typeof closeCheckout === "function") {
+            closeCheckout();
+        }
+
     } catch (err) {
         alert("Error: " + err.message);
+    } finally {
         document.getElementById('loader').style.display = 'none';
     }
     }
+    
+    function showAppGuide(platform) {
+    const guideOverlay = document.createElement('div');
+    guideOverlay.id = 'app-guide';
+    guideOverlay.style = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); z-index: 9999;
+        display: flex; align-items: center; justify-content: center; color: white;
+        text-align: center; font-family: sans-serif; padding: 20px;
+    `;
+
+    const icon = platform === 'viber' ? 'fab fa-viber' : 'fab fa-telegram';
+    const color = platform === 'viber' ? '#7360f2' : '#24A1DE';
+
+    guideOverlay.innerHTML = `
+        <div style="background: white; color: #333; padding: 30px; border-radius: 25px; max-width: 320px; width: 100%;">
+            <i class="${icon}" style="font-size: 50px; color: ${color}; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px;">မှာယူမှုအသေးစိတ်ကို Copy ကူးပြီးပါပြီ</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #666;">
+                ခဏနေလျှင် ${platform} ပွင့်လာပါမည်။ <br>
+                <b>"Message"</b> ရိုက်သည့်နေရာတွင် <b>Paste (ဖိနှိပ်ပြီး)</b> လုပ်၍ ပို့ပေးပါ။
+            </p>
+            <div style="margin-top: 20px; font-weight: bold; color: ${color};">
+                <i class="fas fa-spinner fa-spin"></i> App သို့ သွားနေပါသည်...
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(guideOverlay);
+
+    // ၅ စက္ကန့်ကြာရင် ပြန်ဖျောက်မယ်
+    setTimeout(() => {
+        if (document.getElementById('app-guide')) {
+            document.getElementById('app-guide').remove();
+        }
+    }, 5000);
+    }
+    
     
     async function trackOrder() {
         const id = prompt("သင့် Order ID ကို ရိုက်ထည့်ပါ:");
