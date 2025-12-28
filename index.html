@@ -7,58 +7,158 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary: #f26522; --bg: #fffbf8; --text: #2d3436; --card-bg: #ffffff; --gold: #ffc107; --dark-blue: #2d2a6e; }
-        body { font-family: 'Pyidaungsu', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; overflow-x: hidden; }
+        <style>
+    /* Premium Orange & Pearl White Palette */
+    :root { 
+        --primary: #FF6B35; /* Vibrant Orange */
+        --primary-glow: rgba(255, 107, 53, 0.3);
+        --pearl-white: #FFFFFF; /* Pure pearl white */
+        --bg-soft: #F0F2F5; /* Soft background */
+        --text-main: #2D3436;
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        --glass-bg: rgba(255, 255, 255, 0.85);
+    }
 
-        /* Animation & UI Effects */
-        @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-10px); }
-        }
-        .cart-animate { animation: bounce 0.4s ease; }
+    body { 
+        font-family: 'Pyidaungsu', sans-serif; 
+        background-color: var(--bg-soft); 
+        color: var(--text-main);
+        margin: 0; 
+        padding-bottom: 100px; 
+        overflow-x: hidden; 
+    }
 
-        /* Header & Sidebar */
-        .header { position: sticky; top: 0; padding: 15px 20px; display: flex; align-items: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000; }
-        .brand-name { font-size: 20px; font-weight: bold; color: var(--primary); flex: 1; }
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 6000; transition: 0.3s; box-shadow: 2px 0 15px rgba(0,0,0,0.1); }
-        .sidebar.active { left: 0; }
-        .sidebar-header { padding: 30px 20px; background: var(--primary); color: white; }
-        .sidebar-item { padding: 15px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: var(--text); }
-        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 5999; }
+    /* Animation */
+    @keyframes bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-10px); }
+    }
+    .cart-animate { animation: bounce 0.4s ease; }
 
-        /* Menu Grid */
-        .search-bar { margin: 15px 20px; background: #f1f2f6; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px; }
-        .search-bar input { border: none; background: transparent; width: 100%; outline: none; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 20px; }
-        .menu-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
-        .menu-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; }
-        .price-tag { color: var(--primary); font-weight: 800; font-size: 15px; margin: 5px 0; }
-        .qty-control { display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .qty-control button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    /* Header - Glassmorphism Effect (ဝင်းပကြည်လင်သော effect) */
+    .header { 
+        position: sticky; 
+        top: 0; 
+        padding: 15px 20px; 
+        display: flex; 
+        align-items: center; 
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px); 
+        box-shadow: 0 2px 15px rgba(0,0,0,0.03); 
+        z-index: 1000; 
+    }
+    .brand-name { font-size: 22px; font-weight: 800; color: var(--primary); flex: 1; letter-spacing: 0.5px; }
 
-        /* Checkout Bar */
-        .checkout-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: var(--primary); color: white; padding: 15px 25px; border-radius: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; border: none; font-size: 16px; font-weight: bold; box-shadow: 0 10px 20px rgba(242,101,34,0.3); }
+    /* Sidebar */
+    .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 6000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 5px 0 25px rgba(0,0,0,0.1); }
+    .sidebar.active { left: 0; }
+    .sidebar-header { padding: 40px 20px; background: linear-gradient(135deg, var(--primary), #FF8C42); color: white; }
+    .sidebar-item { padding: 16px 25px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: var(--text-main); font-weight: 500; }
 
-        /* Drawer */
-        .cart-drawer { position: fixed; bottom: -100%; left: 0; width: 100%; height: 75%; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2001; display: flex; flex-direction: column; }
-        .cart-drawer.active { bottom: 0; }
-        .drawer-header { padding: 15px; text-align: center; border-bottom: 1px solid #eee; cursor: pointer; }
-        .pull-bar { width: 40px; height: 5px; background: #ddd; border-radius: 10px; margin: 0 auto 5px; }
-        .cart-items-container { flex: 1; overflow-y: auto; padding: 20px; }
-        .cart-item-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dotted #eee; }
-        .cart-item-row img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; }
-        .summary-card { background: #f9f9f9; padding: 20px; border-radius: 20px; margin: 0 20px 20px; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    /* Search Bar */
+    .search-bar { 
+        margin: 20px; 
+        background: white; 
+        border-radius: 15px; 
+        padding: 12px 18px; 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+        box-shadow: var(--card-shadow);
+    }
+    .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 15px; }
 
-        /* Modal & Loader */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 5001; padding: 20px; }
-        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 400px; }
-        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 7000; justify-content: center; align-items: center; flex-direction: column; }
+    /* Menu Grid & Pearl Cards */
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 10px 20px; }
+    .menu-card { 
+        background: var(--pearl-white); 
+        border-radius: 25px; 
+        padding: 12px; 
+        box-shadow: var(--card-shadow);
+        text-align: center; 
+        transition: 0.3s;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .menu-card:active { transform: scale(0.96); }
+    .menu-card img { width: 100%; height: 130px; object-fit: cover; border-radius: 20px; margin-bottom: 8px; }
+    .price-tag { color: var(--primary); font-weight: 800; font-size: 16px; margin: 8px 0; }
+    
+    /* Quantity Controls */
+    .qty-control { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 5px; }
+    .qty-control button { 
+        width: 34px; 
+        height: 34px; 
+        border-radius: 12px; 
+        border: none; 
+        background: #F1F2F6; 
+        font-weight: bold;
+        cursor: pointer; 
+    }
 
-        /* Invoice Secret Wrap */
-        #voucher-wrap { position: absolute; left: -9999px; top: 0; background: white; }
-    </style>
+    /* Checkout Bar - Glowing Orange */
+    .checkout-bar { 
+        position: fixed; 
+        bottom: 25px; 
+        left: 50%; 
+        transform: translateX(-50%); 
+        width: 88%; 
+        background: linear-gradient(90deg, var(--primary), #FF8C42); 
+        color: white; 
+        padding: 18px 25px; 
+        border-radius: 22px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        z-index: 1001; 
+        border: none; 
+        font-size: 17px; 
+        font-weight: bold; 
+        box-shadow: 0 12px 30px var(--primary-glow); 
+    }
+
+    /* Cart Drawer */
+    .cart-drawer { 
+        position: fixed; bottom: -100%; left: 0; width: 100%; height: 75%; 
+        background: white; border-radius: 30px 30px 0 0; 
+        box-shadow: 0 -15px 40px rgba(0,0,0,0.1); 
+        transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2001; 
+        display: flex; flex-direction: column; 
+    }
+    .cart-drawer.active { bottom: 0; }
+    .drawer-header { padding: 20px; text-align: center; border-bottom: 1px solid #f1f1f1; }
+    .pull-bar { width: 45px; height: 5px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 10px; }
+
+    /* Premium Inputs */
+    .premium-input {
+        width: 100%; 
+        padding: 14px 18px; 
+        margin-bottom: 15px; 
+        border: 1px solid #E9ECEF; 
+        border-radius: 15px; 
+        font-family: 'Pyidaungsu', sans-serif;
+        font-size: 15px;
+        transition: 0.3s;
+        box-sizing: border-box;
+        background: #F8F9FA;
+    }
+    .premium-input:focus {
+        border-color: var(--primary);
+        outline: none;
+        background: white;
+        box-shadow: 0 0 12px var(--primary-glow);
+    }
+    .input-label { font-size: 12px; font-weight: bold; color: #95A5A6; margin-left: 5px; margin-bottom: 6px; display: block; text-transform: uppercase; }
+
+    /* Modal & Loader */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 5001; }
+    .modal-content { background: white; padding: 30px; border-radius: 30px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+    
+    #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 7000; justify-content: center; align-items: center; flex-direction: column; }
+
+    #voucher-wrap { position: absolute; left: -9999px; top: 0; background: white; }
+        </style>
+    
+        
 </head>
 <body>
 
@@ -110,27 +210,36 @@
 
 <div class="modal" id="checkout-modal">
     <div class="modal-content">
-        <h3 style="text-align:center; color:var(--dark-blue);">မှာယူသူအချက်အလက်</h3>
-        <input type="text" id="cust-name" placeholder="အမည်" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-        <textarea id="notes" placeholder="မှတ်ချက် (အစပ်လျှော့ရန် စသည်...)" style="width:100%; padding:12px; height:80px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-bottom:15px;"></textarea>
-
-        <div style="margin-bottom: 10px;">
-    <label style="font-size: 12px; color: gray;">Pickup Date:</label>
-    <input type="date" id="pickup-date" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
-</div>
-<div style="margin-bottom: 15px;">
-    <label style="font-size: 12px; color: gray;">Pickup Time:</label>
-    <input type="time" id="pickup-time" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
-</div>
+        <h3 style="text-align:center; color:var(--dark-blue); margin-bottom: 20px;">Confirm Order</h3>
         
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <button onclick="submitOrder('viber')" style="background:#7360f2; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;"><i class="fab fa-viber"></i> Viber</button>
-            <button onclick="submitOrder('telegram')" style="background:#24A1DE; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;"><i class="fab fa-telegram"></i> Telegram</button>
+        <label class="input-label">Customer Name</label>
+        <input type="text" id="cust-name" class="premium-input" placeholder="Enter your name">
+
+        <label class="input-label">Phone Number</label>
+        <input type="tel" id="cust-phone" class="premium-input" placeholder="09xxxxxxxxx">
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label class="input-label">Pickup Date</label>
+                <input type="date" id="pickup-date" class="premium-input">
+            </div>
+            <div style="flex: 1;">
+                <label class="input-label">Pickup Time</label>
+                <input type="time" id="pickup-time" class="premium-input">
+            </div>
         </div>
-        <center><button onclick="closeCheckout()" style="margin-top:15px; background:none; border:none; color:gray;">ပယ်ဖျက်မည်</button></center>
+
+        <label class="input-label">Notes (Optional)</label>
+        <textarea id="notes" class="premium-input" style="height: 80px;" placeholder="Any special instructions?"></textarea>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top: 10px;">
+            <button onclick="submitOrder('viber')" style="background:#7360f2; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; cursor:pointer;"><i class="fab fa-viber"></i> Viber</button>
+            <button onclick="submitOrder('telegram')" style="background:#24A1DE; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; cursor:pointer;"><i class="fab fa-telegram"></i> Telegram</button>
+        </div>
+        <center><button onclick="closeCheckout()" style="margin-top:15px; background:none; border:none; color:#aaa; cursor:pointer; font-size: 14px;">Cancel</button></center>
     </div>
 </div>
+    
 
 <div id="voucher-wrap">
     <div id="invoice-card" style="padding:40px; width:400px; background:white; color:black;">
@@ -243,64 +352,105 @@
     }
 
     async function submitOrder(platform) {
-        const name = document.getElementById('cust-name').value;
-        const phone = document.getElementById('cust-phone').value;
-        const notes = document.getElementById('notes').value;
-        const total = document.getElementById('total-price-display').innerText;
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+    const date = document.getElementById('pickup-date').value;
+    const time = document.getElementById('pickup-time').value;
+    const notes = document.getElementById('notes').value;
+    const total = document.getElementById('total-price-display').innerText;
 
-        if(!name || !phone) return alert("အမည်နှင့် ဖုန်းဖြည့်ပါ။");
-
-        document.getElementById('loader').style.display = 'flex';
-
-        try {
-            // 1. Save to Supabase
-            const { data, error } = await _supabase.from('orders').insert([{ customer_name: name, phone: phone, total: total, status: 'pending' }]).select();
-            if(error) throw error;
-            const orderId = data[0].id;
-
-            // 2. Generate Voucher Image
-            document.getElementById('inv-order-id').innerText = `Order ID: #${orderId}`;
-            document.getElementById('inv-date').innerText = `Date: ${new Date().toLocaleString()}`;
-            document.getElementById('inv-total').innerText = `Total: ${total} K`;
-            let itemsHtml = "";
-            for(let n in cart) itemsHtml += `<p>${n} x ${cart[n]}</p>`;
-            document.getElementById('inv-items').innerHTML = itemsHtml;
-
-            const vWrap = document.getElementById('voucher-wrap');
-            vWrap.style.left = "0";
-            const canvas = await html2canvas(document.querySelector("#invoice-card"));
-            vWrap.style.left = "-9999px";
-
-            // 3. Message Formatting
-            let msg = `🍗 *New Order: #${orderId}*\n👤 ဝယ်သူ: ${name}\n📞 ဖုန်း: ${phone}\n💰 စုစုပေါင်း: ${total} K\n📝 မှတ်ချက်: ${notes || '-'}`;
-
-            // Save History
-            saveToHistory({id: orderId, total: total, status: 'pending', date: new Date().toLocaleDateString()});
-
-            // Clean Cart & UI
-            cart = {}; saveCart(); updateTotal();
-            document.getElementById('loader').style.display = 'none';
-            closeCheckout(); toggleDrawer();
-
-            // 4. Send & Open App
-            if (platform === 'viber') {
-                window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)}`;
-            } else {
-                window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
-            }
-
-            // Download Voucher
-            const link = document.createElement('a');
-            link.download = `Voucher_${orderId}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-
-        } catch (err) {
-            alert("Error: " + err.message);
-            document.getElementById('loader').style.display = 'none';
-        }
+    // Validation - အချက်အလက်စစ်ဆေးခြင်း
+    if(!name || !phone || !date || !time) {
+        return alert("အမည်၊ ဖုန်း၊ လာယူမည့်ရက်နှင့် အချိန်တို့ကို ပြည့်စုံစွာဖြည့်ပါ။");
     }
 
+    // ပစ္စည်းစာရင်းကို Bullet Point ပုံစံပြောင်းခြင်း
+    let itemsBulletList = Object.keys(cart).map(name => `▪️ ${name} (${cart[name]} ခု)`).join('\n');
+    let itemsDatabaseList = Object.keys(cart).map(name => `${name} x ${cart[name]}`).join(', ');
+
+    document.getElementById('loader').style.display = 'flex';
+
+    try {
+        // ၁။ Supabase ထဲသို့ သိမ်းဆည်းခြင်း
+        const { data, error } = await _supabase.from('orders').insert([{ 
+            customer_name: name, 
+            phone: phone, 
+            total: total, 
+            items: itemsDatabaseList,
+            pickup_info: `${date} ${time}`,
+            status: 'pending' 
+        }]).select();
+
+        if(error) throw error;
+        const orderId = data[0].id;
+
+        // ၂။ Voucher Image ထုတ်ရန်အတွက် Data ထည့်ခြင်း
+        document.getElementById('inv-order-id').innerText = `Order ID: #${orderId}`;
+        document.getElementById('inv-date').innerText = `Date: ${new Date().toLocaleString()}`;
+        document.getElementById('inv-total').innerText = `Total: ${total} K`;
+        let itemsHtml = "";
+        for(let n in cart) itemsHtml += `<p>${n} x ${cart[n]}</p>`;
+        document.getElementById('inv-items').innerHTML = itemsHtml;
+
+        // Voucher ပုံဖမ်းခြင်း
+        const vWrap = document.getElementById('voucher-wrap');
+        vWrap.style.left = "0";
+        vWrap.style.top = "0";
+        const canvas = await html2canvas(document.querySelector("#invoice-card"), { useCORS: true, scale: 2 });
+        vWrap.style.left = "-9999px";
+
+        // ၃။ Premium Message Formatting (English Date Format)
+        let msg = `🍗 *မြင်သာကြက်ကင် (Order #${orderId})*
+━━━━━━━━━━━━━━━━━━
+👤 *Customer:* ${name}
+📞 *Phone:* ${phone}
+📅 *Pickup Date:* ${date} ${time}
+━━━━━━━━━━━━━━━━━━
+📦 *Order Items:*
+${itemsBulletList}
+
+💰 *Total:* *${total} MMK*
+━━━━━━━━━━━━━━━━━━
+📝 *Notes:* ${notes || '-'}
+⚠️ အော်ဒါတင်ပြီးပါက 09767287345 သို့ ဖုန်းဆက်ပေးပါ။`;
+
+        // ၄။ History သိမ်းခြင်း
+        saveToHistory({
+            id: orderId, 
+            total: total, 
+            status: 'pending', 
+            date: date, 
+            time: time 
+        });
+
+        // ၅။ UI နှင့် Cart ကို Reset လုပ်ခြင်း
+        cart = {};
+        saveCart();
+        updateTotal();
+        document.getElementById('loader').style.display = 'none';
+        closeCheckout();
+        if (typeof toggleDrawer === "function") toggleDrawer();
+
+        // ၆။ Viber/Telegram သို့ ပို့ဆောင်ခြင်း
+        const encodedMsg = encodeURIComponent(msg);
+        if (platform === 'viber') {
+            window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodedMsg}`;
+        } else {
+            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodedMsg}`;
+        }
+
+        // ၇။ Voucher ပုံကို Download ချပေးခြင်း
+        const link = document.createElement('a');
+        link.download = `Voucher_${orderId}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+    } catch (err) {
+        alert("Error: " + err.message);
+        document.getElementById('loader').style.display = 'none';
+    }
+    }
+    
     async function trackOrder() {
         const id = prompt("သင့် Order ID ကို ရိုက်ထည့်ပါ:");
         if(!id) return;
