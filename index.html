@@ -383,40 +383,53 @@
        // ၁။ Menu ပြသပေးသည့် Function (Variable Name နှင့် Syntax ပြင်ထားသည်)
      function renderMenu(items) {
     const display = document.getElementById('menu-display');
+    if (!display) return;
+    
     display.innerHTML = items.map(i => {
-        const safeId = getSafeId(i.name); // Safe ID ကို ဒီမှာ သုံးမယ်
+        // အမည်ထဲက Space တွေကို Dash (-) နဲ့ အစားထိုးပြီး ID ပေးခြင်း
+        const safeId = i.name.replace(/\s+/g, '-');
         return `
-            <div class="menu-card">
-                ...
-                // renderMenu ထဲက span နေရာ
-<span id="qty-${getSafeId(i.name)}">${cart[i.name] || 0}</span>
-                                  
-                ...
+            <div class="menu-card bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <img src="${i.image_url || 'https://via.placeholder.com/150'}" class="w-full h-32 object-cover rounded-lg">
+                <div class="font-semibold text-gray-800 mt-3">${i.name}</div>
+                <div class="text-primary font-bold">${Number(i.price).toLocaleString()} K</div>
+                <div class="flex items-center justify-between mt-4 bg-gray-50 rounded-lg p-1">
+                    <button onclick="updateQty('${i.name}', -1, ${i.price})" class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600">-</button>
+                    <span id="qty-${safeId}" class="font-bold text-gray-800">${cart[i.name] || 0}</span> 
+                    <button onclick="updateQty('${i.name}', 1, ${i.price})" class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-md shadow-sm">+</button>
+                </div>
             </div>
         `;
     }).join('');
      }
     
+    
 
 // ၂။ အရေအတွက် အတိုးအလျှော့လုပ်သည့် Function
 function updateQty(name, change, price) {
+    // Cart ထဲမှာ အရေအတွက် ပြောင်းလဲခြင်း
     cart[name] = (cart[name] || 0) + change;
-    if (cart[name] <= 0) delete cart[name];
     
+    // ၀ ဖြစ်သွားရင် Cart ထဲက ဖျက်ခြင်း
+    if (cart[name] <= 0) {
+        delete cart[name];
+    }
+    
+    // UI Update များ လုပ်ဆောင်ခြင်း
     updateTotal();
     renderDrawerItems();
     saveCart();
     
-    // ဒီအပိုင်းမှာ error မတက်အောင် if နဲ့ သေချာစစ်ပါ
-    const safeId = getSafeId(name);
-const qtyLabel = document.getElementById(`qty-${safeId}`);
+    // Menu ကတ်ပြားပေါ်က ဂဏန်းကို ရှာပြီး Update လုပ်ခြင်း
+    const safeId = name.replace(/\s+/g, '-');
+    const qtyLabel = document.getElementById(`qty-${safeId}`);
     
     if (qtyLabel) {
+        // Cart ထဲမှာ ရှိရင် အဲဒီအရေအတွက်ပြမယ်၊ မရှိရင် 0 ပြမယ်
         qtyLabel.innerText = cart[name] || 0;
-    } else {
-        console.warn(`ID qty-${safeId} ကို ရှာမတွေ့ပါ`); // error တက်မယ့်အစား log ပဲ ပြမယ်
     }
 }
+    
     
     
     
@@ -517,12 +530,11 @@ function updateTotalDisplay(val) {
     const notes = document.getElementById('notes').value;
     const total = document.getElementById('total-price-display').innerText;
 
-    // ၁။ အချက်အလက်စစ်ဆေးခြင်း
+    // ၁။ အချက်အလက် ပြည့်စုံမှု စစ်ဆေးခြင်း
     if (!name || !phone || !date || !time) {
         return alert("အမည်၊ ဖုန်း၊ လာယူမည့်ရက်နှင့် အချိန်တို့ကို ပြည့်စုံစွာဖြည့်ပါ။");
     }
 
-    // ပစ္စည်းမရှိဘဲ အော်ဒါတင်ခြင်းကို တားဆီးရန်
     if (Object.keys(cart).length === 0) {
         return alert("ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိသေးပါ");
     }
@@ -534,22 +546,20 @@ function updateTotalDisplay(val) {
     document.getElementById('loader').style.display = 'flex';
 
     try {
-        // ၃။ Supabase ထဲသို့ သိမ်းဆည်းခြင်း
-        const { data, error } = await _supabase
-            .from('orders')
-            .insert([{
-                customer_name: name,
-                phone: phone,
-                total: total,
-                items: itemsDatabaseList,
-                pickup_time: `${date} ${time}`,
-                status: 'pending'
-            }]).select();
+        // ၃။ Supabase Database ထဲသို့ သိမ်းဆည်းခြင်း
+        const { data, error } = await _supabase.from('orders').insert([{ 
+            customer_name: name, 
+            phone: phone, 
+            total: total, 
+            items: itemsDatabaseList,
+            pickup_time: `${date} ${time}`,
+            status: 'pending' 
+        }]).select();
 
         if (error) throw error;
         const orderId = data[0].id;
 
-        // ၄။ Voucher Image ထုတ်ရန်အတွက် Data ထည့်ခြင်း
+        // ၄။ Voucher Image (ပြေစာပုံ) ထုတ်ရန်အတွက် Data ထည့်ခြင်း
         document.getElementById('inv-order-id').innerText = `Order ID: #${orderId}`;
         document.getElementById('inv-date').innerText = `Date: ${new Date().toLocaleString()}`;
         document.getElementById('inv-total').innerText = `Total: ${total} K`;
@@ -557,14 +567,13 @@ function updateTotalDisplay(val) {
         for (let n in cart) itemsHtml += `<p>${n} x ${cart[n]}</p>`;
         document.getElementById('inv-items').innerHTML = itemsHtml;
 
-        // Voucher ပုံဖမ်းခြင်း
+        // HTML ကို ပုံအဖြစ်ပြောင်းခြင်း (Voucher Photo)
         const vWrap = document.getElementById('voucher-wrap');
-        vWrap.style.left = "0";
-        vWrap.style.top = "0";
+        vWrap.style.left = "0"; vWrap.style.top = "0";
         const canvas = await html2canvas(document.querySelector("#invoice-card"), { useCORS: true, scale: 2 });
         vWrap.style.left = "-9999px";
 
-        // ၅။ Message Formatting
+        // ၅။ ပို့မည့် Message ကို ပုံစံချခြင်း
         let msg = `🍗 *မြင်သာကြက်ကင် (Order #${orderId})*
 ━━━━━━━━━━━━━━━━━━
 👤 *Customer:* ${name}
@@ -579,10 +588,12 @@ ${itemsBulletList}
 📝 *Notes:* ${notes || '-'}
 ⚠️ အော်ဒါတင်ပြီးပါက 09767287345 သို့ ဖုန်းဆက်ပေးပါ။`;
 
-        // Clipboard ထဲသို့ Message ကို Auto Copy ကူးခြင်း
+        // ⭐️ ၆။ Clipboard ထဲသို့ Message ကို Auto Copy ကူးခြင်း
         try {
             await navigator.clipboard.writeText(msg);
+            console.log('Copied to clipboard');
         } catch (err) {
+            // Browser အဟောင်းများအတွက် Fallback နည်းလမ်း
             const textArea = document.createElement("textarea");
             textArea.value = msg;
             document.body.appendChild(textArea);
@@ -591,10 +602,7 @@ ${itemsBulletList}
             document.body.removeChild(textArea);
         }
 
-        // ၆။ History သိမ်းခြင်း
-        saveToHistory({ id: orderId, total: total, status: 'pending', date: date, time: time });
-
-        // ၇။ Voucher ပုံကို Download ချပေးခြင်း
+        // ၇။ Voucher ပုံကို ဖုန်းထဲသို့ Download ချပေးခြင်း
         const link = document.createElement('a');
         link.download = `Voucher_${orderId}.png`;
         link.href = canvas.toDataURL("image/png");
@@ -602,7 +610,7 @@ ${itemsBulletList}
 
         // ၈။ Viber/Telegram သို့ ပို့ဆောင်ခြင်း
         const encodedMsg = encodeURIComponent(msg);
-        showAppGuide(platform);
+        showAppGuide(platform); // Guide အရင်ပြမယ်
 
         setTimeout(() => {
             if (platform === 'viber') {
@@ -611,11 +619,11 @@ ${itemsBulletList}
                 window.location.href = `https://t.me/+${MY_PHONE}?text=${encodedMsg}`;
             }
 
-            // ၉။ နောက်ဆုံးအဆင့် - UI ကို Reset လုပ်ပြီး Refresh လုပ်မယ်
+            // ၉။ နောက်ဆုံးအဆင့် - UI Reset လုပ်ပြီး 0 ဖြစ်အောင် Refresh လုပ်မယ်
             setTimeout(() => {
                 cart = {}; // Cart ရှင်းမယ်
                 localStorage.removeItem('mt_cart'); // LocalStorage ရှင်းမယ်
-                location.reload(); // အားလုံး 0 ဖြစ်သွားအောင် Page ပြန်ဖွင့်မယ်
+                location.reload(); // Page ကို Refresh လုပ်လိုက်ရင် Menu Design ပြန်မှန်သွားပြီး Quantity 0 ဖြစ်သွားပါမယ်
             }, 3000);
 
         }, 2000);
@@ -626,6 +634,8 @@ ${itemsBulletList}
         document.getElementById('loader').style.display = 'none';
     }
     }
+    
+            
     
 
     
