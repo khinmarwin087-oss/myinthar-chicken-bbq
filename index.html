@@ -430,19 +430,7 @@ function deleteItem(name) {
     
         
     
-        // Haptic & Animation
-        if (navigator.vibrate) navigator.vibrate(50);
-        const bar = document.querySelector('.checkout-bar');
-        bar.classList.add('cart-animate');
-        setTimeout(() => bar.classList.remove('cart-animate'), 400);
-
-        updateTotal();
-        renderDrawerItems();
-        saveCart();
         
-        const qtyLabel = document.getElementById(`qty-${name.replace(/\s+/g, '-')}`);
-        if (qtyLabel) qtyLabel.innerText = cart[name] || 0;
-    }
 
     function updateTotal() {
         let total = 0; let count = 0;
