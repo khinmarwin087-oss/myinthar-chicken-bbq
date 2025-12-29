@@ -389,7 +389,7 @@
             <div class="menu-card">
                 ...
                 // renderMenu ထဲက span နေရာ
-`<span id="qty-${i.name.replace(/\s+/g, '-')}">${cart[i.name] || 0}</span>`
+<span id="qty-${getSafeId(i.name)}">${cart[i.name] || 0}</span>
                                   
                 ...
             </div>
