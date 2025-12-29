@@ -85,14 +85,35 @@
 }
 .back-btn:active { transform: scale(0.9); }
 
-/* Menu Card ကို Premium ဆန်အောင် ပြန်ညှိခြင်း */
-.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
-.menu-card { 
-    background: #ffffff; border-radius: 20px; padding: 12px; 
-    box-shadow: 0 8px 20px rgba(0,0,0,0.04); text-align: center; border: 1px solid #f8f8f8;
+/* Menu Grid Fix */
+.menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 15px !important;
+    padding: 20px !important;
+    min-height: 400px;
 }
-.menu-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 16px; }
 
+.menu-card {
+    background: white !important;
+    border-radius: 20px !important;
+    padding: 15px !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+    text-align: center !important;
+    border: 1px solid #f0f0f0 !important;
+    transition: transform 0.3s ease !important;
+}
+
+.menu-card:hover {
+    transform: translateY(-5px) !important;
+}
+
+.menu-card img {
+    width: 100% !important;
+    height: 120px !important;
+    object-fit: cover !important;
+    border-radius: 15px !important;
+}
 /* Cart Drawer အတွင်းပိုင်း Layout */
 .cart-items-container { 
     flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; 
@@ -363,22 +384,35 @@
     return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }
     
-    async function fetchMenu() {
-    console.log("Fetching data from Supabase..."); // ဒါလေး ထည့်စစ်ပါ
-    const { data, error } = await _supabase.from('menu_items').select('*');
+    // Menu အကွက်တွေ မပေါ်ရင် ဒီ demo data သုံးပါ
+async function fetchMenu() {
+    console.log("Fetching data from Supabase...");
     
-    if (error) {
-        console.error("Supabase Error:", error); // Error ရှိရင် ဒီမှာ ပြပါလိမ့်မယ်
-        return;
-    }
+    // Demo data နဲ့ အရင်စမ်းပါ (Supabase error မရှိအောင်)
+    const demoData = [
+        { name: "မြင်းသား ရိုး့ခြောက်", price: 8500, image: "https://via.placeholder.com/300x200/FF6B35/FFFFFF?text=Roast", description: "Premium ရိုး့ခြောက်" },
+        { name: "ငါး သုပ်", price: 4500, image: "https://via.placeholder.com/300x200/FF8C42/FFFFFF?text=Fish", description: "Fresh ငါးသုပ်" },
+        { name: "ကြက်သား ကင်", price: 6500, image: "https://via.placeholder.com/300x200/FF6B35/FFFFFF?text=Chicken", description: "Grilled ကြက်သား" }
+    ];
     
-    if (data) { 
-        console.log("Data received:", data); // Data ရမရ စစ်ပါ
-        allItems = data; 
-        renderMenu(data); 
+    allItems = demoData;
+    renderMenu(demoData);
+    console.log("Demo menu loaded:", demoData);
+    
+    // Supabase က data လည်း ထပ်ကြိုးစားပါ
+    try {
+        const { data, error } = await supabase.from('menuitems').select();
+        if (error) {
+            console.error("Supabase Error:", error);
+        } else if (data && data.length > 0) {
+            console.log("Real data loaded:", data);
+            allItems = data;
+            renderMenu(data);
+        }
+    } catch(err) {
+        console.error("Fetch error:", err);
     }
 }
-    
 
        // ၁။ Menu ပြသပေးသည့် Function (Variable Name နှင့် Syntax ပြင်ထားသည်)
       function renderMenu(items) {
