@@ -278,32 +278,33 @@ function renderMenu(items) {
 }
 
 // 4. Quantity Update (အလုပ်လုပ်မယ်!)
-function updateQty(safeId, change) {
-    const qtyElement = document.getElementById(`qty-${safeId}`);
-    const currentQty = parseInt(qtyElement.textContent) || 0;
-    const newQty = Math.max(0, currentQty + change);
-    
+function updateQty(name, delta) {
+    const qtyElement = document.getElementById(`qty-${name}`);
+    if (!qtyElement) return;
+
+    let currentQty = parseInt(qtyElement.textContent) || 0;
+    let newQty = currentQty + delta;
+
+    if (newQty < 0) newQty = 0;
     qtyElement.textContent = newQty;
-    
-    // Update Cart
-    const item = demoMenu.find(item => getSafeId(item.name) === safeId);
+
+    // menuItems ထဲကနေ သက်ဆိုင်ရာ ပစ္စည်းရဲ့ ဈေးနှုန်းကို ယူမယ်
+    const itemData = menuItems.find(m => m.name === name || m.name_mm === name);
+    const price = itemData ? itemData.price : 0;
+
     if (newQty > 0) {
-        cart[safeId] = { ...item, quantity: newQty, total: item.price * newQty };
+        cart[name] = {
+            quantity: newQty,
+            total: newQty * price
+        };
     } else {
-        delete cart[safeId];
+        delete cart[name];
     }
-    
-    updateTotal();
+
     saveCart();
+    updateTotal();
+}
     
-    // Button text update
-    const cartText = document.getElementById(`cart-text-${safeId}`);
-    if (newQty > 0) {
-        cartText.textContent = `Added (${newQty})`;
-    } else {
-        cartText.textContent = 'Add to Cart';
-    }
-                  }
 
 // Add to Cart Function
 function addToCart(name) {
