@@ -26,7 +26,7 @@
             overflow-x: hidden; -webkit-tap-highlight-color: transparent;
         }
 
-        /* Fixed Cart Icon */
+        /* Cart Icon */
         .cart-trigger {
             position: fixed; top: 20px; right: 20px;
             background: var(--primary); color: white;
@@ -41,7 +41,14 @@
             padding: 4px 8px; border-radius: 20px; border: 2px solid white;
         }
 
-        /* Header & Search */
+        /* Fly Animation */
+        .flying-item {
+            position: fixed; z-index: 9999; pointer-events: none;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--primary); transition: all 0.7s cubic-bezier(0.1, 0.5, 0.1, 1);
+        }
+
+        /* Header */
         .header { background: var(--pearl); padding: 25px 20px; border-bottom: 1px solid var(--border); }
         .search-area { padding: 15px 20px; }
         .search-bar { 
@@ -54,7 +61,7 @@
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
         .menu-card { 
             background: white; border-radius: 20px; overflow: hidden; border: 1px solid var(--border);
-            text-align: center; padding-bottom: 15px; transition: 0.3s;
+            text-align: center; padding-bottom: 15px;
         }
         .menu-card img { width: 100%; height: 120px; object-fit: cover; background: #fafafa; }
         .price-tag { color: var(--primary); font-weight: 800; margin: 5px 0; }
@@ -62,14 +69,8 @@
             background: white; color: var(--primary); border: 1.5px solid var(--primary);
             padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer;
         }
-        /* Fly Animation */
-        .flying-item {
-            position: fixed; z-index: 9999; pointer-events: none;
-            width: 40px; height: 40px; border-radius: 50%;
-            background: var(--primary); transition: all 0.8s cubic-bezier(0.1, 0.5, 0.1, 1);
-        }
 
-        /* Drawer & Steps */
+        /* Drawer & Form */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: none; z-index: 2000; }
         .drawer { 
             position: fixed; bottom: -100%; left: 0; width: 100%; height: 95%;
@@ -78,55 +79,32 @@
         }
         .drawer.active { bottom: 0; }
         .step-container { display: flex; width: 200%; height: 100%; transition: 0.4s ease; }
-        .step { width: 50%; padding: 30px; box-sizing: border-box; overflow-y: auto; }
+        .step { width: 50%; padding: 25px; box-sizing: border-box; overflow-y: auto; }
 
-        /* Form Inputs */
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: var(--gray); margin-bottom: 5px; }
         .form-control {
             width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px;
-            box-sizing: border-box; font-family: inherit; font-size: 14px; background: #FAFAFA;
-        }
-        .form-control:focus { outline: none; border-color: var(--primary); background: white; }
-
-        /* Delete Button */
-        .del-item-btn {
-            color: var(--danger); background: #FFF0F0; border: none;
-            width: 35px; height: 35px; border-radius: 10px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            box-sizing: border-box; margin-top: 5px; background: #FAFAFA;
         }
 
-        /* Premium Guide Modal */
+        /* Modal */
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
             display: none; align-items: flex-end; justify-content: center; z-index: 3000;
         }
         .modal-content {
             background: white; padding: 30px; border-radius: 30px 30px 0 0; 
-            max-width: 500px; width: 100%; animation: slideUp 0.4s ease-out;
+            max-width: 500px; width: 100%; animation: slideUp 0.4s ease;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .guide-step {
-            display: flex; align-items: center; gap: 15px; margin-bottom: 15px;
-            padding: 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border);
-        }
-        .guide-num {
-            background: var(--primary); color: white; width: 25px; height: 25px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 12px; flex-shrink: 0;
-        }
-
-        /* Invoice */
-        #voucher-ui { background: #fff; padding: 40px; width: 380px; color: #1a1a1a; font-family: sans-serif; }
+        /* Invoice UI */
+        #voucher-ui { background: #fff; padding: 40px; width: 380px; color: #1a1a1a; font-family: sans-serif; position: relative; }
         .inv-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
-        .qty-box { display: flex; align-items: center; background: #f5f5f5; border-radius: 10px; padding: 4px; gap: 5px; }
-        .qty-box input { width: 30px; border: none; background: transparent; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="cart-trigger" onclick="toggleDrawer(true)">
+<div class="cart-trigger" id="cart-icon" onclick="toggleDrawer(true)">
     <i class="fas fa-shopping-basket"></i>
     <div class="cart-badge" id="cart-count">0</div>
 </div>
@@ -142,6 +120,31 @@
     </div>
 </div>
 
+    <div style="padding: 0 20px; overflow-x: auto; white-space: nowrap; margin-bottom: 15px; scrollbar-width: none; -ms-overflow-style: none;">
+    <style>
+        .cat-tabs::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            display: inline-block; padding: 10px 18px; border-radius: 12px;
+            border: 1px solid #eee; background: white; font-size: 14px;
+            font-weight: bold; color: #888; cursor: pointer; margin-right: 8px;
+            transition: 0.3s;
+        }
+        .cat-btn.active {
+            background: #FF6B35; color: white; border-color: #FF6B35;
+        }
+    </style>
+    <div class="cat-tabs" id="category-list">
+        <button onclick="filterCategory('All')" class="cat-btn active">အားလုံး</button>
+        <button onclick="filterCategory('အသား')" class="cat-btn">အသား</button>
+        <button onclick="filterCategory('အရိုး')" class="cat-btn">အရိုး</button>
+        <button onclick="filterCategory('ကလီစာ')" class="cat-btn">ကလီစာ</button>
+        <button onclick="filterCategory('အရေခွံ')" class="cat-btn">အရေခွံ</button>
+        <button onclick="filterCategory('အသီးအရွက်')" class="cat-btn">အသီးအရွက်</button>
+        <button onclick="filterCategory('ဥ')" class="cat-btn">ဥ</button>
+    </div>
+    </div>
+    
+
 <div class="menu-grid" id="menu-display"></div>
 
 <div class="overlay" id="overlay" onclick="toggleDrawer(false)"></div>
@@ -149,57 +152,48 @@
     <div class="step-container" id="step-wrapper">
         <div class="step">
             <h2 style="margin-bottom: 20px;">ခြင်းတောင်း</h2>
-            <div id="cart-items-list" style="min-height: 200px; margin-bottom: 20px;"></div>
-            <div style="background:var(--primary-light); padding:20px; border-radius:20px; border: 1px dashed var(--primary);">
+            <div id="cart-items-list" style="min-height: 200px;"></div>
+            <div style="background:var(--primary-light); padding:20px; border-radius:20px; margin-top:15px;">
                 <div style="display:flex; justify-content:space-between; font-weight:bold; color: var(--primary);">
                     <span>စုစုပေါင်း</span>
                     <span id="subtotal">0 K</span>
                 </div>
             </div>
-            <button onclick="goToStep(2)" style="width:100%; background:var(--primary); color:white; border:none; padding:18px; border-radius:18px; font-weight:bold; margin-top:20px;">ဆက်လုပ်ရန်</button>
+            <button onclick="goToStep(2)" style="width:100%; background:var(--primary); color:white; border:none; padding:18px; border-radius:18px; font-weight:bold; margin-top:20px;">အချက်အလက်ဖြည့်ရန်</button>
         </div>
 
         <div class="step">
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
                 <i class="fas fa-chevron-left" onclick="goToStep(1)" style="cursor:pointer"></i>
-                <h2 style="margin:0">အချက်အလက်များ</h2>
+                <h2 style="margin:0">ပို့ဆောင်ရေး</h2>
             </div>
             
-            <div class="form-group">
-                <label>အမည် *</label>
-                <input type="text" id="cust-name" class="form-control" placeholder="သင့်အမည်">
-            </div>
-            <div class="form-group">
-                <label>ဖုန်းနံပါတ် *</label>
-                <input type="tel" id="cust-phone" class="form-control" placeholder="09xxxxxxxxx">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>လာယူမည့်ရက်</label>
+            <input type="text" id="cust-name" class="form-control" placeholder="အမည် *">
+            <input type="tel" id="cust-phone" class="form-control" placeholder="ဖုန်းနံပါတ် *" style="margin-top:10px;">
+            
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <div style="flex:1">
+                    <label style="font-size:12px; color:gray;">လာယူမည့်ရက်</label>
                     <input type="date" id="pickup-date" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label>လာယူမည့်အချိန်</label>
+                <div style="flex:1">
+                    <label style="font-size:12px; color:gray;">အချိန်</label>
                     <input type="time" id="pickup-time" class="form-control">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>မှတ်ချက် (Note)</label>
-                <textarea id="order-note" class="form-control" rows="2" placeholder="အပိုထပ်ဆောင်းမှာကြားလိုသည်များ..."></textarea>
+            <textarea id="order-note" class="form-control" style="margin-top:10px;" placeholder="မှတ်ချက် (Note)"></textarea>
+
+            <div style="background: #FDF8F6; padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid #FFEBD6;">
+                <label style="font-size:13px; font-weight:bold; color:var(--primary);">စရံငွေ (ရှိလျှင်)</label>
+                <div style="display:flex; gap:5px; margin: 5px 0;">
+                    <button onclick="calcDeposit(0.5)" style="flex:1; padding:7px; font-size:11px; border:1px solid var(--primary); background:white; color:var(--primary); border-radius:8px;">၅၀% တွက်ရန်</button>
+                    <button onclick="calcDeposit(0)" style="flex:1; padding:7px; font-size:11px; border:1px solid #ccc; background:white; color:gray; border-radius:8px;">မထည့်ပါ</button>
+                </div>
+                <input type="number" id="deposit-input" class="form-control" placeholder="စရံငွေပမာဏ">
             </div>
 
-            <div style="background: #FFF9F2; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #FFEBD6;">
-                <label style="color:var(--primary); font-weight:bold;">စရံငွေ (Optional)</label>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <button onclick="calcDeposit(0.5)" style="background:white; border:1px solid var(--primary); color:var(--primary); padding:8px; border-radius:8px; font-size:12px; flex:1;">၅၀% တွက်မည်</button>
-                    <button onclick="calcDeposit(0)" style="background:white; border:1px solid var(--gray); color:var(--gray); padding:8px; border-radius:8px; font-size:12px; flex:1;">မထည့်ပါ</button>
-                </div>
-                <input type="number" id="deposit-input" class="form-control" style="margin-top:10px; border-color: var(--primary);" placeholder="စရံငွေပမာဏ (ရှိလျှင်)">
-            </div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:20px;">
                 <button onclick="showGuide('viber')" style="background:#7360f2; color:white; border:none; padding:16px; border-radius:15px; font-weight:bold;"><i class="fab fa-viber"></i> Viber</button>
                 <button onclick="showGuide('telegram')" style="background:#24A1DE; color:white; border:none; padding:16px; border-radius:15px; font-weight:bold;"><i class="fab fa-telegram"></i> Telegram</button>
             </div>
@@ -209,70 +203,60 @@
 
 <div class="modal" id="guide-modal">
     <div class="modal-content">
-        <div style="text-align:center; margin-bottom: 20px;">
-            <div style="width: 50px; height: 5px; background: #eee; border-radius: 10px; margin: 0 auto 15px;"></div>
-            <h3 id="guide-title" style="margin:0; color: var(--text);">💡 မှာယူနည်းလမ်းညွှန်</h3>
-        </div>
-        <div class="guide-step">
-            <div class="guide-num">၁</div>
-            <div style="font-size: 13px;">အော်ဒါစာသားများကို စနစ်မှ <b>Auto Copy</b> ကူးပေးပါမည်။</div>
-        </div>
-        <div class="guide-step">
-            <div class="guide-num">၂</div>
-            <div style="font-size: 13px;">App ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် <b>Paste (ကူးထည့်)</b> လုပ်၍ ပို့ပါ။</div>
-        </div>
-        <button onclick="downloadVoucher()" style="width:100%; background:#333; color:white; border:none; padding:15px; border-radius:15px; font-weight:bold; margin-bottom:10px;"><i class="fas fa-file-invoice"></i> Voucher ဒေါင်းမည်</button>
-        <button id="final-ok" style="width:100%; background:var(--primary); color:white; border:none; padding:18px; border-radius:15px; font-weight:bold;">အိုကေ (ပို့မည်)</button>
-        <button onclick="document.getElementById('guide-modal').style.display='none'" style="width:100%; background:none; border:none; color:var(--gray); margin-top:10px;">ပိတ်မည်</button>
+        <h3 id="guide-title" style="margin-top:0;">💡 မှာယူနည်းလမ်းညွှန်</h3>
+        <p style="font-size:14px; color:#666;">၁။ အော်ဒါစာသားကို <b>Auto Copy</b> ယူပေးပါမည်။<br>၂။ App ထဲရှိ ဆိုင်ရှင် Chat တွင် <b>Paste</b> လုပ်၍ ပို့ပေးပါ။</p>
+        
+        <button onclick="downloadVoucher()" style="width:100%; background:#333; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; margin-bottom:10px;"><i class="fas fa-download"></i> Voucher ဒေါင်းလုဒ်ဆွဲမည်</button>
+        <button id="final-ok" style="width:100%; background:var(--primary); color:white; border:none; padding:18px; border-radius:12px; font-weight:bold;">အိုကေ (ပို့မည်)</button>
+        <button onclick="document.getElementById('guide-modal').style.display='none'" style="width:100%; background:none; border:none; color:gray; margin-top:10px;">ပိတ်မည်</button>
     </div>
 </div>
 
-<div style="position:fixed; top:-5000px;">
+<div style="position:fixed; top:-9999px;">
     <div id="voucher-ui">
-        <div style="text-align:center; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+        <div style="text-align:center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
             <h2 style="color:var(--primary); margin:0;">MYIN THAR ROAST</h2>
-            <p style="font-size:10px; color:#888;">OFFICIAL INVOICE</p>
+            <p style="font-size:10px; color:gray;">OFFICIAL INVOICE</p>
         </div>
-        <div style="margin:20px 0; font-size:12px;">
-            <div id="v-name">Name: </div>
-            <div id="v-phone">Phone: </div>
-            <div id="v-pickup">Pickup: </div>
-            <div id="v-date">Date: </div>
+        <div style="margin:20px 0; font-size:13px;">
+            <div id="v-name"></div>
+            <div id="v-phone"></div>
+            <div id="v-pickup"></div>
+            <div id="v-date"></div>
         </div>
         <div id="v-items"></div>
-        <div style="margin-top:20px; border-top:2px solid #1a1a1a; padding-top:10px;">
-            <div class="inv-row" style="font-weight:bold;"><span>Total</span><span id="v-total"></span></div>
-            <div class="inv-row" style="color:#666;"><span>Deposit</span><span id="v-dep"></span></div>
+        <div style="margin-top:20px; border-top:2px solid #333; padding-top:10px;">
+            <div class="inv-row" style="font-weight:bold; font-size:16px;"><span>Total</span><span id="v-total"></span></div>
+            <div class="inv-row" style="color:gray;"><span>Deposit</span><span id="v-dep"></span></div>
         </div>
-        <div style="text-align:center; margin-top:30px; font-size:10px; color:#aaa;">
-            Thank you for ordering! 09 767 287 345
-        </div>
+        <p style="text-align:center; font-size:10px; color:#ccc; margin-top:30px;">Thank you! 09 767 287 345</p>
     </div>
 </div>
 
 <script>
     let cart = {};
+    const MY_PHONE = "959767287345";
     const menuData = [
-        { id: 1, name: 'ကြက်ပေါင်', price: 4000 },
-        { id: 2, name: 'ကြက်ရင်အုံ', price: 4000 },
-        { id: 3, name: 'ဆိတ်သားကင်', price: 1500 },
-        { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800 },
-        { id: 5, name: 'အရေခွံ', price: 500 },
-        { id: 6, name: 'အတောင်ပျံ', price: 500 },
-        { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000 },
-        { id: 8, name: 'အူ', price: 500 },
-        { id: 9, name: 'ခေါင်း', price: 300 },
-        { id: 10, name: 'လည် ချောင်း', price: 300 },
-        { id: 11, name: 'အသည်းမြစ်', price: 500 },
-        { id: 12, name: 'ခြေထောက်', price: 300 },
-        { id: 13, name: 'ခြေထောက်(CP)', price: 700 },
-        { id: 14, name: 'လက်မောင်းလုံး', price: 1000 },
-        { id: 15, name: 'အဆီပူး', price: 800 },
-        { id: 16, name: 'အသားတု', price: 400 },
-        { id: 17, name: 'ရုံးပတေသီး', price: 300 },
-        { id: 18, name: 'အပ်မှို', price: 1000 },
-        { id: 19, name: 'ငုံးဥ', price: 1000 }
-    ];
+    { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား' },
+    { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား' },
+    { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား' },
+    { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား' },
+    { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ' },
+    { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး' },
+    { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000, category: 'အရိုး' },
+    { id: 8, name: 'အူ', price: 500, category: 'ကလီစာ' },
+    { id: 9, name: 'ခေါင်း', price: 300, category: 'အရိုး' },
+    { id: 10, name: 'လည် ချောင်း', price: 300, category: 'အရိုး' },
+    { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ' },
+    { id: 12, name: 'ခြေထောက်', price: 300, category: 'အရိုး' },
+    { id: 13, name: 'ခြေထောက်(CP)', price: 700, category: 'အရိုး' },
+    { id: 14, name: 'လက်မောင်းလုံး', price: 1000, category: 'အသား' },
+    { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ' },
+    { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်' },
+    { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်' },
+    { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်' },
+    { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ' }
+];
     
 
     function renderMenu(items) {
@@ -288,7 +272,30 @@
         `).join('');
     }
 
+    // --- Fly Animation ပြင်ဆင်ချက် ---
     function addToCart(event, id) {
+        const btn = event.target;
+        const btnRect = btn.getBoundingClientRect();
+        const cartIcon = document.getElementById('cart-icon');
+        const cartRect = cartIcon.getBoundingClientRect();
+
+        const flyer = document.createElement('div');
+        flyer.className = 'flying-item';
+        flyer.style.left = btnRect.left + 'px';
+        flyer.style.top = btnRect.top + 'px';
+        document.body.appendChild(flyer);
+
+        // Animation သက်ရောက်မှုပေးရန် setTimeout သုံးခြင်း
+        setTimeout(() => {
+            flyer.style.left = (cartRect.left + 10) + 'px';
+            flyer.style.top = (cartRect.top + 10) + 'px';
+            flyer.style.transform = 'scale(0.3)';
+            flyer.style.opacity = '0';
+        }, 10);
+
+        setTimeout(() => flyer.remove(), 750);
+
+        // Logic
         const item = menuData.find(m => m.id === id);
         if(cart[id]) cart[id].qty++;
         else cart[id] = { ...item, qty: 1 };
@@ -301,20 +308,17 @@
         document.getElementById('cart-count').innerText = items.reduce((s,i)=>s+i.qty, 0);
         document.getElementById('subtotal').innerText = total.toLocaleString() + " K";
         
-        const list = document.getElementById('cart-items-list');
-        list.innerHTML = items.map(i => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center; background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f9f9f9;">
-                <div style="flex:1;">
-                    <div style="font-size:13px; font-weight: bold;">${i.name}</div>
-                    <div style="font-size:11px; color: var(--primary);">${(i.price * i.qty).toLocaleString()} K</div>
+        document.getElementById('cart-items-list').innerHTML = items.map(i => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">
+                <div style="flex:1">
+                    <div style="font-weight:bold; font-size:14px;">${i.name}</div>
+                    <div style="font-size:12px; color:var(--primary);">${(i.price*i.qty).toLocaleString()} K</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="qty-box">
-                        <i class="fas fa-minus" onclick="changeQty(${i.id}, -1)" style="font-size:10px; cursor:pointer;"></i>
-                        <input type="number" value="${i.qty}" readonly>
-                        <i class="fas fa-plus" onclick="changeQty(${i.id}, 1)" style="font-size:10px; cursor:pointer; color:var(--primary);"></i>
-                    </div>
-                    <button class="del-item-btn" onclick="deleteItem(${i.id})"><i class="fas fa-trash-alt" style="font-size:12px;"></i></button>
+                    <button onclick="changeQty(${i.id}, -1)" style="border:none; width:25px; height:25px; border-radius:5px;">-</button>
+                    <span style="font-weight:bold;">${i.qty}</span>
+                    <button onclick="changeQty(${i.id}, 1)" style="border:none; width:25px; height:25px; border-radius:5px; background:var(--primary); color:white;">+</button>
+                    <button onclick="deleteItem(${i.id})" style="border:none; background:#FFF0F0; color:red; padding:5px 8px; border-radius:5px;"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
         `).join('');
@@ -326,14 +330,11 @@
         updateUI();
     }
 
-    function deleteItem(id) {
-        delete cart[id];
-        updateUI();
-    }
+    function deleteItem(id) { delete cart[id]; updateUI(); }
 
-    function calcDeposit(percent) {
+    function calcDeposit(p) {
         let total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
-        document.getElementById('deposit-input').value = Math.round(total * percent);
+        document.getElementById('deposit-input').value = Math.round(total * p);
     }
 
     function showGuide(platform) {
@@ -343,31 +344,44 @@
         document.getElementById('final-ok').onclick = () => sendOrder(platform);
     }
 
+    // --- စာသားထပ်နေမှု ပြင်ဆင်ချက် ---
     function sendOrder(platform) {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        const pDate = document.getElementById('pickup-date').value || "မသတ်မှတ်ထားပါ";
-        const pTime = document.getElementById('pickup-time').value || "မသတ်မှတ်ထားပါ";
-        const note = document.getElementById('order-note').value || "-";
+        const d = document.getElementById('pickup-date').value || "-";
+        const t = document.getElementById('pickup-time').value || "-";
+        const n = document.getElementById('order-note').value || "-";
         const dep = document.getElementById('deposit-input').value || "0";
         
-        let itemsMsg = Object.values(cart).map(i => `• ${i.name} (${i.qty})`).join('\n');
+        let itemsList = Object.values(cart).map(i => `• ${i.name} (${i.qty})`).join('\n');
         let total = document.getElementById('subtotal').innerText;
         
-        let msg = `🍗 MYIN THAR ROAST ORDER\n--------------------\n👤 အမည်: ${name}\n📞 ဖုန်း: ${phone}\n📅 လာယူမည့်ရက်: ${pDate}\n⏰ အချိန်: ${pTime}\n📝 မှတ်ချက်: ${note}\n--------------------\n${itemsMsg}\n--------------------\n💰 စုစုပေါင်း: ${total}\n💵 စရံငွေ: ${parseInt(dep).toLocaleString()} K\n--------------------`;
+        // စာသားကို တစ်ခါပဲ သတ်မှတ်သည်
+        let msg = `🍗 MYIN THAR ROAST ORDER\n--------------------\n👤 အမည်: ${name}\n📞 ဖုန်း: ${phone}\n📅 ရက်စွဲ: ${d}\n⏰ အချိန်: ${t}\n📝 မှတ်ချက်: ${n}\n--------------------\n${itemsList}\n--------------------\n💰 စုစုပေါင်း: ${total}\n💵 စရံငွေ: ${parseInt(dep).toLocaleString()} K\n--------------------`;
 
-        navigator.clipboard.writeText(msg);
-        const encoded = encodeURIComponent(msg);
-        if(platform === 'viber') window.location.href = `viber://chat?number=%2B959767287345&draft=${encoded}`;
-        else window.location.href = `https://t.me/share/url?url=${encoded}&text=${encoded}`;
+        if (sendVia === 'viber') {
+            navigator.clipboard.writeText(msg).then(() => {
+                alert("အော်ဒါစာသားကို Copy ယူပြီးပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။");
+                window.location.href = `viber://contact?number=${MY_PHONE}`;
+            }).catch(err => {
+                window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)}`;
+            });
+        } else {
+            const teleMsg = msg.replace(/\*/g, ''); 
+            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
+        }
     }
 
+    // --- Voucher Download ပြင်ဆင်ချက် ---
     async function downloadVoucher() {
-        const ui = document.getElementById('voucher-ui');
-        document.getElementById('v-name').innerText = "Name: " + document.getElementById('cust-name').value;
-        document.getElementById('v-phone').innerText = "Phone: " + document.getElementById('cust-phone').value;
-        document.getElementById('v-pickup').innerText = "Pickup: " + document.getElementById('pickup-date').value + " " + document.getElementById('pickup-time').value;
-        document.getElementById('v-date').innerText = "Date: " + new Date().toLocaleDateString();
+        const modal = document.getElementById('guide-modal');
+        const vUI = document.getElementById('voucher-ui');
+        
+        // Data Fill
+        document.getElementById('v-name').innerText = "👤 Name: " + document.getElementById('cust-name').value;
+        document.getElementById('v-phone').innerText = "📞 Phone: " + document.getElementById('cust-phone').value;
+        document.getElementById('v-pickup').innerText = "⏰ Pickup: " + document.getElementById('pickup-date').value + " " + document.getElementById('pickup-time').value;
+        document.getElementById('v-date').innerText = "📅 Date: " + new Date().toLocaleDateString();
         document.getElementById('v-total').innerText = document.getElementById('subtotal').innerText;
         document.getElementById('v-dep').innerText = (parseInt(document.getElementById('deposit-input').value) || 0).toLocaleString() + " K";
         
@@ -375,11 +389,15 @@
             <div class="inv-row"><span>${i.name} x ${i.qty}</span><span>${(i.price*i.qty).toLocaleString()} K</span></div>
         `).join('');
 
-        const canvas = await html2canvas(ui);
-        const link = document.createElement('a');
-        link.download = `Invoice-${Date.now()}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+        try {
+            const canvas = await html2canvas(vUI, { scale: 2 });
+            const link = document.createElement('a');
+            link.download = `Order-MT-${Date.now()}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        } catch (e) {
+            alert("Download ဆွဲရာတွင် အမှားအယွင်းရှိပါသည်။");
+        }
     }
 
     function toggleDrawer(show) {
@@ -391,13 +409,26 @@
         document.getElementById('step-wrapper').style.transform = `translateX(-${(s-1)*50}%)`;
     }
 
-    function filterMenu() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        renderMenu(menuData.filter(i => i.name.toLowerCase().includes(q)));
-    }
+    function filterCategory(cat) {
+    // နှိပ်လိုက်တဲ့ Button ကို Active ဖြစ်အောင်လုပ်ခြင်း
+    const btns = document.querySelectorAll('.cat-btn');
+    btns.forEach(btn => {
+        btn.classList.remove('active');
+        // မြန်မာစာ "အားလုံး" သို့မဟုတ် category နာမည် တူရင် active ပေးမယ်
+        if (btn.innerText === cat || (cat === 'All' && btn.innerText === 'အားလုံး')) {
+            btn.classList.add('active');
+        }
+    });
 
-    renderMenu(menuData);
+    // Menu ကို Category အလိုက် စစ်ထုတ်ပြခြင်း
+    if (cat === 'All') {
+        renderMenu(menuData);
+    } else {
+        const filtered = menuData.filter(item => item.category === cat);
+        renderMenu(filtered);
+    }
+}
+
 </script>
 </body>
 </html>
-
