@@ -10,55 +10,64 @@
         :root { 
             --gold: #B8860B; --navy: #001F3F; --pearl: #FDFDFD; 
             --white: #FFFFFF; --text: #2C3E50; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --red: #d9534f; --green: #27ae60;
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--pearl); color: var(--text); margin: 0; overflow-x: hidden; }
 
-        /* Toast Notification (Fixed Size & Logic) */
-        #toast-msg {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: var(--navy); color: white; padding: 10px 20px; border-radius: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 2000; transition: 0.4s;
-            display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 180px; justify-content: center;
-        }
+        /* Header */
+        .header { background: var(--white); padding: 10px 15px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .header img { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; }
+        .header h2 { margin: 0; color: var(--navy); letter-spacing: 1px; font-size: 16px; text-transform: uppercase; font-weight: 800; }
+
+        /* General Styles */
+        #toast-msg { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 12px 25px; border-radius: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 2000; transition: 0.4s; display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 200px; justify-content: center; }
         #toast-msg.show { top: 20px; }
 
-        /* Compact Header */
-        .header { background: var(--white); padding: 15px; text-align: center; box-shadow: var(--shadow); position: sticky; top:0; z-index:100; }
-        .header h2 { margin: 0; color: var(--navy); letter-spacing: 2px; font-size: 18px; text-transform: uppercase; }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center; }
 
-        /* Search Section */
-        .search-section { padding: 15px; max-width: 500px; margin: 0 auto; }
-        .search-box input { width: 100%; padding: 12px 40px; border-radius: 12px; border: 1px solid #eee; outline: none; box-sizing: border-box; font-size: 14px; }
+        .search-section { padding: 10px 15px; max-width: 500px; margin: 0 auto; }
+        .search-box { position: relative; width: 100%; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--gold); }
+        .search-box input { width: 100%; padding: 12px 12px 12px 42px; border-radius: 12px; border: 1px solid #eee; outline: none; box-sizing: border-box; font-size: 14px; box-shadow: var(--shadow); }
         
-        /* Compact Menu Grid */
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; max-width: 800px; margin: 0 auto; }
-        .item-card { background: var(--white); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #f0f0f0; }
-        .item-card img { width: 100%; height: 110px; object-fit: cover; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 15px; max-width: 800px; margin: 0 auto; }
+        .item-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #f8f8f8; }
+        .item-card img { width: 100%; height: 120px; object-fit: cover; }
         .item-info { padding: 10px; text-align: center; }
-        .item-info b { display: block; font-size: 13px; margin-bottom: 4px; color: var(--navy); }
-        .price { color: var(--gold); font-weight: bold; font-size: 13px; margin-bottom: 8px; display: block; }
-        .btn-add { background: var(--navy); color: white; border: none; padding: 8px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 11px; }
+        .item-info b { display: block; font-size: 14px; margin-bottom: 5px; color: var(--navy); }
+        .price { color: var(--gold); font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; }
+        .btn-add { background: var(--navy); color: white; border: none; padding: 10px; border-radius: 12px; cursor: pointer; width: 100%; font-size: 12px; font-weight: bold; }
 
-        /* Compact Floating Button */
-        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(0,31,63,0.3); cursor: pointer; z-index: 200; border: 2px solid var(--gold); }
-        .badge { position: absolute; top: -3px; right: -3px; background: var(--gold); color: white; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; }
+        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,31,63,0.3); cursor: pointer; z-index: 200; border: 2.5px solid var(--gold); }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--gold); color: white; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; }
 
-        /* Drawer UI */
+        /* Basket Drawer */
         #drawer { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: var(--pearl); z-index: 300; transition: 0.4s; display: flex; flex-direction: column; }
         #drawer.open { right: 0; }
-        .drawer-header { padding: 20px; display: flex; align-items: center; background: white; border-bottom: 1px solid #eee; }
+        .drawer-header { padding: 18px; display: flex; align-items: center; background: white; border-bottom: 1px solid #eee; }
         .drawer-body { flex: 1; overflow-y: auto; padding: 15px; }
+        .cart-row { background: white; padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; box-shadow: var(--shadow); }
+        .cart-controls { display: flex; align-items: center; gap: 12px; }
+        .cart-controls i { font-size: 24px; cursor: pointer; color: var(--navy); }
+        .qty-input { width: 35px; border: 1px solid #eee; text-align: center; font-weight: bold; font-size: 15px; border-radius: 5px; }
+        .drawer-footer { padding: 20px; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); }
+        .btn-confirm { width: 100%; background: var(--navy); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-        .cart-row { background: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; box-shadow: var(--shadow); }
-        .qty-input { width: 40px; padding: 4px; text-align: center; border: 1px solid #eee; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        /* Custom Success Modal (Premium Design) */
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:500; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
+        .success-card { background: white; width: 85%; max-width: 350px; border-radius: 30px; padding: 30px; text-align: center; animation: slideUp 0.4s ease-out; position: relative; overflow: hidden; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .success-icon { width: 70px; height: 70px; background: var(--green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3); }
+        .success-card h3 { margin: 10px 0; color: var(--navy); font-size: 20px; }
+        .success-card p { color: #777; font-size: 14px; line-height: 1.5; margin-bottom: 25px; }
+        .btn-voucher { background: var(--navy); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-close-final { background: transparent; border: 1px solid #eee; color: #999; width: 100%; padding: 12px; border-radius: 15px; font-size: 13px; cursor: pointer; }
 
-        .drawer-footer { padding: 20px; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.03); }
-        .btn-confirm { width: 100%; background: var(--navy); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 15px; cursor: pointer; }
-
-        /* Voucher */
+        /* Voucher Template */
         #voucher-card { background: white; width: 380px; padding: 0; color: #333; }
-        .v-header { background: var(--navy); color: white; padding: 30px 15px; text-align: center; }
-        .v-body { padding: 20px; }
+        .v-header { background: var(--navy); color: white; padding: 25px; text-align: center; }
+        .v-header img { width: 55px; height: 55px; border-radius: 50%; border: 2px solid white; margin-bottom: 10px; }
+        .v-body { padding: 25px; }
         .v-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .v-table th { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: left; color: #888; }
         .v-table td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; }
@@ -68,21 +77,31 @@
 
 <div id="toast-msg"><i class="fas fa-check-circle"></i> <span id="toast-text"></span></div>
 
-<div id="loader" style="...">
-    <i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--navy)"></i>
-    <p style="margin-top:15px; font-size:14px; font-weight:bold; color:var(--navy); text-align:center;">
-        ခဏစောင့်ပေးပါ... <br>
-        <span style="font-size:12px; color:var(--gold);">ဘောက်ချာထုတ်ပေးနေ၍ ၅ စက္ကန့်ခန့် ကြာနိုင်ပါသည်</span><br>
-        <span id="wait-timer" style="font-size:18px;">5</span>
-    </p>
+<div id="loader">
+    <i class="fas fa-circle-notch fa-spin fa-3x" style="color:var(--navy)"></i>
+    <p style="margin-top:20px; font-size:15px; font-weight:bold; color:var(--navy);" id="loader-text">ခဏစောင့်ပေးပါ...</p>
 </div>
-    
 
-<div class="header"><h2>MYIN THAR ROAST</h2></div>
+<div id="modal-success" class="modal-overlay">
+    <div class="success-card">
+        <div class="success-icon"><i class="fas fa-check"></i></div>
+        <h3>မှာယူမှုအောင်မြင်ပါသည်</h3>
+        <p>လူကြီးမင်း၏ Order ကို လက်ခံရရှိပါသည်။ <br> ကျေးဇူးတင်ရှိပါသည်ဗျာ။</p>
+        <button class="btn-voucher" onclick="downloadVoucher()">
+            <i class="fas fa-download"></i> ဘောက်ချာဒေါင်းလုဒ်လုပ်မယ်
+        </button>
+        <button class="btn-close-final" onclick="location.reload()">ပိတ်မည်</button>
+    </div>
+</div>
+
+<div class="header">
+    <img src="https://i.ibb.co/k2Xyz9Gs/IMG-20260115-204542.png" alt="Logo">
+    <h2>MYIN THAR ROAST</h2>
+</div>
 
 <div class="search-section">
-    <div style="position:relative;">
-        <i class="fas fa-search" style="position:absolute; left:15px; top:14px; color:var(--gold); font-size:14px;"></i>
+    <div class="search-box">
+        <i class="fas fa-search"></i>
         <input type="text" id="search" placeholder="ရှာဖွေရန်..." onkeyup="filterMenu()">
     </div>
 </div>
@@ -90,18 +109,18 @@
 <div id="menu-grid" class="menu-grid"></div>
 
 <div class="cart-fab" onclick="toggleCart()">
-    <i class="fas fa-shopping-basket"></i>
+    <i class="fas fa-shopping-basket fa-lg"></i>
     <div class="badge" id="cart-badge">0</div>
 </div>
 
 <div id="drawer">
     <div class="drawer-header">
-        <i class="fas fa-chevron-left" style="font-size:18px; cursor:pointer;" onclick="toggleCart()"></i>
-        <h4 style="flex:1; text-align:center; margin:0; letter-spacing:1px;">MY BASKET</h4>
+        <i class="fas fa-arrow-left" onclick="toggleCart()"></i>
+        <h4 style="flex:1; text-align:center; margin:0; color: var(--navy);">MY BASKET</h4>
     </div>
     <div class="drawer-body" id="cart-list"></div>
     <div class="drawer-footer">
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-weight:bold; font-size: 18px;">
             <span>TOTAL</span>
             <span id="total-amt" style="color:var(--gold)">0 K</span>
         </div>
@@ -109,35 +128,36 @@
     </div>
 </div>
 
-<div id="modal-checkout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:400; align-items:center; justify-content:center; backdrop-filter: blur(3px);">
-    <div style="background:white; padding:25px; border-radius:20px; width:85%; max-width:350px;">
-        <h4 style="margin-top:0; text-align:center;">CUSTOMER INFO</h4>
-        <input type="text" id="cust-name" placeholder="အမည်" style="width:100%; padding:12px; margin:8px 0; border:1px solid #eee; border-radius:10px; box-sizing:border-box;">
-        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; margin:8px 0; border:1px solid #eee; border-radius:10px; box-sizing:border-box;">
-        <p style="font-size:10px; color:#999; margin:10px 0 5px 2px;">လာယူမည့်အချိန်</p>
-        <input type="datetime-local" id="pickup-time" style="width:100%; padding:12px; border:1px solid #eee; border-radius:10px; box-sizing:border-box;">
-        <button class="btn-confirm" style="margin-top:20px;" onclick="validateAndSend()">CONFIRM ORDER</button>
-        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#bbb; margin-top:10px;">မလုပ်တော့ပါ</button>
+<div id="modal-checkout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+    <div style="background:white; padding:30px; border-radius:25px; width:88%; max-width:360px;">
+        <h4 style="margin-top:0; text-align:center; color: var(--navy);">CUSTOMER INFO</h4>
+        <input type="text" id="cust-name" placeholder="အမည်" style="width:100%; padding:14px; margin:10px 0; border:1px solid #eee; border-radius:12px; box-sizing:border-box; outline: none;">
+        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:14px; margin:10px 0; border:1px solid #eee; border-radius:12px; box-sizing:border-box; outline: none;">
+        <p style="font-size:11px; color:#888; margin:15px 0 5px 2px;">လာယူမည့်အချိန်</p>
+        <input type="datetime-local" id="pickup-time" style="width:100%; padding:14px; border:1px solid #eee; border-radius:12px; box-sizing:border-box; outline: none;">
+        <button class="btn-confirm" style="margin-top:25px;" onclick="validateAndSend()">CONFIRM ORDER</button>
+        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#aaa; margin-top:15px;">မလုပ်တော့ပါ</button>
     </div>
 </div>
 
 <div id="v-wrap" style="position:absolute; left:-9999px;">
     <div id="voucher-card">
         <div class="v-header">
-            <h2 style="margin:0; letter-spacing:3px;">INVOICE</h2>
-            <p style="margin:5px 0 0 0; opacity:0.7; font-size:11px;">Myin Thar Roast Premium</p>
+            <img src="https://i.ibb.co/k2Xyz9Gs/IMG-20260115-204542.png" alt="Logo">
+            <h2 style="margin:0; font-size:20px;">INVOICE</h2>
+            <p style="margin:5px 0 0 0; opacity:0.8; font-size:12px;">Myin Thar Roast Premium</p>
         </div>
         <div class="v-body">
-            <div style="display:flex; justify-content:space-between; font-size:11px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
                 <div><b>BILL TO:</b><br><span id="v-n"></span><br><span id="v-p"></span></div>
                 <div style="text-align:right;"><b>ID:</b> #<span id="v-id"></span><br><span id="v-d"></span></div>
             </div>
-            <table class="v-table" style="margin-top:15px;">
+            <table class="v-table" style="margin-top:20px;">
                 <thead><tr><th>Items</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
                 <tbody id="v-rows"></tbody>
             </table>
-            <div style="text-align:right; margin-top:20px; border-top:2px solid #eee; padding-top:10px;">
-                <h3 style="margin:0; color:var(--navy);" id="v-tot"></h3>
+            <div style="text-align:right; margin-top:20px; border-top:1px solid #eee; padding-top:12px;">
+                <h3 id="v-tot" style="margin:0; color:var(--navy);"></h3>
             </div>
         </div>
     </div>
@@ -150,76 +170,61 @@
 
     const menuData = [
         { name: 'ကြက်ပေါင်', price: 4000, img: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?q=80&w=500&auto=format&fit=crop' },
-        { name: 'ကြက်ရင်အုံ', price: 4000, img: '' },
-        { name: 'ဆိတ်သားကင်', price: 1500, img: '' },
-        { name: 'အသား ချောင်း', price: 800, img: '' },
-        { name: 'အရေခွံ', price: 500, img: '' },
-        { name: 'အတောင်ပျံ', price: 500, img: '' },
-        { name: 'အသည်းမြစ်', price: 500, img: '' },
-        { name: 'အဆီပူး', price: 800, img: '' }
+        { name: 'ကြက်ရင်အုံ', price: 4000, img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=500&auto=format&fit=crop' },
+        { name: 'ဆိတ်သားကင်', price: 1500, img: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=500&auto=format&fit=crop' },
+        { name: 'အသား ချောင်း', price: 800, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Meat' },
+        { name: 'အရေခွံ', price: 500, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Skin' },
+        { name: 'အတောင်ပျံ', price: 500, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Wing' },
+        { name: 'အသည်းမြစ်', price: 500, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Gizzard' },
+        { name: 'အဆီပူး', price: 800, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Fat' }
     ];
 
     let cart = {};
-    let toastTimer; // Timer for toast
+    let currentOID = "";
 
     function showToast(msg) {
         const toast = document.getElementById('toast-msg');
         document.getElementById('toast-text').innerText = msg;
-        
-        clearTimeout(toastTimer); // Clear existing timer
         toast.classList.add('show');
-        
-        toastTimer = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2500);
+        setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
     function renderMenu(items) {
         document.getElementById('menu-grid').innerHTML = items.map(i => `
             <div class="item-card">
-                <img src="${i.img || 'https://via.placeholder.com/150'}">
+                <img src="${i.img}">
                 <div class="item-info">
                     <b>${i.name}</b>
-                    <span class="price">${i.price} K</span>
+                    <span class="price">${i.price.toLocaleString()} K</span>
                     <button class="btn-add" onclick="add('${i.name}')">Add to Cart</button>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     }
 
-    function add(name) {
-        cart[name] = (cart[name] || 0) + 1;
-        update();
-        showToast(name + " ထည့်ပြီးပါပြီ");
-    }
-
-    function change(name, v) {
-        v = parseInt(v);
-        if(isNaN(v) || v <= 0) delete cart[name];
-        else cart[name] = v;
-        update();
-    }
+    function add(name) { cart[name] = (cart[name] || 0) + 1; update(); showToast(name + " ထည့်ပြီးပါပြီ"); }
+    function change(name, v) { v = parseInt(v); if(isNaN(v) || v <= 0) delete cart[name]; else cart[name] = v; update(); }
 
     function update() {
-        let count = 0, total = 0, html = "";
+        let count = 0, total = 0, html = "", vRows = "";
         for(let k in cart) {
             let item = menuData.find(m => m.name === k);
             let sub = item.price * cart[k];
             count += cart[k]; total += sub;
-            html += `
-                <div class="cart-row">
-                    <div style="flex:1"><b>${k}</b><br><small>${item.price} K</small></div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-minus-square" onclick="change('${k}', ${cart[k]-1})" style="color:#ccc;"></i>
-                        <input type="number" class="qty-input" value="${cart[k]}" onchange="change('${k}', this.value)">
-                        <i class="fas fa-plus-square" onclick="change('${k}', ${cart[k]+1})" style="color:var(--navy);"></i>
-                    </div>
+            html += `<div class="cart-row">
+                <div style="flex:1"><b>${k}</b><br><small>${item.price} K</small></div>
+                <div class="cart-controls">
+                    <i class="fas fa-minus-circle" onclick="change('${k}', ${cart[k]-1})"></i>
+                    <input type="number" class="qty-input" value="${cart[k]}" onchange="change('${k}', this.value)">
+                    <i class="fas fa-plus-circle" onclick="change('${k}', ${cart[k]+1})"></i>
                 </div>
-            `;
+            </div>`;
+            vRows += `<tr><td>${k}</td><td style="text-align:center;">${cart[k]}</td><td style="text-align:right;">${sub.toLocaleString()}</td></tr>`;
         }
         document.getElementById('cart-badge').innerText = count;
         document.getElementById('total-amt').innerText = total.toLocaleString() + " K";
-        document.getElementById('cart-list').innerHTML = html || "<p style='text-align:center; color:#999; margin-top:30px; font-size:12px;'>ခြင်းတောင်းထဲမှာ ဘာမှမရှိသေးပါ</p>";
+        document.getElementById('cart-list').innerHTML = html || "<p style='text-align:center; color:#999; margin-top:50px;'>ခြင်းတောင်းထဲမှာ ဘာမှမရှိသေးပါ</p>";
+        document.getElementById('v-rows').innerHTML = vRows;
+        document.getElementById('v-tot').innerText = "Total: " + total.toLocaleString() + " K";
     }
 
     function toggleCart() { document.getElementById('drawer').classList.toggle('open'); }
@@ -232,54 +237,45 @@
         const t = document.getElementById('pickup-time').value;
         if(!n || !p) return showToast("အချက်အလက်ဖြည့်ပါ");
 
+        currentOID = Math.floor(1000 + Math.random() * 9000);
         document.getElementById('loader').style.display = 'flex';
-
-    // ဒီ Timer Code လေးကို ထည့်ပါ
-    let timeLeft = 5;
-    const timerElem = document.getElementById('wait-timer');
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElem.innerText = timeLeft;
-        if (timeLeft <= 0) clearInterval(countdown);
-    }, 1000);
-
-        for(let k in cart) {
-            let item = menuData.find(m => m.name === k);
-            let sub = item.price * cart[k];
-            totalVal += sub;
-            itemsArr.push(`${k} (${cart[k]} ခု)`);
-            vRows += `<tr><td>${k}</td><td style="text-align:center;">${cart[k]}</td><td style="text-align:right;">${sub.toLocaleString()}</td></tr>`;
-        }
+        document.getElementById('loader-text').innerText = "Order ပို့နေပါသည်...";
 
         document.getElementById('v-n').innerText = n;
         document.getElementById('v-p').innerText = p;
-        document.getElementById('v-id').innerText = oId;
+        document.getElementById('v-id').innerText = currentOID;
         document.getElementById('v-d').innerText = new Date().toLocaleString();
-        document.getElementById('v-rows').innerHTML = vRows;
-        document.getElementById('v-tot').innerText = "Total: " + totalVal.toLocaleString() + " K";
+
+        let itemsText = Object.keys(cart).map(k => `${k} (${cart[k]} ခု)`).join(", ");
+        let totalVal = document.getElementById('total-amt').innerText;
 
         try {
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: n, phone: p, items: itemsArr.join(", "), total: totalVal }) });
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: n, phone: p, items: itemsText, total: totalVal }) });
             await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TG_ID, text: `📦 *ORDER RECEIVED* (#${oId})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Items:*\n${itemsArr.join("\n")}\n\n💰 *Total: ${totalVal} K*`, parse_mode: 'Markdown' })
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TG_ID, text: `📦 *ORDER RECEIVED* (#${currentOID})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Items:*\n${itemsText.replace(/,/g, '\n')}\n\n💰 *Total: ${totalVal}*`, parse_mode: 'Markdown' })
             });
 
-            html2canvas(document.querySelector("#voucher-card")).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Invoice_${oId}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                document.getElementById('loader').style.display = 'none';
-                showToast("မှာယူမှု အောင်မြင်ပါသည်။");
-                showToast("ဘောက်ချာ downloadဆွဲပြီးပါပြီ။");
-                setTimeout(() => location.reload(), 2000);
-            });
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('modal-checkout').style.display = 'none';
+            document.getElementById('modal-success').style.display = 'flex';
+
         } catch(e) { 
             document.getElementById('loader').style.display = 'none';
             showToast("Error ဖြစ်သွားပါသည်"); 
         }
+    }
+
+    async function downloadVoucher() {
+        document.getElementById('loader').style.display = 'flex';
+        document.getElementById('loader-text').innerText = "ဘောက်ချာ ထုတ်ပေးနေပါသည်...";
+        const canvas = await html2canvas(document.querySelector("#voucher-card"), { scale: 2, useCORS: true });
+        const link = document.createElement('a');
+        link.download = `Invoice_${currentOID}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        document.getElementById('loader').style.display = 'none';
+        location.reload();
     }
 
     function filterMenu() {
