@@ -3,422 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MYIN THAR ROAST - Premium Dining</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>MYIN THAR ROAST - Luxury Creation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <style>
-        :root {
-            --gold: #D4AF37; --bg: #0F0F0F; --card: #1C1C1C; --text: #F5F5F5;
+        :root { 
+            --gold: #B8860B; --navy: #001F3F; --pearl: #FDFDFD; 
+            --white: #FFFFFF; --text: #2C3E50; --shadow: 0 10px 40px rgba(0,0,0,0.06);
         }
-        .light-mode {
-            --bg: #F5F5F5; --card: #FFFFFF; --text: #0F0F0F;
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--pearl); color: var(--text); margin: 0; }
+
+        /* Custom Notification Design */
+        #toast-msg {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--navy); color: white; padding: 15px 30px; border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 10px; font-weight: 500;
         }
-        body {
-            font-family: sans-serif; background-color: var(--bg); color: var(--text);
-            margin: 0; padding-bottom: 100px; transition: 0.3s;
-        }
+        #toast-msg.show { top: 30px; }
 
-        /* Nav & Search */
-        .top-bar { padding: 15px; position: sticky; top: 0; background: var(--bg); z-index: 100; border-bottom: 1px solid var(--gold); }
-        .controls { display: flex; gap: 10px; margin-bottom: 10px; justify-content: space-between; }
-        .search-box { width: 100%; position: relative; }
-        .search-box input { width: 100%; padding: 10px 35px; border-radius: 20px; border: 1px solid var(--gold); background: var(--card); color: var(--text); box-sizing: border-box; }
-        .search-box i { position: absolute; left: 12px; top: 12px; color: var(--gold); }
+        /* Header */
+        .header { background: var(--white); padding: 25px; text-align: center; box-shadow: var(--shadow); position: sticky; top:0; z-index:100; border-bottom: 2px solid #f0f0f0; }
+        .header h2 { margin: 0; color: var(--navy); letter-spacing: 3px; font-weight: 800; text-transform: uppercase; font-size: 20px; }
 
-        /* Menu Grid */
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
-        .menu-card { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .menu-card img { width: 100%; height: 130px; object-fit: cover; }
-        .card-info { padding: 10px; }
-        .price-tag { color: var(--gold); font-weight: bold; }
-
-        /* Footer */
-        .footer-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); padding: 15px; display: flex; justify-content: space-between; border-top: 1px solid var(--gold); box-sizing: border-box; }
+        /* Search & Menu */
+        .search-section { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .search-box input { width: 100%; padding: 15px 50px; border-radius: 15px; border: 1px solid #eee; background: white; box-shadow: var(--shadow); outline: none; box-sizing: border-box; }
         
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        
-        /* Modal Loading */
-        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; color: white; flex-direction: column; align-items: center; justify-content: center; }
-        
-        .cat-btn { background: var(--card); border: 1px solid var(--gold); color: var(--text); padding: 5px 12px; border-radius: 15px; font-size: 12px; cursor: pointer; }
-        .cat-btn.active { background: var(--gold); color: black; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; max-width: 900px; margin: 0 auto; }
+        .item-card { background: var(--white); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; position: relative; }
+        .item-card img { width: 100%; height: 140px; object-fit: cover; }
+        .item-info { padding: 15px; text-align: center; }
+        .item-info b { display: block; font-size: 15px; margin-bottom: 5px; color: var(--navy); }
+        .price { color: var(--gold); font-weight: bold; font-size: 14px; margin-bottom: 12px; display: block; }
+        .btn-add { background: var(--navy); color: white; border: none; padding: 10px; border-radius: 12px; cursor: pointer; width: 100%; font-size: 12px; transition: 0.3s; }
+        .btn-add:hover { background: var(--gold); }
 
-        input { padding: 12px; border-radius: 10px; border: 1px solid #444; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-        
-  /* Invoice Layout New Design */
-    #invoice-card {
-        background: #fff;
-        color: #1a1a1a;
-        padding: 0;
-        width: 450px; /* အနည်းငယ် ပိုကျယ်အောင် လုပ်ထားသည် */
-        font-family: 'Pyidaungsu', sans-serif;
-        border: 1px solid #ddd;
-        position: relative;
-        text-align: left;
-    }
+        /* Cart Floating Button */
+        .cart-fab { position: fixed; bottom: 35px; right: 25px; background: var(--navy); color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 35px rgba(0,31,63,0.3); cursor: pointer; z-index: 200; border: 2px solid var(--gold); }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--gold); color: white; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; }
 
-    .inv-header {
-        background-color: #001f3f; /* Dark Blue */
-        color: white;
-        padding: 30px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+        /* Drawer UI */
+        #drawer { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: var(--pearl); z-index: 300; transition: 0.5s; display: flex; flex-direction: column; }
+        #drawer.open { right: 0; }
+        .drawer-header { padding: 25px; display: flex; align-items: center; background: white; border-bottom: 1px solid #eee; }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
 
-    .inv-header h2 { margin: 0; font-size: 28px; letter-spacing: 2px; }
-    
-    .inv-details { padding: 20px; display: flex; justify-content: space-between; font-size: 13px; }
-    .inv-details b { color: #001f3f; }
+        .cart-row { background: white; padding: 20px; border-radius: 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .qty-input { width: 45px; padding: 5px; text-align: center; border: 1px solid #eee; border-radius: 8px; font-weight: bold; font-size: 14px; }
 
-    .inv-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    .inv-table th { background-color: #f1c40f; color: #000; padding: 10px; font-size: 14px; text-align: left; }
-    .inv-table td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .drawer-footer { padding: 25px; background: white; box-shadow: 0 -10px 40px rgba(0,0,0,0.04); border-radius: 30px 30px 0 0; }
+        .btn-confirm { width: 100%; background: var(--navy); color: white; border: none; padding: 18px; border-radius: 18px; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,31,63,0.2); }
 
-    .inv-summary { padding: 20px; text-align: right; }
-    .inv-summary table { width: 150px; margin-left: auto; }
-    .inv-total { font-size: 18px; color: #001f3f; font-weight: bold; border-top: 2px solid #001f3f; padding-top: 10px; }
-
-    .inv-footer { background-color: #001f3f; color: white; padding: 15px; font-size: 11px; display: flex; justify-content: space-between; }
-    
-    .status-stamp {
-        border: 3px solid #2ecc71; color: #2ecc71; padding: 5px 10px;
-        transform: rotate(-15deg); font-weight: bold; width: fit-content; margin: 10px 20px;
-    }
+        /* Voucher Design */
+        #voucher-card { background: white; width: 400px; padding: 0; color: #333; }
+        .v-header { background: var(--navy); color: white; padding: 35px 20px; text-align: center; }
+        .v-body { padding: 25px; }
+        .v-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .v-table th { border-bottom: 2px solid #eee; padding: 12px 5px; text-align: left; font-size: 12px; color: #888; text-transform: uppercase; }
+        .v-table td { padding: 15px 5px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div id="loader">
-    <i class="fas fa-spinner fa-spin fa-3x"></i>
-    <p style="margin-top:15px;">Voucher Downloading... ခဏစောင့်ပါ...</p>
+<div id="toast-msg"><i class="fas fa-info-circle"></i> <span id="toast-text"></span></div>
+
+<div id="loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
+    <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--navy)"></i>
+    <p style="margin-top:20px; font-weight:bold; color:var(--navy); letter-spacing:1px;">PROCESSING ORDER...</p>
 </div>
 
-<div class="top-bar">
-    <div class="controls">
-        <button class="btn-gold" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-        <h2 style="margin:0; color:var(--gold); font-size: 18px;">MYIN THAR ROAST</h2>
-        <select id="lang" onchange="changeLang()" style="padding: 5px; border-radius: 5px;">
-            <option value="my">မြန်မာ</option>
-            <option value="en">English</option>
-        </select>
-    </div>
-    <div class="search-box">
-        <i class="fas fa-search"></i>
+<div class="header"><h2>MYIN THAR ROAST</h2></div>
+
+<div class="search-section">
+    <div class="search-box" style="position:relative;">
+        <i class="fas fa-search" style="position:absolute; left:20px; top:18px; color:var(--gold);"></i>
         <input type="text" id="search" placeholder="Search menu..." onkeyup="filterMenu()">
     </div>
-    <div id="categories" style="display:flex; gap:5px; margin-top:10px; overflow-x: auto; padding-bottom:5px;">
-        <button class="cat-btn active" onclick="filterCat('All')">All</button>
-        <button class="cat-btn" onclick="filterCat('Chicken')">ကြက်ကင်</button>
-        <button class="cat-btn" onclick="filterCat('Other')">အခြား</button>
+</div>
+
+<div id="menu-grid" class="menu-grid"></div>
+
+<div class="cart-fab" onclick="toggleCart()">
+    <i class="fas fa-shopping-bag"></i>
+    <div class="badge" id="cart-badge">0</div>
+</div>
+
+<div id="drawer">
+    <div class="drawer-header">
+        <i class="fas fa-arrow-left" style="font-size:20px; cursor:pointer; color:var(--navy);" onclick="toggleCart()"></i>
+        <h3 style="flex:1; text-align:center; margin:0; color:var(--navy); letter-spacing:1px;">MY BASKET</h3>
+    </div>
+    <div class="drawer-body" id="cart-list"></div>
+    <div class="drawer-footer">
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold; font-size:18px;">
+            <span>TOTAL</span>
+            <span id="total-amt" style="color:var(--gold)">0 K</span>
+        </div>
+        <button class="btn-confirm" onclick="openCheckout()">NEXT STEP</button>
     </div>
 </div>
 
-<div id="menu-display" class="menu-grid"></div>
-
-<div class="footer-bar">
-    <div style="font-size: 18px;">Total: <span id="total-price" style="color:var(--gold);">0</span> K</div>
-    <button class="btn-gold" onclick="openCheckout()" id="checkout-btn">Checkout</button>
-</div>
-
-<div id="checkout-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:999; align-items:center; justify-content:center;">
-    <div style="background:var(--card); padding:25px; border-radius:20px; width:90%; max-width:400px; border:1px solid var(--gold);">
-        <h3 id="modal-title">ORDER DETAILS</h3>
-        <input type="text" id="cust-name" placeholder="Name">
-        <input type="tel" id="cust-phone" placeholder="Phone">
-        <input type="datetime-local" id="pickup-time">
-        
-        <button class="btn-gold" style="width:100%; margin-top:10px; background:#7360f2; color:white;" onclick="submitOrder('viber')">ORDER VIBER</button>
-        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#777; margin-top:15px; cursor:pointer;">Cancel</button>
+<div id="modal-checkout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+    <div style="background:white; padding:35px; border-radius:30px; width:85%; max-width:400px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+        <h3 style="margin-top:0; color:var(--navy); text-align:center; letter-spacing:1px;">DELIVERY DETAILS</h3>
+        <input type="text" id="cust-name" placeholder="သင့်အမည်" style="width:100%; padding:15px; margin:10px 0; border:1px solid #eee; border-radius:12px; outline:none; background:#fafafa;">
+        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:15px; margin:10px 0; border:1px solid #eee; border-radius:12px; outline:none; background:#fafafa;">
+        <p style="font-size:11px; color:#999; margin:10px 0 5px 5px;">PICKUP TIME</p>
+        <input type="datetime-local" id="pickup-time" style="width:100%; padding:15px; border:1px solid #eee; border-radius:12px; outline:none; background:#fafafa;">
+        <button class="btn-confirm" style="margin-top:25px;" onclick="validateAndSend()">PLACE ORDER</button>
+        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#bbb; margin-top:15px; cursor:pointer;">Cancel</button>
     </div>
 </div>
 
-<div id="voucher-wrap" style="position:absolute; left:-9999px;">
-    <div id="invoice-card">
-        <div class="inv-header">
-            <div>
-                <h2>INVOICE</h2>
-                <p style="margin:5px 0 0 0; font-size:12px; opacity:0.8;">Myin Thar Roast Premium</p>
-            </div>
-            <div style="text-align:right; font-size:12px;">
-                <p>Order ID: #<span id="v-id"></span></p>
-                <p>Date: <span id="v-date"></span></p>
-            </div>
+<div id="v-wrap" style="position:absolute; left:-9999px;">
+    <div id="voucher-card">
+        <div class="v-header">
+            <h1 style="margin:0; letter-spacing:5px;">VOUCHER</h1>
+            <p style="margin:5px 0 0 0; opacity:0.7; font-size:12px;">မြင်သာကြက်ကင်</p>
         </div>
-
-        <div class="inv-details">
-            <div>
-                <p><b>Bill To:</b></p>
-                <p id="v-name" style="font-size:16px; margin:5px 0;"></p>
-                <p id="v-phone"></p>
+        <div class="v-body">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#666;">
+                <div><b>CUSTOMER</b><br><span id="v-n" style="color:#000; font-size:14px;"></span><br><span id="v-p"></span></div>
+                <div style="text-align:right;"><b>ORDER ID</b><br>#<span id="v-id" style="color:#000; font-size:14px;"></span><br><span id="v-d"></span></div>
             </div>
-            <div style="text-align:right;">
-                <p><b>Payment Method:</b></p>
-                <p>Cash on Pickup</p>
-            </div>
-        </div>
-
-        <table class="inv-table">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody id="v-items-table">
-                </tbody>
-        </table>
-
-        <div class="inv-summary">
-            <table>
-                <tr>
-                    <td style="text-align:left;">Subtotal:</td>
-                    <td id="v-subtotal"></td>
-                </tr>
-                <tr class="inv-total">
-                    <td style="text-align:left;">Total:</td>
-                    <td><span id="v-total"></span> K</td>
-                </tr>
+            <table class="v-table">
+                <thead><tr><th>Description</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
+                <tbody id="v-rows"></tbody>
             </table>
+            <div style="text-align:right; margin-top:30px;">
+                <p style="margin:0; font-size:12px; color:#888;">Grand Total</p>
+                <h2 style="margin:0; color:var(--navy); font-size:24px;" id="v-tot"></h2>
+            </div>
         </div>
-
-        <div class="status-stamp">PENDING PICKUP</div>
-
-        <div class="inv-footer">
-            <div>
-                <p>📍 မြင်သာ၊ တောင်ဥက္ကလာပမြို့နယ်</p>
-                <p>📞 09 767 287 345</p>
-            </div>
-            <div style="text-align:right;">
-                <p>Thank you for your order!</p>
-                <p>ပြန်လည်အားပေးမှုကို ကျေးဇူးတင်ပါသည်</p>
-            </div>
+        <div style="background:#f8f9fa; padding:25px; text-align:center; font-size:11px; border-top:1px solid #eee;">
+            📍 မြင်သာဈေးရှေ့ | 📞 09 767 287 345
         </div>
     </div>
 </div>
 
 <script>
-    const SB_URL = "https://iogpnvljnhsxuzzdltpb.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NTk2MDYsImV4cCI6MjA4MjMzNTYwNn0.Kxy3QW1gq-J-tzUF2fxQd0l989Wr7BI2uRTbWDTNL6k";
-    const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyueuaZoIKZDi_W4CYhrJw6DDb1KH48zcSGT6OHGWVdDkEx6SsAqlYB9NHb0m2em40m/exec";
+    const TG_TOKEN = "8215695761:AAF1qDjAJn7gjiHyzf8t7W6c8e51cim98sU";
+    const TG_ID = "8116152317";
 
-    const MY_PHONE = "959767287345";
     const menuData = [
-    { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: '' },
-    { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: '' },
-    { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
-    { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
-    { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
-    { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
-    { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000, category: 'အရိုး', image: '' },
-    { id: 8, name: 'အူ', price: 500, category: 'ကလီစာ', image: '' },
-    { id: 9, name: 'ခေါင်း', price: 300, category: 'အရိုး', image: '' },
-    { id: 10, name: 'လည် ချောင်း', price: 300, category: 'အရိုး', image: '' },
-    { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
-    { id: 12, name: 'ခြေထောက်', price: 300, category: 'အရိုး', image: '' },
-    { id: 13, name: 'ခြေထောက်(CP)', price: 700, category: 'အရိုး', image: '' },
-    { id: 14, name: 'လက်မောင်းလုံး', price: 1000, category: 'အသား', image: '' },
-    { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
-    { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: '' },
-    { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: '' },
-    { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: '' },
-    { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: '' }
-];
-    let cart = {}; let allItems = []; let currentCat = 'All';
+        { name: 'ကြက်ပေါင်', price: 4000, img: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?q=80&w=500&auto=format&fit=crop' },
+        { name: 'ကြက်ရင်အုံ', price: 4000, img: '' },
+        { name: 'ဆိတ်သားကင်', price: 1500, img: '' },
+        { name: 'အသား ချောင်း', price: 800, img: '' },
+        { name: 'အရေခွံ', price: 500, img: '' },
+        { name: 'အတောင်ပျံ', price: 500, img: '' },
+        { name: 'အသည်းမြစ်', price: 500, img: '' },
+        { name: 'အဆီပူး', price: 800, img: '' }
+    ];
 
-    window.onload = () => { fetchMenu(); loadCart(); };
+    let cart = {};
 
-    async function fetchMenu() {
-        const { data } = await _supabase.from('menu_items').select('*');
-        allItems = data || [];
-        renderMenu(allItems);
+    function showToast(msg) {
+        const toast = document.getElementById('toast-msg');
+        document.getElementById('toast-text').innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     function renderMenu(items) {
-        document.getElementById('menu-display').innerHTML = items.map(i => `
-            <div class="menu-card">
-                <img src="${i.image_url}">
-                <div class="card-info">
-                    <div style="font-size:14px; height:35px; overflow:hidden;">${i.name}</div>
-                    <div class="price-tag">${i.price.toLocaleString()} K</div>
-                    <div style="display:flex; justify-content:space-between; margin-top:5px;">
-                        <button onclick="updateQty('${i.name}', -1, ${i.price})" style="width:25px;">-</button>
-                        <span id="qty-${i.name}">${cart[i.name] || 0}</span>
-                        <button onclick="updateQty('${i.name}', 1, ${i.price})" style="width:25px; background:var(--gold); border:none;">+</button>
-                    </div>
+        document.getElementById('menu-grid').innerHTML = items.map(i => `
+            <div class="item-card">
+                <img src="${i.img || 'https://via.placeholder.com/150'}">
+                <div class="item-info">
+                    <b>${i.name}</b>
+                    <span class="price">${i.price} K</span>
+                    <button class="btn-add" onclick="add('${i.name}')">Add to Cart</button>
                 </div>
             </div>
         `).join('');
     }
 
-    function updateQty(name, change, price) {
-        cart[name] = (cart[name] || 0) + change;
-        if (cart[name] <= 0) delete cart[name];
-        document.getElementById(`qty-${name}`).innerText = cart[name] || 0;
-        updateTotal();
-        saveCart();
+    function add(name) {
+        cart[name] = (cart[name] || 0) + 1;
+        update();
+        showToast(name + " ထည့်လိုက်ပါပြီ");
     }
 
-    function updateTotal() {
-        let total = 0;
-        for(let name in cart) {
-            let item = allItems.find(i => i.name === name);
-            if(item) total += cart[name] * item.price;
+    function change(name, v) {
+        v = parseInt(v);
+        if(v <= 0) delete cart[name];
+        else cart[name] = v;
+        update();
+    }
+
+    function update() {
+        let count = 0, total = 0, html = "";
+        for(let k in cart) {
+            let item = menuData.find(m => m.name === k);
+            let sub = item.price * cart[k];
+            count += cart[k]; total += sub;
+            html += `
+                <div class="cart-row">
+                    <div style="flex:1"><b>${k}</b><br><small style="color:var(--gold)">${item.price} K</small></div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fas fa-minus-circle" onclick="change('${k}', ${cart[k]-1})" style="cursor:pointer; color:#ccc;"></i>
+                        <input type="number" class="qty-input" value="${cart[k]}" onchange="change('${k}', this.value)">
+                        <i class="fas fa-plus-circle" onclick="change('${k}', ${cart[k]+1})" style="cursor:pointer; color:var(--navy);"></i>
+                    </div>
+                </div>
+            `;
         }
-        document.getElementById('total-price').innerText = total.toLocaleString();
+        document.getElementById('cart-badge').innerText = count;
+        document.getElementById('total-amt').innerText = total.toLocaleString() + " K";
+        document.getElementById('cart-list').innerHTML = html || "<p style='text-align:center; color:#999; margin-top:50px;'>Your basket is empty</p>";
     }
 
-    // Save/Load Cart to prevent loss on refresh
-    function saveCart() { localStorage.setItem('roast_cart', JSON.stringify(cart)); }
-    function loadCart() {
-        let saved = localStorage.getItem('roast_cart');
-        if(saved) { cart = JSON.parse(saved); updateTotal(); }
+    function toggleCart() { document.getElementById('drawer').classList.toggle('open'); }
+    function openCheckout() { if(Object.keys(cart).length === 0) return showToast("ပစ္စည်းအရင်ရွေးပါ"); document.getElementById('modal-checkout').style.display = 'flex'; }
+    function closeCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+
+    async function validateAndSend() {
+        const n = document.getElementById('cust-name').value;
+        const p = document.getElementById('cust-phone').value;
+        const t = document.getElementById('pickup-time').value;
+        
+        if(!n || !p) return showToast("အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
+
+        document.getElementById('loader').style.display = 'flex';
+        let totalVal = 0, itemsArr = [], vRows = "";
+        const oId = Math.floor(1000 + Math.random() * 9000);
+
+        for(let k in cart) {
+            let item = menuData.find(m => m.name === k);
+            let sub = item.price * cart[k];
+            totalVal += sub;
+            itemsArr.push(`${k} (${cart[k]} ခု)`);
+            vRows += `<tr><td>${k}</td><td style="text-align:center;">${cart[k]}</td><td style="text-align:right;">${sub.toLocaleString()}</td></tr>`;
+        }
+
+        document.getElementById('v-n').innerText = n;
+        document.getElementById('v-p').innerText = p;
+        document.getElementById('v-id').innerText = oId;
+        document.getElementById('v-d').innerText = new Date().toLocaleString();
+        document.getElementById('v-rows').innerHTML = vRows;
+        document.getElementById('v-tot').innerText = totalVal.toLocaleString() + " K";
+
+        const tgMsg = `💎 *PREMIUM ORDER RECEIVED* (#${oId})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Ordered Items:*\n${itemsArr.join("\n")}\n\n💰 *Total: ${totalVal} K*`;
+
+        try {
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: n, phone: p, items: itemsArr.join(", "), total: totalVal }) });
+            await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TG_ID, text: tgMsg, parse_mode: 'Markdown' })
+            });
+
+            html2canvas(document.querySelector("#voucher-card")).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Voucher_${oId}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                document.getElementById('loader').style.display = 'none';
+                showToast("Order တင်ခြင်း အောင်မြင်ပါသည်။");
+                showToast("ဘောက်ချာ downloadဆွဲပြီးပါပြီ။");
+                setTimeout(() => location.reload(), 2000);
+            });
+        } catch(e) { 
+            document.getElementById('loader').style.display = 'none';
+            showToast("Error ဖြစ်သွားပါသည်။"); 
+        }
     }
 
     function filterMenu() {
         let q = document.getElementById('search').value.toLowerCase();
-        let filtered = allItems.filter(i => i.name.toLowerCase().includes(q));
-        renderMenu(filtered);
+        renderMenu(menuData.filter(i => i.name.toLowerCase().includes(q)));
     }
 
-    function filterCat(cat) {
-        currentCat = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        if(cat === 'All') renderMenu(allItems);
-        else renderMenu(allItems.filter(i => i.category === cat));
-    }
-
-    function toggleTheme() { document.body.classList.toggle('light-mode'); }
-
-    function openCheckout() { document.getElementById('checkout-modal').style.display = 'flex'; }
-    function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
-
-   async function submitOrder(platform) {
-    const name = document.getElementById('cust-name').value;
-    const phone = document.getElementById('cust-phone').value;
-    const timeInput = document.getElementById('pickup-time').value;
-    const total = document.getElementById('total-price').innerText;
-
-    if(!name || !phone) return alert("ဝယ်သူအမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ။");
-    
-    let items = [];
-    for(let k in cart) items.push(`${k} (${cart[k]} ခု)`);
-    if(items.length === 0) return alert("မီနူး ရွေးချယ်ပေးပါ။");
-
-    // English Format Date & Time
-    let dateObj = timeInput ? new Date(timeInput) : new Date();
-    let formattedTime = dateObj.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-    let formattedDate = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-
-    // Show Loading
-    document.getElementById('loader').style.display = 'flex';
-
-    // 1. Save to Supabase
-    const { data, error } = await _supabase.from('orders').insert([{
-        customer_name: name, phone: phone, items: items.join(", "), total: total, status: 'pending'
-    }]).select();
-
-    if(!error) {
-        const orderId = data[0].id;
-        
-       // Voucher Info injection
-document.getElementById('v-id').innerText = orderId;
-document.getElementById('v-name').innerText = name;
-document.getElementById('v-phone').innerText = "Phone: " + phone;
-document.getElementById('v-date').innerText = formattedDate;
-document.getElementById('v-total').innerText = total;
-document.getElementById('v-subtotal').innerText = total + " K";
-
-// Table Items Injection
-let tableHtml = "";
-let count = 1;
-for(let k in cart) {
-    let itemPrice = allItems.find(i => i.name === k).price;
-    tableHtml += `
-        <tr>
-            <td>${count++}</td>
-            <td>${k}</td>
-            <td>${cart[k]}</td>
-            <td>${(itemPrice * cart[k]).toLocaleString()} K</td>
-        </tr>`;
-}
-document.getElementById('v-items-table').innerHTML = tableHtml;
-        // 3. Generate Voucher & Messaging
-        html2canvas(document.querySelector("#invoice-card")).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Roast_Voucher_${orderId}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-            
-            // Order Message Format
-            const msg = `🍗 *MYIN THAR ROAST (Order #${orderId})*\n` +
-                        `━━━━━━━━━━━━━━━━━━\n` +
-                        `👤 *Customer:* ${name}\n` +
-                        `📞 *Phone:* ${phone}\n` +
-                        `📅 *Pick-up:* ${formattedDate} | ${formattedTime}\n` +
-                        `━━━━━━━━━━━━━━━━━━\n` +
-                        `📦 *Items:*\n${items.map(i => "▪️ " + i).join("\n")}\n\n` +
-                        `💰 *Total:* *${total} MMK*\n` +
-                        `━━━━━━━━━━━━━━━━━━\n` +
-                        `⚠️ After ordering, please call 09767287345.`;
-
-            // Reset Everything
-            cart = {};
-            localStorage.removeItem('roast_cart');
-            renderMenu(allItems);
-            updateTotal();
-            document.getElementById('loader').style.display = 'none';
-            closeCheckout();
-
-            // 4. Messaging Logic
-            if (platform === 'viber') {
-                navigator.clipboard.writeText(msg).then(() => {
-                    alert("Voucher ကို ဒေါင်းလုဒ်လုပ်နေပါသည်။ အော်ဒါစာသားကို Copy ယူပြီးပါပြီ။ Viber ပွင့်လာပါက ဆိုင်ရှင် Chat ထဲတွင် Paste လုပ်၍ ပို့ပေးပါ။");
-                    window.location.href = `viber://contact?number=${MY_PHONE}`;
-                }).catch(err => {
-                    // Backup if clipboard fails
-                    window.location.href = `viber://contact?number=${MY_PHONE}&draft=${encodeURIComponent(msg)}`;
-                });
-            } else {
-                // Telegram logic
-                const teleMsg = msg.replace(/\*/g, ''); // Remove stars for cleaner Telegram link
-                window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(teleMsg)}`;
-            }
-        });
-    } else {
-        alert("Error saving order. Please check internet.");
-        document.getElementById('loader').style.display = 'none';
-    }
-}// submitOrder function ရဲ့ Supabase insert ပြီးတဲ့နေရာမှာ ထည့်ပါ
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyueuaZoIKZDi_W4CYhrJw6DDb1KH48zcSGT6OHGWVdDkEx6SsAqlYB9NHb0m2em40m/exec";
-
-const orderData = {
-    name: name,
-    phone: phone,
-    time: formattedDate + " " + formattedTime,
-    items: items.join(", "),
-    total: total
-};
-
-// Google Sheet သို့ ပို့ခြင်း
-fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    cache: 'no-cache',
-    body: JSON.stringify(orderData)
-});
-    
-    function changeLang() {
-        let l = document.getElementById('lang').value;
-        document.getElementById('search').placeholder = (l==='en') ? "Search..." : "ရှာဖွေရန်...";
-        document.getElementById('checkout-btn').innerText = (l==='en') ? "Checkout" : "အော်ဒါတင်မည်";
-    }
+    window.onload = () => renderMenu(menuData);
 </script>
 </body>
 </html>
