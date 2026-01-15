@@ -68,10 +68,15 @@
 
 <div id="toast-msg"><i class="fas fa-check-circle"></i> <span id="toast-text"></span></div>
 
-<div id="loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
+<div id="loader" style="...">
     <i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--navy)"></i>
-    <p style="margin-top:15px; font-size:12px; font-weight:bold; color:var(--navy);">PLEASE WAIT...</p>
+    <p style="margin-top:15px; font-size:14px; font-weight:bold; color:var(--navy); text-align:center;">
+        ခဏစောင့်ပေးပါ... <br>
+        <span style="font-size:12px; color:var(--gold);">ဘောက်ချာထုတ်ပေးနေ၍ ၅ စက္ကန့်ခန့် ကြာနိုင်ပါသည်</span><br>
+        <span id="wait-timer" style="font-size:18px;">5</span>
+    </p>
 </div>
+    
 
 <div class="header"><h2>MYIN THAR ROAST</h2></div>
 
@@ -228,8 +233,15 @@
         if(!n || !p) return showToast("အချက်အလက်ဖြည့်ပါ");
 
         document.getElementById('loader').style.display = 'flex';
-        let totalVal = 0, itemsArr = [], vRows = "";
-        const oId = Math.floor(1000 + Math.random() * 9000);
+
+    // ဒီ Timer Code လေးကို ထည့်ပါ
+    let timeLeft = 5;
+    const timerElem = document.getElementById('wait-timer');
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerElem.innerText = timeLeft;
+        if (timeLeft <= 0) clearInterval(countdown);
+    }, 1000);
 
         for(let k in cart) {
             let item = menuData.find(m => m.name === k);
