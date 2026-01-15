@@ -2,123 +2,198 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <title>🍗 Admin Dashboard - မြင်သာကြက်ကင်</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Pyidaungsu', sans-serif; background: #f1f5f9; }</style>
+    <style>
+        body { font-family: 'Pyidaungsu', sans-serif; background: #f3f4f6; }
+        .order-new { background: #ffffff !important; border-left: 8px solid #ef4444 !important; font-weight: bold; }
+        .order-read { background: #f9fafb !important; opacity: 0.8; border-left: 8px solid #cbd5e1 !important; }
+        .new-badge { background: #ef4444; color: white; padding: 2px 10px; border-radius: 50px; font-size: 10px; font-weight: 900; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        th { background: #1e293b !important; color: white !important; font-size: 12px; padding: 15px !important; text-transform: uppercase; }
+        #v-temp { position: fixed; left: -9999px; background: white; width: 350px; padding: 25px; }
+    </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-2 md:p-6">
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 text-white">
-        <div class="bg-blue-600 p-6 rounded-2xl shadow-lg">
-            <h3 class="text-lg opacity-80">စုစုပေါင်း အော်ဒါ</h3>
-            <p id="total-orders" class="text-3xl font-bold">0</p>
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-6 bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-black text-slate-800">MYIN THAR ROAST</h1>
+                <p id="status-text" class="text-[10px] font-bold text-blue-500 uppercase">Connecting to Sheet...</p>
+            </div>
+            <button onclick="fetchAllData()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[11px] font-black hover:bg-blue-700 shadow-lg active:scale-95">
+                🔄 REFRESH NOW
+            </button>
         </div>
-        <div class="bg-green-600 p-6 rounded-2xl shadow-lg">
-            <h3 class="text-lg opacity-80">စုစုပေါင်း ရောင်းရငွေ</h3>
-            <p id="total-revenue" class="text-3xl font-bold">0 K</p>
-        </div>
-        <div class="bg-orange-500 p-6 rounded-2xl shadow-lg">
-            <h3 class="text-lg opacity-80">ယနေ့ အော်ဒါသစ်</h3>
-            <p id="new-orders-count" class="text-3xl font-bold">0</p>
-        </div>
-        <div class="bg-purple-600 p-6 rounded-2xl shadow-lg">
-            <h3 class="text-lg opacity-80">ဖောက်သည်ဦးရေ</h3>
-            <p id="total-customers" class="text-3xl font-bold">0</p>
-        </div>
-    </div>
 
-    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-6 border-b flex justify-between items-center">
-            <h2 class="text-xl font-bold text-slate-800">📦 Recent Orders</h2>
-            <button onclick="fetchOrders()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200">🔄 Refresh</button>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-3xl border">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Total Orders</p>
+                <h2 id="stat-orders" class="text-2xl font-black">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-b-4 border-b-blue-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Revenue</p>
+                <h2 id="stat-revenue" class="text-2xl font-black">0 K</h2>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Customers</p>
+                <h2 id="stat-users" class="text-2xl font-black">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-b-4 border-b-red-500">
+                <p class="text-[10px] font-bold text-red-500 uppercase">Unread</p>
+                <h2 id="stat-new" class="text-2xl font-black text-red-500">0</h2>
+            </div>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 text-slate-500 text-sm uppercase">
-                    <tr>
-                        <th class="p-4">Customer</th>
-                        <th class="p-4">Items</th>
-                        <th class="p-4">Total</th>
-                        <th class="p-4">Time</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="order-table-body">
+
+        <div class="mb-6">
+            <input type="text" id="searchInput" oninput="searchOrders()" placeholder="နာမည်၊ ဖုန်း သို့မဟုတ် ပစ္စည်းဖြင့် ရှာရန်..." 
+                   class="w-full p-4 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 80px;">Status</th>
+                            <th>Customer</th>
+                            <th>Order Details (Items)</th>
+                            <th>Total Amount</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-body" class="divide-y divide-slate-100">
+                        <tr><td colspan="5" class="p-10 text-center text-slate-400">Loading data... Please wait.</td></tr>
                     </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 
-    <audio id="order-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <div id="v-temp">
+        <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:15px;">
+            <h2 style="margin:0; font-size:22px; font-weight:900;">MYIN THAR ROAST</h2>
+            <p style="margin:5px 0 0 0; font-size:12px;">ORDER CONFIRMATION</p>
+        </div>
+        <div id="v-items" style="margin:20px 0; font-size:15px; line-height:1.6;"></div>
+        <div style="text-align:right; font-size:20px; font-weight:900; border-top:3px solid #000; padding-top:10px;">
+            TOTAL: <span id="v-total"></span> K
+        </div>
+    </div>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyueuaZoIKZDi_W4CYhrJw6DDb1KH48zcSGT6OHGWVdDkEx6SsAqlYB9NHb0m2em40m/exec";
-        let lastOrderCount = 0;
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFy4xiu08UDQSBiTpo4DTH2XFbSAsCacSdv_ZtLtV93zNHWEPwkH2CKZqYmu3g2YIu/exec";
+        let allData = [];
+        let readOrders = JSON.parse(localStorage.getItem('readOrders') || '[]');
 
-        async function fetchOrders() {
+        async function fetchAllData() {
+            const statusLabel = document.getElementById('status-text');
             try {
-                const response = await fetch(SCRIPT_URL);
-                const orders = await response.json();
-                renderDashboard(orders);
-                
-                // Check for new orders to play sound
-                if (orders.length > lastOrderCount && lastOrderCount !== 0) {
-                    document.getElementById('order-sound').play();
-                    alert("New Order Received! 🔔");
+                statusLabel.innerText = "Connecting...";
+                const res = await fetch(SCRIPT_URL);
+                const data = await res.json();
+
+                if (allData.length > 0 && data.length > allData.length) {
+                    document.getElementById('notif-sound').play().catch(e => {});
                 }
-                lastOrderCount = orders.length;
-            } catch (e) { console.error("Error fetching data"); }
+
+                allData = data;
+                updateStats(allData);
+                renderTable(allData);
+                statusLabel.innerText = "Sync Success: " + new Date().toLocaleTimeString();
+            } catch (e) {
+                statusLabel.innerText = "Sync Failed!";
+                console.error(e);
+            }
         }
 
-        function renderDashboard(orders) {
-            let totalRev = 0;
-            let customers = new Set();
-            let tableHtml = "";
+        // ဂဏန်းမဟုတ်တာပါရင် ဂဏန်းပဲပြောင်းတဲ့ function
+        function cleanPrice(val) {
+            if (!val) return 0;
+            // ၁၈,၀၀၀ K ထဲကနေ ၁၈၀၀၀ ပဲယူမယ်
+            let num = String(val).replace(/[^0-9]/g, "");
+            return num ? parseInt(num) : 0;
+        }
 
-            orders.reverse().forEach(order => {
-                totalRev += Number(order.total || 0);
-                customers.add(order.phone);
-                
-                const statusColor = order.status === "Ready" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700";
+        function updateStats(data) {
+            let rev = 0; let unread = 0; const users = new Set();
+            data.forEach((o, index) => {
+                rev += cleanPrice(o.total);
+                if (o.phone) users.add(o.phone);
+                // Row ID မပါတော့တဲ့အတွက် index ကိုသုံးပြီး read/unread မှတ်မယ်
+                if (!readOrders.includes("id_"+index)) unread++;
+            });
+            document.getElementById('stat-orders').innerText = data.length;
+            document.getElementById('stat-revenue').innerText = rev.toLocaleString() + " K";
+            document.getElementById('stat-users').innerText = users.size;
+            document.getElementById('stat-new').innerText = unread;
+        }
 
-                tableHtml += `
-                    <tr class="border-b hover:bg-slate-50 transition">
-                        <td class="p-4 font-bold text-slate-700">${order.name}<br><small class="text-slate-400 font-normal">${order.phone}</small></td>
-                        <td class="p-4 text-sm text-slate-600">${order.items}</td>
-                        <td class="p-4 font-bold text-blue-600">${Number(order.total).toLocaleString()} K</td>
-                        <td class="p-4 text-slate-500">${order.time}</td>
-                        <td class="p-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${order.status || 'Pending'}</span>
+        function markAsRead(uniqueId) {
+            if (!readOrders.includes(uniqueId)) {
+                readOrders.push(uniqueId);
+                localStorage.setItem('readOrders', JSON.stringify(readOrders));
+                renderTable(allData);
+                updateStats(allData);
+            }
+        }
+
+        function renderTable(data) {
+            const body = document.getElementById('order-body');
+            // အော်ဒါအသစ်တွေကို အပေါ်တင်မယ်
+            body.innerHTML = [...data].map((o, idx) => ({...o, originalIdx: idx})).reverse().map(o => {
+                const uniqueId = "id_" + o.originalIdx;
+                const isRead = readOrders.includes(uniqueId);
+                const price = cleanPrice(o.total);
+
+                return `
+                    <tr class="transition cursor-pointer border-b ${isRead ? 'order-read' : 'order-new'}" onclick="markAsRead('${uniqueId}')">
+                        <td class="p-5 text-center">${isRead ? '' : '<span class="new-badge">NEW</span>'}</td>
+                        <td class="p-5">
+                            <div class="font-bold text-slate-800">${o.name || 'No Name'}</div>
+                            <div class="text-blue-500 text-[10px] font-bold">${o.phone || '-'}</div>
                         </td>
-                        <td class="p-4 flex gap-2">
-                            <button onclick="downloadVoucher('${order.name}', '${order.items}', ${order.total})" class="text-xs bg-slate-800 text-white px-3 py-2 rounded-lg">Voucher</button>
-                            ${order.status !== 'Ready' ? `<button onclick="updateStatus(${order.rowId})" class="text-xs bg-green-600 text-white px-3 py-2 rounded-lg">Mark Ready</button>` : ''}
+                        <td class="p-5 text-sm text-slate-600">${o.items || '-'}</td>
+                        <td class="p-5 font-black text-slate-900">${price.toLocaleString()} K</td>
+                        <td class="p-5 text-center">
+                            <button onclick="event.stopPropagation(); markAsRead('${uniqueId}'); printVoucher('${o.name}','${o.items}','${price}')" 
+                                    class="bg-slate-900 text-white px-5 py-2 rounded-xl text-[10px] font-black hover:bg-blue-600 transition">
+                                VOUCHER
+                            </button>
                         </td>
                     </tr>
                 `;
-            });
-
-            document.getElementById('order-table-body').innerHTML = tableHtml;
-            document.getElementById('total-orders').innerText = orders.length;
-            document.getElementById('total-revenue').innerText = totalRev.toLocaleString() + " K";
-            document.getElementById('total-customers').innerText = customers.size;
+            }).join('');
         }
 
-        function downloadVoucher(name, items, total) {
-            const content = `🍗 မြင်သာကြက်ကင်\n------------------\nCustomer: ${name}\nItems: ${items}\nTotal: ${total} Ks\n------------------\nThank you!`;
-            const blob = new Blob([content], {type: "text/plain"});
+        function searchOrders() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allData.filter(o => 
+                (o.name && o.name.toLowerCase().includes(term)) || 
+                (o.phone && o.phone.includes(term)) || 
+                (o.items && o.items.toLowerCase().includes(term))
+            );
+            renderTable(filtered);
+        }
+
+        async function printVoucher(n, i, t) {
+            document.getElementById('v-items').innerHTML = `<b>Name:</b> ${n}<br><br>${i.split(',').join('<br>')}`;
+            document.getElementById('v-total').innerText = Number(t).toLocaleString();
+            const canvas = await html2canvas(document.querySelector("#v-temp"), { scale: 3 });
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Voucher_${name}.txt`;
+            link.download = `Voucher_${n}.png`;
+            link.href = canvas.toDataURL();
             link.click();
         }
 
-        // Auto Refresh every 30 seconds
-        setInterval(fetchOrders, 30000);
-        window.onload = fetchOrders;
+        window.onload = fetchAllData;
+        setInterval(fetchAllData, 120000);
     </script>
 </body>
 </html>
-
