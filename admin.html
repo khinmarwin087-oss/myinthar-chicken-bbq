@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <title>🍗 Admin Dashboard - မြင်သာကြက်ကင်</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Pyidaungsu', sans-serif; background: #f1f5f9; }</style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 text-white">
+        <div class="bg-blue-600 p-6 rounded-2xl shadow-lg">
+            <h3 class="text-lg opacity-80">စုစုပေါင်း အော်ဒါ</h3>
+            <p id="total-orders" class="text-3xl font-bold">0</p>
+        </div>
+        <div class="bg-green-600 p-6 rounded-2xl shadow-lg">
+            <h3 class="text-lg opacity-80">စုစုပေါင်း ရောင်းရငွေ</h3>
+            <p id="total-revenue" class="text-3xl font-bold">0 K</p>
+        </div>
+        <div class="bg-orange-500 p-6 rounded-2xl shadow-lg">
+            <h3 class="text-lg opacity-80">ယနေ့ အော်ဒါသစ်</h3>
+            <p id="new-orders-count" class="text-3xl font-bold">0</p>
+        </div>
+        <div class="bg-purple-600 p-6 rounded-2xl shadow-lg">
+            <h3 class="text-lg opacity-80">ဖောက်သည်ဦးရေ</h3>
+            <p id="total-customers" class="text-3xl font-bold">0</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h2 class="text-xl font-bold text-slate-800">📦 Recent Orders</h2>
+            <button onclick="fetchOrders()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200">🔄 Refresh</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-500 text-sm uppercase">
+                    <tr>
+                        <th class="p-4">Customer</th>
+                        <th class="p-4">Items</th>
+                        <th class="p-4">Total</th>
+                        <th class="p-4">Time</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="order-table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <audio id="order-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyueuaZoIKZDi_W4CYhrJw6DDb1KH48zcSGT6OHGWVdDkEx6SsAqlYB9NHb0m2em40m/exec";
+        let lastOrderCount = 0;
+
+        async function fetchOrders() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const orders = await response.json();
+                renderDashboard(orders);
+                
+                // Check for new orders to play sound
+                if (orders.length > lastOrderCount && lastOrderCount !== 0) {
+                    document.getElementById('order-sound').play();
+                    alert("New Order Received! 🔔");
+                }
+                lastOrderCount = orders.length;
+            } catch (e) { console.error("Error fetching data"); }
+        }
+
+        function renderDashboard(orders) {
+            let totalRev = 0;
+            let customers = new Set();
+            let tableHtml = "";
+
+            orders.reverse().forEach(order => {
+                totalRev += Number(order.total || 0);
+                customers.add(order.phone);
+                
+                const statusColor = order.status === "Ready" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700";
+
+                tableHtml += `
+                    <tr class="border-b hover:bg-slate-50 transition">
+                        <td class="p-4 font-bold text-slate-700">${order.name}<br><small class="text-slate-400 font-normal">${order.phone}</small></td>
+                        <td class="p-4 text-sm text-slate-600">${order.items}</td>
+                        <td class="p-4 font-bold text-blue-600">${Number(order.total).toLocaleString()} K</td>
+                        <td class="p-4 text-slate-500">${order.time}</td>
+                        <td class="p-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${order.status || 'Pending'}</span>
+                        </td>
+                        <td class="p-4 flex gap-2">
+                            <button onclick="downloadVoucher('${order.name}', '${order.items}', ${order.total})" class="text-xs bg-slate-800 text-white px-3 py-2 rounded-lg">Voucher</button>
+                            ${order.status !== 'Ready' ? `<button onclick="updateStatus(${order.rowId})" class="text-xs bg-green-600 text-white px-3 py-2 rounded-lg">Mark Ready</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('order-table-body').innerHTML = tableHtml;
+            document.getElementById('total-orders').innerText = orders.length;
+            document.getElementById('total-revenue').innerText = totalRev.toLocaleString() + " K";
+            document.getElementById('total-customers').innerText = customers.size;
+        }
+
+        function downloadVoucher(name, items, total) {
+            const content = `🍗 မြင်သာကြက်ကင်\n------------------\nCustomer: ${name}\nItems: ${items}\nTotal: ${total} Ks\n------------------\nThank you!`;
+            const blob = new Blob([content], {type: "text/plain"});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Voucher_${name}.txt`;
+            link.click();
+        }
+
+        // Auto Refresh every 30 seconds
+        setInterval(fetchOrders, 30000);
+        window.onload = fetchOrders;
+    </script>
+</body>
+</html>
+
