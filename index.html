@@ -3,100 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MYIN THAR ROAST - Luxury Creation</title>
+    <title>MYIN THAR ROAST - Premium</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
             --gold: #B8860B; --navy: #001F3F; --pearl: #FDFDFD; 
-            --white: #FFFFFF; --text: #2C3E50; --shadow: 0 10px 40px rgba(0,0,0,0.06);
+            --white: #FFFFFF; --text: #2C3E50; --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--pearl); color: var(--text); margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--pearl); color: var(--text); margin: 0; overflow-x: hidden; }
 
-        /* Custom Notification Design */
+        /* Toast Notification (Fixed Size & Logic) */
         #toast-msg {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: var(--navy); color: white; padding: 15px 30px; border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; gap: 10px; font-weight: 500;
+            background: var(--navy); color: white; padding: 10px 20px; border-radius: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 2000; transition: 0.4s;
+            display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 180px; justify-content: center;
         }
-        #toast-msg.show { top: 30px; }
+        #toast-msg.show { top: 20px; }
 
-        /* Header */
-        .header { background: var(--white); padding: 25px; text-align: center; box-shadow: var(--shadow); position: sticky; top:0; z-index:100; border-bottom: 2px solid #f0f0f0; }
-        .header h2 { margin: 0; color: var(--navy); letter-spacing: 3px; font-weight: 800; text-transform: uppercase; font-size: 20px; }
+        /* Compact Header */
+        .header { background: var(--white); padding: 15px; text-align: center; box-shadow: var(--shadow); position: sticky; top:0; z-index:100; }
+        .header h2 { margin: 0; color: var(--navy); letter-spacing: 2px; font-size: 18px; text-transform: uppercase; }
 
-        /* Search & Menu */
-        .search-section { padding: 20px; max-width: 600px; margin: 0 auto; }
-        .search-box input { width: 100%; padding: 15px 50px; border-radius: 15px; border: 1px solid #eee; background: white; box-shadow: var(--shadow); outline: none; box-sizing: border-box; }
+        /* Search Section */
+        .search-section { padding: 15px; max-width: 500px; margin: 0 auto; }
+        .search-box input { width: 100%; padding: 12px 40px; border-radius: 12px; border: 1px solid #eee; outline: none; box-sizing: border-box; font-size: 14px; }
         
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; max-width: 900px; margin: 0 auto; }
-        .item-card { background: var(--white); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; position: relative; }
-        .item-card img { width: 100%; height: 140px; object-fit: cover; }
-        .item-info { padding: 15px; text-align: center; }
-        .item-info b { display: block; font-size: 15px; margin-bottom: 5px; color: var(--navy); }
-        .price { color: var(--gold); font-weight: bold; font-size: 14px; margin-bottom: 12px; display: block; }
-        .btn-add { background: var(--navy); color: white; border: none; padding: 10px; border-radius: 12px; cursor: pointer; width: 100%; font-size: 12px; transition: 0.3s; }
-        .btn-add:hover { background: var(--gold); }
+        /* Compact Menu Grid */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; max-width: 800px; margin: 0 auto; }
+        .item-card { background: var(--white); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #f0f0f0; }
+        .item-card img { width: 100%; height: 110px; object-fit: cover; }
+        .item-info { padding: 10px; text-align: center; }
+        .item-info b { display: block; font-size: 13px; margin-bottom: 4px; color: var(--navy); }
+        .price { color: var(--gold); font-weight: bold; font-size: 13px; margin-bottom: 8px; display: block; }
+        .btn-add { background: var(--navy); color: white; border: none; padding: 8px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 11px; }
 
-        /* Cart Floating Button */
-        .cart-fab { position: fixed; bottom: 35px; right: 25px; background: var(--navy); color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 35px rgba(0,31,63,0.3); cursor: pointer; z-index: 200; border: 2px solid var(--gold); }
-        .badge { position: absolute; top: -5px; right: -5px; background: var(--gold); color: white; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; }
+        /* Compact Floating Button */
+        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(0,31,63,0.3); cursor: pointer; z-index: 200; border: 2px solid var(--gold); }
+        .badge { position: absolute; top: -3px; right: -3px; background: var(--gold); color: white; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; }
 
         /* Drawer UI */
-        #drawer { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: var(--pearl); z-index: 300; transition: 0.5s; display: flex; flex-direction: column; }
+        #drawer { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: var(--pearl); z-index: 300; transition: 0.4s; display: flex; flex-direction: column; }
         #drawer.open { right: 0; }
-        .drawer-header { padding: 25px; display: flex; align-items: center; background: white; border-bottom: 1px solid #eee; }
-        .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+        .drawer-header { padding: 20px; display: flex; align-items: center; background: white; border-bottom: 1px solid #eee; }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 15px; }
 
-        .cart-row { background: white; padding: 20px; border-radius: 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; box-shadow: var(--shadow); }
-        .qty-input { width: 45px; padding: 5px; text-align: center; border: 1px solid #eee; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .cart-row { background: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; box-shadow: var(--shadow); }
+        .qty-input { width: 40px; padding: 4px; text-align: center; border: 1px solid #eee; border-radius: 6px; font-weight: bold; font-size: 13px; }
 
-        .drawer-footer { padding: 25px; background: white; box-shadow: 0 -10px 40px rgba(0,0,0,0.04); border-radius: 30px 30px 0 0; }
-        .btn-confirm { width: 100%; background: var(--navy); color: white; border: none; padding: 18px; border-radius: 18px; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,31,63,0.2); }
+        .drawer-footer { padding: 20px; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.03); }
+        .btn-confirm { width: 100%; background: var(--navy); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 15px; cursor: pointer; }
 
-        /* Voucher Design */
-        #voucher-card { background: white; width: 400px; padding: 0; color: #333; }
-        .v-header { background: var(--navy); color: white; padding: 35px 20px; text-align: center; }
-        .v-body { padding: 25px; }
-        .v-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .v-table th { border-bottom: 2px solid #eee; padding: 12px 5px; text-align: left; font-size: 12px; color: #888; text-transform: uppercase; }
-        .v-table td { padding: 15px 5px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
+        /* Voucher */
+        #voucher-card { background: white; width: 380px; padding: 0; color: #333; }
+        .v-header { background: var(--navy); color: white; padding: 30px 15px; text-align: center; }
+        .v-body { padding: 20px; }
+        .v-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .v-table th { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: left; color: #888; }
+        .v-table td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; }
     </style>
 </head>
 <body>
 
-<div id="toast-msg"><i class="fas fa-info-circle"></i> <span id="toast-text"></span></div>
+<div id="toast-msg"><i class="fas fa-check-circle"></i> <span id="toast-text"></span></div>
 
-<div id="loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
-    <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--navy)"></i>
-    <p style="margin-top:20px; font-weight:bold; color:var(--navy); letter-spacing:1px;">PROCESSING ORDER...</p>
+<div id="loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
+    <i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--navy)"></i>
+    <p style="margin-top:15px; font-size:12px; font-weight:bold; color:var(--navy);">PLEASE WAIT...</p>
 </div>
 
 <div class="header"><h2>MYIN THAR ROAST</h2></div>
 
 <div class="search-section">
-    <div class="search-box" style="position:relative;">
-        <i class="fas fa-search" style="position:absolute; left:20px; top:18px; color:var(--gold);"></i>
-        <input type="text" id="search" placeholder="Search menu..." onkeyup="filterMenu()">
+    <div style="position:relative;">
+        <i class="fas fa-search" style="position:absolute; left:15px; top:14px; color:var(--gold); font-size:14px;"></i>
+        <input type="text" id="search" placeholder="ရှာဖွေရန်..." onkeyup="filterMenu()">
     </div>
 </div>
 
 <div id="menu-grid" class="menu-grid"></div>
 
 <div class="cart-fab" onclick="toggleCart()">
-    <i class="fas fa-shopping-bag"></i>
+    <i class="fas fa-shopping-basket"></i>
     <div class="badge" id="cart-badge">0</div>
 </div>
 
 <div id="drawer">
     <div class="drawer-header">
-        <i class="fas fa-arrow-left" style="font-size:20px; cursor:pointer; color:var(--navy);" onclick="toggleCart()"></i>
-        <h3 style="flex:1; text-align:center; margin:0; color:var(--navy); letter-spacing:1px;">MY BASKET</h3>
+        <i class="fas fa-chevron-left" style="font-size:18px; cursor:pointer;" onclick="toggleCart()"></i>
+        <h4 style="flex:1; text-align:center; margin:0; letter-spacing:1px;">MY BASKET</h4>
     </div>
     <div class="drawer-body" id="cart-list"></div>
     <div class="drawer-footer">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold; font-size:18px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold;">
             <span>TOTAL</span>
             <span id="total-amt" style="color:var(--gold)">0 K</span>
         </div>
@@ -104,40 +104,36 @@
     </div>
 </div>
 
-<div id="modal-checkout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
-    <div style="background:white; padding:35px; border-radius:30px; width:85%; max-width:400px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
-        <h3 style="margin-top:0; color:var(--navy); text-align:center; letter-spacing:1px;">DELIVERY DETAILS</h3>
-        <input type="text" id="cust-name" placeholder="သင့်အမည်" style="width:100%; padding:15px; margin:10px 0; border:1px solid #eee; border-radius:12px; outline:none; background:#fafafa;">
-        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:15px; margin:10px 0; border:1px solid #eee; border-radius:12px; outline:none; background:#fafafa;">
-        <p style="font-size:11px; color:#999; margin:10px 0 5px 5px;">PICKUP TIME</p>
-        <input type="datetime-local" id="pickup-time" style="width:100%; padding:15px; border:1px solid #eee; border-radius:12px; outline:none; background:#fafafa;">
-        <button class="btn-confirm" style="margin-top:25px;" onclick="validateAndSend()">PLACE ORDER</button>
-        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#bbb; margin-top:15px; cursor:pointer;">Cancel</button>
+<div id="modal-checkout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:400; align-items:center; justify-content:center; backdrop-filter: blur(3px);">
+    <div style="background:white; padding:25px; border-radius:20px; width:85%; max-width:350px;">
+        <h4 style="margin-top:0; text-align:center;">CUSTOMER INFO</h4>
+        <input type="text" id="cust-name" placeholder="အမည်" style="width:100%; padding:12px; margin:8px 0; border:1px solid #eee; border-radius:10px; box-sizing:border-box;">
+        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:12px; margin:8px 0; border:1px solid #eee; border-radius:10px; box-sizing:border-box;">
+        <p style="font-size:10px; color:#999; margin:10px 0 5px 2px;">လာယူမည့်အချိန်</p>
+        <input type="datetime-local" id="pickup-time" style="width:100%; padding:12px; border:1px solid #eee; border-radius:10px; box-sizing:border-box;">
+        <button class="btn-confirm" style="margin-top:20px;" onclick="validateAndSend()">CONFIRM ORDER</button>
+        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#bbb; margin-top:10px;">မလုပ်တော့ပါ</button>
     </div>
 </div>
 
 <div id="v-wrap" style="position:absolute; left:-9999px;">
     <div id="voucher-card">
         <div class="v-header">
-            <h1 style="margin:0; letter-spacing:5px;">VOUCHER</h1>
-            <p style="margin:5px 0 0 0; opacity:0.7; font-size:12px;">မြင်သာကြက်ကင်</p>
+            <h2 style="margin:0; letter-spacing:3px;">INVOICE</h2>
+            <p style="margin:5px 0 0 0; opacity:0.7; font-size:11px;">Myin Thar Roast Premium</p>
         </div>
         <div class="v-body">
-            <div style="display:flex; justify-content:space-between; font-size:11px; color:#666;">
-                <div><b>CUSTOMER</b><br><span id="v-n" style="color:#000; font-size:14px;"></span><br><span id="v-p"></span></div>
-                <div style="text-align:right;"><b>ORDER ID</b><br>#<span id="v-id" style="color:#000; font-size:14px;"></span><br><span id="v-d"></span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11px;">
+                <div><b>BILL TO:</b><br><span id="v-n"></span><br><span id="v-p"></span></div>
+                <div style="text-align:right;"><b>ID:</b> #<span id="v-id"></span><br><span id="v-d"></span></div>
             </div>
-            <table class="v-table">
-                <thead><tr><th>Description</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
+            <table class="v-table" style="margin-top:15px;">
+                <thead><tr><th>Items</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
                 <tbody id="v-rows"></tbody>
             </table>
-            <div style="text-align:right; margin-top:30px;">
-                <p style="margin:0; font-size:12px; color:#888;">Grand Total</p>
-                <h2 style="margin:0; color:var(--navy); font-size:24px;" id="v-tot"></h2>
+            <div style="text-align:right; margin-top:20px; border-top:2px solid #eee; padding-top:10px;">
+                <h3 style="margin:0; color:var(--navy);" id="v-tot"></h3>
             </div>
-        </div>
-        <div style="background:#f8f9fa; padding:25px; text-align:center; font-size:11px; border-top:1px solid #eee;">
-            📍 မြင်သာဈေးရှေ့ | 📞 09 767 287 345
         </div>
     </div>
 </div>
@@ -159,12 +155,18 @@
     ];
 
     let cart = {};
+    let toastTimer; // Timer for toast
 
     function showToast(msg) {
         const toast = document.getElementById('toast-msg');
         document.getElementById('toast-text').innerText = msg;
+        
+        clearTimeout(toastTimer); // Clear existing timer
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+        
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
     }
 
     function renderMenu(items) {
@@ -183,12 +185,12 @@
     function add(name) {
         cart[name] = (cart[name] || 0) + 1;
         update();
-        showToast(name + " ထည့်လိုက်ပါပြီ");
+        showToast(name + " ထည့်ပြီးပါပြီ");
     }
 
     function change(name, v) {
         v = parseInt(v);
-        if(v <= 0) delete cart[name];
+        if(isNaN(v) || v <= 0) delete cart[name];
         else cart[name] = v;
         update();
     }
@@ -201,18 +203,18 @@
             count += cart[k]; total += sub;
             html += `
                 <div class="cart-row">
-                    <div style="flex:1"><b>${k}</b><br><small style="color:var(--gold)">${item.price} K</small></div>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <i class="fas fa-minus-circle" onclick="change('${k}', ${cart[k]-1})" style="cursor:pointer; color:#ccc;"></i>
+                    <div style="flex:1"><b>${k}</b><br><small>${item.price} K</small></div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-minus-square" onclick="change('${k}', ${cart[k]-1})" style="color:#ccc;"></i>
                         <input type="number" class="qty-input" value="${cart[k]}" onchange="change('${k}', this.value)">
-                        <i class="fas fa-plus-circle" onclick="change('${k}', ${cart[k]+1})" style="cursor:pointer; color:var(--navy);"></i>
+                        <i class="fas fa-plus-square" onclick="change('${k}', ${cart[k]+1})" style="color:var(--navy);"></i>
                     </div>
                 </div>
             `;
         }
         document.getElementById('cart-badge').innerText = count;
         document.getElementById('total-amt').innerText = total.toLocaleString() + " K";
-        document.getElementById('cart-list').innerHTML = html || "<p style='text-align:center; color:#999; margin-top:50px;'>Your basket is empty</p>";
+        document.getElementById('cart-list').innerHTML = html || "<p style='text-align:center; color:#999; margin-top:30px; font-size:12px;'>ခြင်းတောင်းထဲမှာ ဘာမှမရှိသေးပါ</p>";
     }
 
     function toggleCart() { document.getElementById('drawer').classList.toggle('open'); }
@@ -223,8 +225,7 @@
         const n = document.getElementById('cust-name').value;
         const p = document.getElementById('cust-phone').value;
         const t = document.getElementById('pickup-time').value;
-        
-        if(!n || !p) return showToast("အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
+        if(!n || !p) return showToast("အချက်အလက်ဖြည့်ပါ");
 
         document.getElementById('loader').style.display = 'flex';
         let totalVal = 0, itemsArr = [], vRows = "";
@@ -243,32 +244,29 @@
         document.getElementById('v-id').innerText = oId;
         document.getElementById('v-d').innerText = new Date().toLocaleString();
         document.getElementById('v-rows').innerHTML = vRows;
-        document.getElementById('v-tot').innerText = totalVal.toLocaleString() + " K";
-
-        const tgMsg = `💎 *PREMIUM ORDER RECEIVED* (#${oId})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Ordered Items:*\n${itemsArr.join("\n")}\n\n💰 *Total: ${totalVal} K*`;
+        document.getElementById('v-tot').innerText = "Total: " + totalVal.toLocaleString() + " K";
 
         try {
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: n, phone: p, items: itemsArr.join(", "), total: totalVal }) });
             await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TG_ID, text: tgMsg, parse_mode: 'Markdown' })
+                body: JSON.stringify({ chat_id: TG_ID, text: `📦 *ORDER RECEIVED* (#${oId})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Items:*\n${itemsArr.join("\n")}\n\n💰 *Total: ${totalVal} K*`, parse_mode: 'Markdown' })
             });
 
             html2canvas(document.querySelector("#voucher-card")).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Voucher_${oId}.png`;
+                link.download = `Invoice_${oId}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
-                
                 document.getElementById('loader').style.display = 'none';
-                showToast("Order တင်ခြင်း အောင်မြင်ပါသည်။");
+                showToast("မှာယူမှု အောင်မြင်ပါသည်။");
                 showToast("ဘောက်ချာ downloadဆွဲပြီးပါပြီ။");
                 setTimeout(() => location.reload(), 2000);
             });
         } catch(e) { 
             document.getElementById('loader').style.display = 'none';
-            showToast("Error ဖြစ်သွားပါသည်။"); 
+            showToast("Error ဖြစ်သွားပါသည်"); 
         }
     }
 
