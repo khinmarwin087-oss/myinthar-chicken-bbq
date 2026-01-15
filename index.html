@@ -232,41 +232,68 @@
     function closeCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
 
     async function validateAndSend() {
-        const n = document.getElementById('cust-name').value;
-        const p = document.getElementById('cust-phone').value;
-        const t = document.getElementById('pickup-time').value;
-        if(!n || !p) return showToast("အချက်အလက်ဖြည့်ပါ");
+    const n = document.getElementById('cust-name').value;
+    const p = document.getElementById('cust-phone').value;
+    const t = document.getElementById('pickup-time').value;
+    
+    if(!n || !p) return showToast("အချက်အလက်ဖြည့်ပါ");
 
-        currentOID = Math.floor(1000 + Math.random() * 9000);
-        document.getElementById('loader').style.display = 'flex';
-        document.getElementById('loader-text').innerText = "Order ပို့နေပါသည်...";
+    currentOID = Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('loader').style.display = 'flex';
+    document.getElementById('loader-text').innerText = "Order ပို့နေပါသည်...";
 
-        document.getElementById('v-n').innerText = n;
-        document.getElementById('v-p').innerText = p;
-        document.getElementById('v-id').innerText = currentOID;
-        document.getElementById('v-d').innerText = new Date().toLocaleString();
+    // Voucher အတွက် အချက်အလက်ဖြည့်ခြင်း
+    document.getElementById('v-n').innerText = n;
+    document.getElementById('v-p').innerText = p;
+    document.getElementById('v-id').innerText = currentOID;
+    document.getElementById('v-d').innerText = new Date().toLocaleString();
 
-        let itemsText = Object.keys(cart).map(k => `${k} (${cart[k]} ခု)`).join(", ");
-        // ဂဏန်းမဟုတ်တာတွေ (comma နဲ့ K) အကုန်ဖယ်ပြီး ဂဏန်းသီးသန့်ပဲ ယူမယ်
-let totalVal = document.getElementById('total-amt').innerText.replace(/[^0-9]/g, ""); 
-        
-        
-        try {
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: n, phone: p, items: itemsText, total: totalVal }) });
-            await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TG_ID, text: `📦 *ORDER RECEIVED* (#${currentOID})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Items:*\n${itemsText.replace(/,/g, '\n')}\n\n💰 *Total: ${totalVal}*`, parse_mode: 'Markdown' })
-            });
+    let itemsText = Object.keys(cart).map(k => `${k} (${cart[k]} ခု)`).join(", ");
+    
+    // Total ကို အင်္ဂလိပ်ဂဏန်းစစ်စစ် ဖြစ်အောင် ပြောင်းခြင်း
+    let totalRaw = document.getElementById('total-amt').innerText.replace(/[^၀-၉0-9]/g, ""); 
+    const myanNum = {'၀':'0','၁':'1','၂':'2','၃':'3','၄':'4','၅':'5','၆':'6','၇':'7','၈':'8','၉':'9'};
+    let totalVal = totalRaw.replace(/[၀-၉]/g, function(s) { return myanNum[s]; });
+    
+    // ဂဏန်းစစ်စစ် (Integer) အဖြစ် ပြောင်းလဲခြင်း
+    let finalTotal = parseInt(totalVal) || 0;
 
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('modal-checkout').style.display = 'none';
-            document.getElementById('modal-success').style.display = 'flex';
+    try {
+        // ၁။ Google Sheet ဆီသို့ ပို့ခြင်း
+        await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ 
+                name: n, 
+                phone: p, 
+                items: itemsText, 
+                total: finalTotal 
+            }) 
+        });
 
-        } catch(e) { 
-            document.getElementById('loader').style.display = 'none';
-            showToast("Error ဖြစ်သွားပါသည်"); 
-        }
+        // ၂။ Telegram ဆီသို့ ပို့ခြင်း
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                chat_id: TG_ID, 
+                text: `📦 *ORDER RECEIVED* (#${currentOID})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Items:*\n${itemsText.replace(/, /g, '\n')}\n\n💰 *Total: ${finalTotal.toLocaleString()} K*`, 
+                parse_mode: 'Markdown' 
+            })
+        });
+
+        // အောင်မြင်လျှင် Modal ပြခြင်း
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('modal-checkout').style.display = 'none';
+        document.getElementById('modal-success').style.display = 'flex';
+
+    } catch(e) { 
+        document.getElementById('loader').style.display = 'none';
+        showToast("Error ဖြစ်သွားပါသည်"); 
+        console.error(e);
     }
+    }
+    
 
     async function downloadVoucher() {
         document.getElementById('loader').style.display = 'flex';
