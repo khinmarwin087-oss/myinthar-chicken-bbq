@@ -208,7 +208,27 @@
     const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
     const MY_PHONE = "959767287345";
-
+    const menuData = [
+    { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: '' },
+    { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: '' },
+    { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
+    { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
+    { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
+    { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
+    { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000, category: 'အရိုး', image: '' },
+    { id: 8, name: 'အူ', price: 500, category: 'ကလီစာ', image: '' },
+    { id: 9, name: 'ခေါင်း', price: 300, category: 'အရိုး', image: '' },
+    { id: 10, name: 'လည် ချောင်း', price: 300, category: 'အရိုး', image: '' },
+    { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
+    { id: 12, name: 'ခြေထောက်', price: 300, category: 'အရိုး', image: '' },
+    { id: 13, name: 'ခြေထောက်(CP)', price: 700, category: 'အရိုး', image: '' },
+    { id: 14, name: 'လက်မောင်းလုံး', price: 1000, category: 'အသား', image: '' },
+    { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
+    { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: '' },
+    { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: '' },
+    { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: '' },
+    { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: '' }
+];
     let cart = {}; let allItems = []; let currentCat = 'All';
 
     window.onload = () => { fetchMenu(); loadCart(); };
@@ -375,7 +395,25 @@ document.getElementById('v-items-table').innerHTML = tableHtml;
         alert("Error saving order. Please check internet.");
         document.getElementById('loader').style.display = 'none';
     }
-}
+}// submitOrder function ရဲ့ Supabase insert ပြီးတဲ့နေရာမှာ ထည့်ပါ
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyueuaZoIKZDi_W4CYhrJw6DDb1KH48zcSGT6OHGWVdDkEx6SsAqlYB9NHb0m2em40m/exec";
+
+const orderData = {
+    name: name,
+    phone: phone,
+    time: formattedDate + " " + formattedTime,
+    items: items.join(", "),
+    total: total
+};
+
+// Google Sheet သို့ ပို့ခြင်း
+fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    cache: 'no-cache',
+    body: JSON.stringify(orderData)
+});
+    
     function changeLang() {
         let l = document.getElementById('lang').value;
         document.getElementById('search').placeholder = (l==='en') ? "Search..." : "ရှာဖွေရန်...";
