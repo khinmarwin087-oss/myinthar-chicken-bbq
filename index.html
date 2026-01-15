@@ -247,8 +247,10 @@
         document.getElementById('v-d').innerText = new Date().toLocaleString();
 
         let itemsText = Object.keys(cart).map(k => `${k} (${cart[k]} ခု)`).join(", ");
-        let totalVal = document.getElementById('total-amt').innerText;
-
+        // ဂဏန်းမဟုတ်တာတွေ (comma နဲ့ K) အကုန်ဖယ်ပြီး ဂဏန်းသီးသန့်ပဲ ယူမယ်
+let totalVal = document.getElementById('total-amt').innerText.replace(/[^0-9]/g, ""); 
+        
+        
         try {
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: n, phone: p, items: itemsText, total: totalVal }) });
             await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
