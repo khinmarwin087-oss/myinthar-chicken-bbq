@@ -44,6 +44,8 @@
         .btn-q { width: 24px; height: 26px; border: none; background: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .val-q { width: 28px; height: 26px; border: none; background: transparent; text-align: center; font-weight: 800; font-size: 12px; outline: none; line-height: 26px; padding: 0; margin: 0; } 
         .btn-del { color: var(--danger); background: #fff1f2; border: none; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        /* Form ပေါ်လာရင် Cart နဲ့ ခြားနားသွားအောင် မျဉ်းတားခြင်း */
+       #form-box { border-top: 2px dashed #e2e8f0;  margin-top: 15px;  padding-top: 15px; }
         
         /* Form Controls */
         .form-card { background: #f8fafc; border-radius: 18px; padding: 15px; border: 1px solid #e2e8f0; }
@@ -226,11 +228,15 @@
         list.innerHTML = html + '<div class="cart-total-row">စုစုပေါင်း: <span style="color:var(--accent); font-size: 18px; margin-left: 5px;">' + total.toLocaleString() + '</span> Ks</div>';
              
         document.getElementById('cart-sheet').style.display = 'block';
-        document.getElementById('form-box').style.display = 'none';
-        document.getElementById('cart-list').style.display = 'block';
-        document.getElementById('next-btn').style.display = 'block';
-        document.getElementById('modal-title').innerText = "ခြင်းတောင်းစာရင်း";
-        document.getElementById('modal-back').onclick = () => document.getElementById('cart-sheet').style.display = 'none';
+    document.getElementById('form-box').style.display = 'none'; // ပထမဆုံးဖွင့်ရင် Form ကို ပိတ်ထားမယ်
+    document.getElementById('cart-list').style.display = 'block';
+    document.getElementById('next-btn').style.display = 'block';
+    document.getElementById('modal-title').innerText = "ခြင်းတောင်းစာရင်း";
+    
+    // Back ခလုတ်နှိပ်ရင် Cart ပိတ်ဖို့ပဲ ထားမယ် (step2 ကနေ ပြန်လာရင်လည်း ဒါပဲ သုံးမယ်)
+    document.getElementById('modal-back').onclick = () => {
+        document.getElementById('cart-sheet').style.display = 'none';
+    };
     }
 
     function removeItem(id) { delete cart[id]; if (Object.keys(cart).length === 0) document.getElementById('cart-sheet').style.display = 'none'; else openCart(); updateFloatingBar(); }
@@ -242,11 +248,16 @@
     function closeAlert() { document.getElementById('alert-bg').style.display = 'none'; document.getElementById('alert-pop').style.display = 'none'; }
     
     function step2() { 
-        document.getElementById('cart-list').style.display = 'none'; 
-        document.getElementById('form-box').style.display = 'block'; 
-        document.getElementById('next-btn').style.display = 'none'; 
-        document.getElementById('modal-title').innerText = "အချက်အလက်ဖြည့်ပါ"; 
-        document.getElementById('modal-back').onclick = openCart; 
+    // Cart list ကို ဖျောက်မပစ်တော့ဘဲ အောက်မှာ Form ကို တွဲပြလိုက်တာပါ
+    document.getElementById('form-box').style.display = 'block'; 
+    document.getElementById('next-btn').style.display = 'none'; // ခလုတ်ကိုတော့ ဖျောက်ရပါမယ်
+    document.getElementById('modal-title').innerText = "အချက်အလက်ဖြည့်ပါ"; 
+    
+    // Form ပွင့်လာရင် အလိုအလျောက် အောက်ဆုံးကို Scroll ဆွဲပေးဖို့ (Form ကို မြင်ရအောင်)
+    setTimeout(() => {
+        const sheet = document.querySelector('.modal-sheet');
+        sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' });
+    }, 100);
     }
 
     async function sendOrder(via) {
