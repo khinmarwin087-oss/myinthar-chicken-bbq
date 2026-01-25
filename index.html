@@ -148,19 +148,26 @@
     const CHAT_ID = "8116152317";
 
     const menuData = [
-        { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: 'https://i.ibb.co/JWsqDFX9/1768228481848.png' },
-        { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: 'https://via.placeholder.com/100' },
-        { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
-        { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
-        { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
-        { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
-        { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
-        { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
-        { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: 'https://i.ibb.co/hpPRPDr/1768208099763.png' },
-        { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: 'https://i.ibb.co/cSCzCKN5/1768228376693.png' },
-        { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: 'https://i.ibb.co/PsGSSTK4/1768228089572.png' },
-        { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: 'https://i.ibb.co/xtyy8V0N/1768211447515.png' }
-    ];
+    { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: 'https://i.ibb.co/JWsqDFX9/1768228481848.png' },
+    { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: '' },
+    { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
+    { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
+    { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
+    { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
+    { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000, category: 'အရိုး', image: '' },
+    { id: 8, name: 'အူ', price: 500, category: 'ကလီစာ', image: '' },
+    { id: 9, name: 'ခေါင်း', price: 300, category: 'အရိုး', image: '' },
+    { id: 10, name: 'လည် ချောင်း', price: 300, category: 'အရိုး', image: 'https://i.ibb.co/bjL850PP/1768208169381.png' },
+    { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
+    { id: 12, name: 'ခြေထောက်', price: 300, category: 'အရိုး', image: '' },
+    { id: 13, name: 'ခြေထောက်(CP)', price: 700, category: 'အရိုး', image: '' },
+    { id: 14, name: 'လက်မောင်းလုံး', price: 1000, category: 'အသား', image: '' },
+    { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
+    { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: 'https://i.ibb.co/hpPRPDr/1768208099763.png' },
+    { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: 'https://i.ibb.co/cSCzCKN5/1768228376693.png' },
+    { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: 'https://i.ibb.co/PsGSSTK4/1768228089572.png' },
+    { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: 'https://i.ibb.co/xtyy8V0N/1768211447515.png' }
+];
 
     let cart = {};
     let activeCat = 'All', chosenDay = 'today';
@@ -239,7 +246,7 @@ ${items.join('\n')}
 
 ⚠️ အော်ဒါတင်ပြီး (၅) မိနစ်အတွင်း ဆိုင်မှ အကြောင်းမပြန်ပါက ဖုန်းဆက်ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။
 
-🛒 *ပြန်မှာရန်နှိပ်ပါ* 👇
+🛒 *ပြန်လည်မှာယူရန်‌နှိပ်ပါ* 👇
 ${WEB_LINK}`;
 
         try {
@@ -257,7 +264,8 @@ ${WEB_LINK}`;
                     clearCart();
                 });
             } else {
-                window.location.href = `https://t.me/share/url?url=${encodeURIComponent(WEB_LINK)}&text=${encodeURIComponent(msg)}`;
+                // အစ်ကိုပြောတဲ့ t.me/+phone ပုံစံ
+                window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
                 clearCart();
             }
         } catch (e) {
