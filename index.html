@@ -33,23 +33,18 @@
         .cart-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; max-width: 480px; margin: auto; z-index: 90; }
 
         /* Modal & Cart Item */
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; backdrop-filter: blur(4px); }
-        .modal-sheet { background: var(--pearl); position: absolute; bottom: 0; left: 0; right: 0; border-radius: 25px 25px 0 0; padding: 20px 15px; max-height: 95vh; overflow-y: auto; max-width: 500px; margin: auto; }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-        .back-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-        .cart-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 5px solid #f1f5f9; }
-        .cart-item-img { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }
-        .cart-item-info { flex: 1; min-width: 0; }
-        .cart-item-info b { font-size: 10px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cart-item-info span { color: var(--accent); font-weight: bold; font-size: 19px; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; backdrop-filter: blur(4px); } 
+        .modal-sheet { background: var(--pearl); position: absolute; bottom: 0; left: 0; right: 0; border-radius: 25px 25px 0 0; padding: 12px 10px; max-height: 95vh; overflow-y: auto; max-width: 500px; margin: auto; } .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; } 
+        .back-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; } 
+        .cart-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; } .cart-item-img { width: 35px; height: 35px; border-radius: 6px; object-fit: cover; background: #f1f5f9; } .cart-item-info { flex: 1; min-width: 0; } 
+        .cart-item-info b { font-size: 12px; line-height: 1.2; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cart-item-info span { font-size: 13px; color: var(--accent); font-weight: bold; } .cart-total-row { text-align: right; padding: 15px 0 5px; font-weight: 800; font-size: 14px; border-top: 1px solid #eee; margin-top: 5px; }
 
         /* Input Controls */
-        .qty-group { display: flex; align-items: center; background: #ffffff; border-radius: 10px; padding: 2px; border: 1px solid #e2e8f0; }
-        .btn-q { width: 28px; height: 28px; border: none; background: white; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .val-q { width: 50px; border: none; background: transparent; text-align: center; font-weight: 800; font-size: 14px; outline: none; }
-        .btn-del { color: var(--danger); background: #fff1f2; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
+        .qty-group { display: flex; align-items: center; background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; height: 26px; overflow: hidden; } 
+        .btn-q { width: 24px; height: 26px; border: none; background: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .val-q { width: 28px; height: 26px; border: none; background: transparent; text-align: center; font-weight: 800; font-size: 12px; outline: none; line-height: 26px; padding: 0; margin: 0; } 
+        .btn-del { color: var(--danger); background: #fff1f2; border: none; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        
         /* Form Controls */
         .form-card { background: #f8fafc; border-radius: 18px; padding: 15px; border: 1px solid #e2e8f0; }
         label { font-size: 11px; font-weight: bold; color: var(--sub); margin-bottom: 5px; display: block; }
@@ -228,7 +223,8 @@
             </div>`;
         }
         document.getElementById('item-count-badge').innerText = count + " မျိုး";
-        list.innerHTML = html + `<div style="text-align:right; padding:20px 0 10px; font-weight:800; font-size:16px;">စုစုပေါင်း= <span style="color:var(--accent)">${total.toLocaleString()}</span> Ks</div>`;
+        list.innerHTML = html + '<div class="cart-total-row">စုစုပေါင်း: <span style="color:var(--accent); font-size: 18px; margin-left: 5px;">' + total.toLocaleString() + '</span> Ks</div>';
+             
         document.getElementById('cart-sheet').style.display = 'block';
         document.getElementById('form-box').style.display = 'none';
         document.getElementById('cart-list').style.display = 'block';
@@ -267,13 +263,19 @@
             items.push(`▪️ ${i.name} (${cart[id]} ခု)`);
         }
         const total = document.getElementById('bar-total').innerText;
-        const msg = `🍗 *မြင်သာကြက်ကင် - အော်ဒါ*\n👤 *အမည်:* ${name}\n📞 *ဖုန်း:* ${phone}\n📅 *နေ့ရက်:* ${dayStr}\n🕒 *အချိန်:* ${time}\n━━━━━━━━━━━━━━\n${items.join('\n')}\n━━━━━━━━━━━━━━\n💰 *စုစုပေါင်း:* *${total} MMK*
-        
-⚠️ အော်ဒါတင်ပြီး (၅) မိနစ်အတွင်း ဆိုင်မှ အကြောင်းမပြန်ပါက ဖုန်းဆက်ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။
+        const msg = `🍗 *မြင်သာကြက်ကင် - အော်ဒါ*
+👤 *အမည်:* ${name}
+📞 *ဖုန်း:* ${phone}
+📅 *နေ့ရက်:* ${dayStr}
+🕒 *အချိန်:* ${time}
+━━━━━━━━━━━━━━
+${items.join('\n')}
+━━━━━━━━━━━━━━
+💰 *စုစုပေါင်း:* *${total} MMK*
 
-🛒 *ပြန်လည်မှာယူရန်‌နှိပ်ပါ* 👇
+🛒 *ပြန်လည်မှာယူရန်နှိပ်ပါ* 👇
 ${WEB_LINK}`;
-
+        
         try {
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
