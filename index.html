@@ -209,7 +209,7 @@
     function closeAlert() { document.getElementById('alert-bg').style.display = 'none'; document.getElementById('alert-pop').style.display = 'none'; }
     function step2() { document.getElementById('cart-list').style.display = 'none'; document.getElementById('form-box').style.display = 'block'; document.getElementById('next-btn').style.display = 'none'; document.getElementById('modal-title').innerText = "အချက်အလက်ဖြည့်ပါ"; document.getElementById('modal-back').onclick = openCart; }
 
-    function sendOrder(via) {
+  async function sendOrder(via) {
         const name = document.getElementById('in-name').value;
         const phone = document.getElementById('in-phone').value;
         const time = document.getElementById('in-time').value;
