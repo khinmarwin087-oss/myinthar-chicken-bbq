@@ -33,8 +33,9 @@
         .cart-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; max-width: 480px; margin: auto; z-index: 90; }
 
         /* Modal & Cart Item */
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; backdrop-filter: blur(4px); } 
-        .modal-sheet { background: var(--pearl); position: absolute; bottom: 0; left: 0; right: 0; border-radius: 25px 25px 0 0; padding: 12px 10px; max-height: 95vh; overflow-y: auto; max-width: 500px; margin: auto; } .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; } 
+        .modal-header { position: sticky; top: 0; background: white; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 10px; } 
+        .modal-sheet { background: var(--pearl); position: absolute; bottom: 0; left: 0; right: 0; border-radius: 25px 25px 0 0; padding: 0 15px 20px; max-height: 90vh; overflow-y: auto; max-width: 500px; margin: auto; scroll-behavior: smooth; }
+        
         .back-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; } 
         .cart-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; } .cart-item-img { width: 35px; height: 35px; border-radius: 6px; object-fit: cover; background: #f1f5f9; } .cart-item-info { flex: 1; min-width: 0; } 
         .cart-item-info b { font-size: 12px; line-height: 1.2; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cart-item-info span { font-size: 13px; color: var(--accent); font-weight: bold; } .cart-total-row { text-align: right; padding: 15px 0 5px; font-weight: 800; font-size: 14px; border-top: 1px solid #eee; margin-top: 5px; }
@@ -246,20 +247,32 @@
     function selectDate(day) { chosenDay = day; document.getElementById('chip-today').classList.toggle('active', day === 'today'); document.getElementById('chip-other').classList.toggle('active', day === 'other'); document.getElementById('custom-date-row').style.display = day === 'other' ? 'block' : 'none'; }
     function myPop(m) { document.getElementById('alert-msg').innerText = m; document.getElementById('alert-bg').style.display = 'block'; document.getElementById('alert-pop').style.display = 'block'; }
     function closeAlert() { document.getElementById('alert-bg').style.display = 'none'; document.getElementById('alert-pop').style.display = 'none'; }
-    
+
     function step2() { 
-    // Cart list ကို ဖျောက်မပစ်တော့ဘဲ အောက်မှာ Form ကို တွဲပြလိုက်တာပါ
-    document.getElementById('form-box').style.display = 'block'; 
-    document.getElementById('next-btn').style.display = 'none'; // ခလုတ်ကိုတော့ ဖျောက်ရပါမယ်
-    document.getElementById('modal-title').innerText = "အချက်အလက်ဖြည့်ပါ"; 
+    const formBox = document.getElementById('form-box');
+    const nextBtn = document.getElementById('next-btn');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBack = document.getElementById('modal-back');
+
+    formBox.style.display = 'block'; 
+    nextBtn.style.display = 'none'; 
+    modalTitle.innerText = "အချက်အလက်ဖြည့်ပါ"; 
     
-    // Form ပွင့်လာရင် အလိုအလျောက် အောက်ဆုံးကို Scroll ဆွဲပေးဖို့ (Form ကို မြင်ရအောင်)
+    // Back ခလုတ်နှိပ်ရင် Form ပြန်ပိတ်ပြီး Cart list ကိုပဲ မြင်ရအောင် လုပ်မယ်
+    modalBack.onclick = () => {
+        formBox.style.display = 'none';
+        nextBtn.style.display = 'block';
+        modalTitle.innerText = "ခြင်းတောင်းစာရင်း";
+        modalBack.onclick = () => { document.getElementById('cart-sheet').style.display = 'none'; };
+    };
+
+    // Form ဆီကို ဖြည်းဖြည်းချင်း Scroll ဆွဲချမယ်
     setTimeout(() => {
-        const sheet = document.querySelector('.modal-sheet');
-        sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' });
+        formBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
     }
-
+    
+    
     async function sendOrder(via) {
         const name = document.getElementById('in-name').value;
         const phone = document.getElementById('in-phone').value;
