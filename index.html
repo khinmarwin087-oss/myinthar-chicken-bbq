@@ -243,7 +243,7 @@ ${items.join('\n')}
 ${WEB_LINK}`;
 
         try {
-            // Telegram Bot ဆီ အရင်ပို့သည်
+            // Telegram Bot ဆီသို့ အရင်ပို့မည်
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -257,7 +257,7 @@ ${WEB_LINK}`;
                     clearCart();
                 });
             } else {
-                window.location.href = https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)};
+                window.location.href = `https://t.me/share/url?url=${encodeURIComponent(WEB_LINK)}&text=${encodeURIComponent(msg)}`;
                 clearCart();
             }
         } catch (e) {
