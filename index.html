@@ -14,16 +14,16 @@
         .top-nav { background: var(--pearl); padding: 15px 12px; position: sticky; top: 0; z-index: 100; border-radius: 0 0 20px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .top-nav h2 { font-size: 18px; margin: 0 0 10px; text-align: center; }
         
-        .search-box { 
+                .search-box { 
             background: #f8fafc; 
             border-radius: 10px; 
-            padding: 5px 10px; 
+            padding: 2px 10px; /* ရှေ့က 5px နေရာမှာ 2px လို့ ပြောင်းလိုက်တာဖြစ်လို့ အပေါ်အောက် ပိန်သွားပါလိမ့်မယ် */
             display: flex; 
             align-items: center; 
             border: 1px solid #e2e8f0; 
-            max-width: 180px; /* Search bar ကို သေးလိုက်သည် */
-            margin: 0 auto;  /* အလယ်တည့်တည့်ထားသည် */
-        }
+            margin-bottom: 5px;
+                }
+        
         .search-box input { border: none; background: transparent; padding-left: 6px; width: 100%; outline: none; font-size: 12px; }
 
         .cat-row { display: flex; overflow-x: auto; gap: 6px; padding: 12px 0 2px; scrollbar-width: none; justify-content: start; }
