@@ -8,22 +8,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --pearl: #ffffff; --bg: #f1f5f9; --accent: #f59e0b; --text: #1e293b; --sub: #64748b; }
-        
-        /* တစ်ခုလုံးကို Size သေးအောင် ချိန်ညှိခြင်း */
         body { font-family: 'Pyidaungsu', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; color: var(--text); font-size: 14px; }
 
-        /* Header - ကျစ်ကျစ်လစ်လစ် */
+        /* Header & Search Bar ပြင်ဆင်မှု */
         .top-nav { background: var(--pearl); padding: 15px 12px; position: sticky; top: 0; z-index: 100; border-radius: 0 0 20px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .top-nav h2 { font-size: 18px; margin: 0 0 10px; text-align: center; }
         
-        .search-box { background: #f8fafc; border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; border: 1px solid #e2e8f0; }
-        .search-box input { border: none; background: transparent; padding-left: 8px; width: 100%; outline: none; font-size: 13px; }
+        .search-box { 
+            background: #f8fafc; 
+            border-radius: 10px; 
+            padding: 5px 10px; 
+            display: flex; 
+            align-items: center; 
+            border: 1px solid #e2e8f0; 
+            max-width: 180px; /* Search bar ကို သေးလိုက်သည် */
+            margin: 0 auto;  /* အလယ်တည့်တည့်ထားသည် */
+        }
+        .search-box input { border: none; background: transparent; padding-left: 6px; width: 100%; outline: none; font-size: 12px; }
 
-        .cat-row { display: flex; overflow-x: auto; gap: 6px; padding: 12px 0 2px; scrollbar-width: none; }
-        .cat-btn { background: var(--pearl); border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 10px; white-space: nowrap; font-size: 12px; font-weight: bold; }
+        .cat-row { display: flex; overflow-x: auto; gap: 6px; padding: 12px 0 2px; scrollbar-width: none; justify-content: start; }
+        .cat-btn { background: var(--pearl); border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 10px; white-space: nowrap; font-size: 12px; font-weight: bold; cursor: pointer; }
         .cat-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* Menu Grid - Size လျှော့ထားသည် */
         .container { padding: 10px; max-width: 500px; margin: auto; }
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .card { background: var(--pearl); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #edf2f7; }
@@ -31,34 +37,30 @@
         .card-info { padding: 10px; text-align: center; }
         .item-name { font-weight: 700; font-size: 13px; display: block; height: 32px; margin-bottom: 4px; overflow: hidden; }
         .item-price { color: var(--accent); font-weight: 800; font-size: 14px; }
-        .btn-add { width: 100%; padding: 8px; margin-top: 8px; border: none; background: #fff8eb; color: #b45309; border-radius: 10px; font-weight: bold; font-size: 12px; }
+        .btn-add { width: 100%; padding: 8px; margin-top: 8px; border: none; background: #fff8eb; color: #b45309; border-radius: 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
 
-        /* Floating Cart Bar */
-        .cart-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; max-width: 480px; margin: auto; z-index: 90; font-size: 14px; }
+        .cart-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: #1e293b; color: white; padding: 12px 18px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; max-width: 480px; margin: auto; z-index: 90; }
 
-        /* Modal Sheet */
         .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; backdrop-filter: blur(4px); }
         .modal-sheet { background: var(--pearl); position: absolute; bottom: 0; left: 0; right: 0; border-radius: 25px 25px 0 0; padding: 20px 15px; max-height: 85vh; overflow-y: auto; max-width: 500px; margin: auto; }
         .modal-header { display: flex; align-items: center; margin-bottom: 15px; }
-        .back-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
+        .back-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; cursor: pointer; }
 
-        /* Quantity Input Fix - နံပါတ်အပြည့်မြင်ရအောင် ပြင်ထားသည် */
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
         .qty-group { display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 2px; }
-        .btn-q { width: 30px; height: 30px; border: none; background: white; border-radius: 8px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .val-q { width: 55px; border: none; background: transparent; text-align: center; font-weight: 800; font-size: 16px; outline: none; }
+        .btn-q { width: 30px; height: 30px; border: none; background: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .val-q { width: 50px; border: none; background: transparent; text-align: center; font-weight: 800; font-size: 16px; outline: none; }
 
-        /* Form Compact */
         .form-card { background: #f8fafc; border-radius: 18px; padding: 15px; border: 1px solid #e2e8f0; }
         label { font-size: 11px; font-weight: bold; color: var(--sub); margin-bottom: 5px; display: block; }
-        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 12px; box-sizing: border-box; font-size: 14px; }
 
-        .date-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .date-chip { background: white; border: 1px solid #cbd5e1; padding: 10px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; }
+        .date-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .date-chip { background: white; border: 1px solid #cbd5e1; padding: 10px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; cursor: pointer; }
         .date-chip.active { background: #fff8eb; border-color: var(--accent); color: #b45309; }
 
-        .btn-main { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 15px; font-weight: 800; font-size: 15px; box-shadow: 0 4px 10px rgba(245,158,11,0.2); }
-        .btn-s { border: none; padding: 12px; border-radius: 12px; color: white; font-weight: bold; font-size: 14px; width: 100%; margin-top: 10px; }
+        .btn-main { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 15px; font-weight: 800; font-size: 15px; cursor: pointer; }
+        .btn-s { border: none; padding: 12px; border-radius: 12px; color: white; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
 
         .alert-pop { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; width: 80%; max-width: 300px; padding: 25px 20px; border-radius: 20px; z-index: 1000; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
     </style>
@@ -68,7 +70,7 @@
 <div class="top-nav">
     <h2>🍗 မြင်သာကြက်ကင်</h2>
     <div class="search-box">
-        <i class="fa-solid fa-magnifying-glass" style="color:#94a3b8"></i>
+        <i class="fa-solid fa-magnifying-glass" style="color:#94a3b8; font-size: 12px;"></i>
         <input type="text" id="searchInput" placeholder="ရှာဖွေရန်..." onkeyup="renderMenu()">
     </div>
     <div class="cat-row">
@@ -117,18 +119,22 @@
                     <div class="date-chip" id="chip-other" onclick="selectDate('other')">တခြားရက်</div>
                 </div>
                 <div id="custom-date-row" style="display:none;">
-                    <label>🗓️  ရက်စွဲ</label>
-                    <input type="date" id="in-date"></div>
+                    <label>🗓️ ရက်စွဲ</label>
+                    <input type="date" id="in-date">
+                </div>
                 <label>🕒 အချိန်</label>
                 <input type="time" id="in-time">
-                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-    <p style="font-size: 14px; color: #555;">
-        📜 အော်ဒါတင်ပြီး <strong>(၅) မိနစ်အတွင်း</strong> ဆိုင်မှ အကြောင်းမပြန်ပါက ဖုန်းဆက်ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။
-    </p>       
-            </div>
-            <div style="display:flex; gap:10px; margin-top:10px;">        
-                <button class="btn-s" style="background:#7360f2;" onclick="sendOrder('viber')"><i class="fa-brands fa-viber"></i> Viber</button>
-                <button class="btn-s" style="background:#0088cc;" onclick="sendOrder('tele')"><i class="fa-brands fa-telegram"></i> Telegram</button>
+                
+                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 12px; background: #fff; margin-bottom: 10px;">
+                    <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.5;">
+                        📜 အော်ဒါတင်ပြီး <strong>(၅) မိနစ်အတွင်း</strong> ဆိုင်မှ အကြောင်းမပြန်ပါက ဖုန်းဆက်ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။
+                    </p>
+                </div>
+
+                <div style="display:flex; gap:10px;">        
+                    <button class="btn-s" style="background:#7360f2;" onclick="sendOrder('viber')"><i class="fa-brands fa-viber"></i> Viber</button>
+                    <button class="btn-s" style="background:#0088cc;" onclick="sendOrder('tele')"><i class="fa-brands fa-telegram"></i> Telegram</button>
+                </div>
             </div>
         </div>
         <button id="next-btn" class="btn-main" style="margin-top:20px;" onclick="step2()">အော်ဒါတင်မည် ➔</button>
@@ -139,27 +145,19 @@
     const MY_PHONE = "959767287345";
     const WEB_LINK = window.location.href;
     const menuData = [
-    { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: 'https://i.ibb.co/JWsqDFX9/1768228481848.png' },
-    { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: '' },
-    { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
-    { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
-    { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
-    { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
-    { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000, category: 'အရိုး', image: '' },
-    { id: 8, name: 'အူ', price: 500, category: 'ကလီစာ', image: '' },
-    { id: 9, name: 'ခေါင်း', price: 300, category: 'အရိုး', image: '' },
-    { id: 10, name: 'လည် ချောင်း', price: 300, category: 'အရိုး', image: 'https://i.ibb.co/bjL850PP/1768208169381.png' },
-    { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
-    { id: 12, name: 'ခြေထောက်', price: 300, category: 'အရိုး', image: '' },
-    { id: 13, name: 'ခြေထောက်(CP)', price: 700, category: 'အရိုး', image: '' },
-    { id: 14, name: 'လက်မောင်းလုံး', price: 1000, category: 'အသား', image: '' },
-    { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
-    { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: 'https://i.ibb.co/hpPRPDr/1768208099763.png' },
-    { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: 'https://i.ibb.co/cSCzCKN5/1768228376693.png' },
-    { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: 'https://i.ibb.co/PsGSSTK4/1768228089572.png' },
-    { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: 'https://i.ibb.co/xtyy8V0N/1768211447515.png' }
-];
-    
+        { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: 'https://i.ibb.co/JWsqDFX9/1768228481848.png' },
+        { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: 'https://via.placeholder.com/100' },
+        { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
+        { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
+        { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
+        { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
+        { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
+        { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
+        { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: 'https://i.ibb.co/hpPRPDr/1768208099763.png' },
+        { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: 'https://i.ibb.co/cSCzCKN5/1768228376693.png' },
+        { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: 'https://i.ibb.co/PsGSSTK4/1768228089572.png' },
+        { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: 'https://i.ibb.co/xtyy8V0N/1768211447515.png' }
+    ];
 
     let cart = {};
     let activeCat = 'All', chosenDay = 'today';
@@ -225,17 +223,30 @@
             items.push(`▪️ ${i.name} (${cart[id]} ခု)`);
         }
         const total = document.getElementById('bar-total').innerText;
-        const msg = `🍗 *မြင်သာကြက်ကင် - အော်ဒါ*\n👤 *အမည်:* ${name}\n📞 *ဖုန်း:* ${phone}\n📅 *နေ့ရက်:* ${dayStr}\n🕒 *အချိန်:* ${time}\n━━━━━━━━━━━━━━\n${items.join('\n')}\n━━━━━━━━━━━━━━\n💰 *စုစုပေါင်း:* *${total} MMK*\n
-⚠️ အော်ဒါတင်ပြီး (၅) မိနစ်အတွင်း ဆိုင်မှ အကြောင်းမပြန်ပါက ဖုန်းဆက်ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။\n🛒 *နောက်တစ်ခါ ထပ်မှာရန်:* ${WEB_LINK}`;
+
+        const msg = `🍗 *မြင်သာကြက်ကင် - အော်ဒါ*
+👤 *အမည်:* ${name}
+📞 *ဖုန်း:* ${phone}
+📅 *နေ့ရက်:* ${dayStr}
+🕒 *အချိန်:* ${time}
+━━━━━━━━━━━━━━
+${items.join('\n')}
+━━━━━━━━━━━━━━
+💰 *စုစုပေါင်း:* *${total} MMK*
+
+⚠️ အော်ဒါတင်ပြီး (၅) မိနစ်အတွင်း ဆိုင်မှ အကြောင်းမပြန်ပါက ဖုန်းဆက်ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။
+
+🛒 *ပြန်မှာရန်နှိပ်ပါ* 👇
+${WEB_LINK}`;
 
         if(via === 'viber') {
             navigator.clipboard.writeText(msg).then(() => {
                 myPop("Copy ကူးပြီးပါပြီ။ Viber မှာ Paste လုပ်ပြီး ပို့ပေးပါ!");
+                setTimeout(() => { window.location.href = `viber://chat?number=%2B${MY_PHONE}`; }, 1500);
                 clearCart();
-                setTimeout(() => { window.location.href = `viber://pa?chatURI=${MY_PHONE}`; }, 1500);
             });
         } else {
-            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
+            window.location.href = `https://t.me/share/url?url=${encodeURIComponent(WEB_LINK)}&text=${encodeURIComponent(msg)}`;
             clearCart();
         }
     }
@@ -245,4 +256,3 @@
 </script>
 </body>
 </html>
-
