@@ -2,317 +2,154 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MYIN THAR ROAST - Premium</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MYIN THAR ROAST - Order Now</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --gold: #B8860B; --navy: #001F3F; --pearl: #FDFDFD; 
-            --white: #FFFFFF; --text: #2C3E50; --shadow: 0 4px 15px rgba(0,0,0,0.05);
-            --red: #d9534f; --green: #27ae60;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--pearl); color: var(--text); margin: 0; overflow-x: hidden; }
-
-        /* Header */
-        .header { background: var(--white); padding: 10px 15px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .header img { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; }
-        .header h2 { margin: 0; color: var(--navy); letter-spacing: 1px; font-size: 16px; text-transform: uppercase; font-weight: 800; }
-
-        /* General Styles */
-        #toast-msg { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 12px 25px; border-radius: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 2000; transition: 0.4s; display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 200px; justify-content: center; }
-        #toast-msg.show { top: 20px; }
-
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center; }
-
-        .search-section { padding: 10px 15px; max-width: 500px; margin: 0 auto; }
-        .search-box { position: relative; width: 100%; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--gold); }
-        .search-box input { width: 100%; padding: 12px 12px 12px 42px; border-radius: 12px; border: 1px solid #eee; outline: none; box-sizing: border-box; font-size: 14px; box-shadow: var(--shadow); }
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --white: #FFFFFF; --shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding-bottom: 120px; }
         
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 15px; max-width: 800px; margin: 0 auto; }
-        .item-card { background: var(--white); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #f8f8f8; }
+        /* Header */
+        .header { background: var(--navy); padding: 30px 20px 60px; text-align: center; border-radius: 0 0 40px 40px; position: relative; z-index: 10; }
+        .header img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; }
+        .header h2 { color: var(--gold); margin: 0; font-family: 'Playfair Display', serif; letter-spacing: 1px; }
+
+        /* Menu Section - အဓိက ပြင်ဆင်ထားသောနေရာ */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; max-width: 600px; margin: -40px auto 0; position: relative; z-index: 20; }
+        .item-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #eee; text-align: center; position: relative; }
         .item-card img { width: 100%; height: 120px; object-fit: cover; }
-        .item-info { padding: 10px; text-align: center; }
-        .item-info b { display: block; font-size: 14px; margin-bottom: 5px; color: var(--navy); }
-        .price { color: var(--gold); font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; }
-        .btn-add { background: var(--navy); color: white; border: none; padding: 10px; border-radius: 12px; cursor: pointer; width: 100%; font-size: 12px; font-weight: bold; }
+        .item-card div { padding: 12px; }
+        .item-card b { display: block; font-size: 14px; color: var(--navy); margin-bottom: 5px; }
+        .price { color: var(--gold); font-weight: 800; font-size: 14px; margin-bottom: 12px; display: block; }
+        
+        /* Add Button */
+        .btn-add { background: var(--navy); color: white; border: none; width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; position: relative; z-index: 30; }
+        .btn-add:active { transform: scale(0.95); opacity: 0.8; }
 
-        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,31,63,0.3); cursor: pointer; z-index: 200; border: 2.5px solid var(--gold); }
-        .badge { position: absolute; top: -5px; right: -5px; background: var(--gold); color: white; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; }
+        /* FAB */
+        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: var(--gold); width: 65px; height: 65px; border-radius: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 100; cursor: pointer; border: 2px solid rgba(212,175,55,0.3); }
+        .badge { position: absolute; top: -8px; right: -8px; background: #EF4444; color: white; font-size: 11px; min-width: 24px; height: 24px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 3px solid white; font-weight: bold; }
 
-        /* Basket Drawer */
-        #drawer { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: var(--pearl); z-index: 300; transition: 0.4s; display: flex; flex-direction: column; }
-        #drawer.open { right: 0; }
-        .drawer-header { padding: 18px; display: flex; align-items: center; background: white; border-bottom: 1px solid #eee; }
-        .drawer-body { flex: 1; overflow-y: auto; padding: 15px; }
-        .cart-row { background: white; padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; box-shadow: var(--shadow); }
-        .cart-controls { display: flex; align-items: center; gap: 12px; }
-        .cart-controls i { font-size: 24px; cursor: pointer; color: var(--navy); }
-        .qty-input { width: 35px; border: 1px solid #eee; text-align: center; font-weight: bold; font-size: 15px; border-radius: 5px; }
-        .drawer-footer { padding: 20px; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); }
-        .btn-confirm { width: 100%; background: var(--navy); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        /* Modals */
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
+        .modal-card { background: white; width: 90%; max-width: 380px; border-radius: 30px; padding: 30px; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 800; color: #64748B; margin: 0 0 6px 5px; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 16px; border: 1px solid #E2E8F0; border-radius: 15px; outline: none; font-size: 14px; background: #F8FAFC; }
+        .btn-confirm { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 18px; border-radius: 20px; font-weight: 800; margin-top: 10px; cursor: pointer; font-size: 16px; }
 
-        /* Custom Success Modal (Premium Design) */
-        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:500; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
-        .success-card { background: white; width: 85%; max-width: 350px; border-radius: 30px; padding: 30px; text-align: center; animation: slideUp 0.4s ease-out; position: relative; overflow: hidden; }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .success-icon { width: 70px; height: 70px; background: var(--green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3); }
-        .success-card h3 { margin: 10px 0; color: var(--navy); font-size: 20px; }
-        .success-card p { color: #777; font-size: 14px; line-height: 1.5; margin-bottom: 25px; }
-        .btn-voucher { background: var(--navy); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-close-final { background: transparent; border: 1px solid #eee; color: #999; width: 100%; padding: 12px; border-radius: 15px; font-size: 13px; cursor: pointer; }
-
-        /* Voucher Template */
-        #voucher-card { background: white; width: 380px; padding: 0; color: #333; }
-        .v-header { background: var(--navy); color: white; padding: 25px; text-align: center; }
-        .v-header img { width: 55px; height: 55px; border-radius: 50%; border: 2px solid white; margin-bottom: 10px; }
-        .v-body { padding: 25px; }
-        .v-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .v-table th { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: left; color: #888; }
-        .v-table td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; }
+        #loader { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center; }
+        .spinner { width: 45px; height: 45px; border: 4px solid #f3f3f3; border-top: 4px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="toast-msg"><i class="fas fa-check-circle"></i> <span id="toast-text"></span></div>
-
-<div id="loader">
-    <i class="fas fa-circle-notch fa-spin fa-3x" style="color:var(--navy)"></i>
-    <p style="margin-top:20px; font-size:15px; font-weight:bold; color:var(--navy);" id="loader-text">ခဏစောင့်ပေးပါ...</p>
-</div>
-
-<div id="modal-success" class="modal-overlay">
-    <div class="success-card">
-        <div class="success-icon"><i class="fas fa-check"></i></div>
-        <h3>မှာယူမှုအောင်မြင်ပါသည်</h3>
-        <p>လူကြီးမင်း၏ Order ကို လက်ခံရရှိပါသည်။ <br> ကျေးဇူးတင်ရှိပါသည်ဗျာ။</p>
-        <button class="btn-voucher" onclick="downloadVoucher()">
-            <i class="fas fa-download"></i> ဘောက်ချာဒေါင်းလုဒ်လုပ်မယ်
-        </button>
-        <button class="btn-close-final" onclick="location.reload()">ပိတ်မည်</button>
-    </div>
-</div>
+<div id="loader"><div class="spinner"></div><p style="margin-top:15px; font-weight:700; color:var(--navy);">အော်ဒါတင်နေပါသည်...</p></div>
 
 <div class="header">
-    <img src="https://i.ibb.co/k2Xyz9Gs/IMG-20260115-204542.png" alt="Logo">
+    <img src="https://i.ibb.co/k2Xyz9Gs/IMG-20260115-204542.png">
     <h2>MYIN THAR ROAST</h2>
-</div>
-
-<div class="search-section">
-    <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" id="search" placeholder="ရှာဖွေရန်..." onkeyup="filterMenu()">
-    </div>
 </div>
 
 <div id="menu-grid" class="menu-grid"></div>
 
-<div class="cart-fab" onclick="toggleCart()">
+<div class="cart-fab" onclick="showCheckout()">
     <i class="fas fa-shopping-basket fa-lg"></i>
     <div class="badge" id="cart-badge">0</div>
 </div>
 
-<div id="drawer">
-    <div class="drawer-header">
-        <i class="fas fa-arrow-left" onclick="toggleCart()"></i>
-        <h4 style="flex:1; text-align:center; margin:0; color: var(--navy);">MY BASKET</h4>
-    </div>
-    <div class="drawer-body" id="cart-list"></div>
-    <div class="drawer-footer">
-        <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-weight:bold; font-size: 18px;">
-            <span>TOTAL</span>
-            <span id="total-amt" style="color:var(--gold)">0 K</span>
+<div id="modal-checkout" class="modal">
+    <div class="modal-card">
+        <h3 style="text-align:center; margin-top:0; font-family: 'Playfair Display', serif;">Confirm Order</h3>
+        <div id="order-summary" style="margin-bottom:20px; font-size:13px; color:#64748B; background: #f8fafc; padding: 15px; border-radius: 15px; border: 1px dashed #cbd5e1;"></div>
+        <div class="input-group">
+            <label>Name</label>
+            <input type="text" id="cust-name" placeholder="အမည်ထည့်ပါ">
         </div>
-        <button class="btn-confirm" onclick="openCheckout()">NEXT STEP</button>
-    </div>
-</div>
-
-<div id="modal-checkout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
-    <div style="background:white; padding:30px; border-radius:25px; width:88%; max-width:360px;">
-        <h4 style="margin-top:0; text-align:center; color: var(--navy);">CUSTOMER INFO</h4>
-        <input type="text" id="cust-name" placeholder="အမည်" style="width:100%; padding:14px; margin:10px 0; border:1px solid #eee; border-radius:12px; box-sizing:border-box; outline: none;">
-        <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:14px; margin:10px 0; border:1px solid #eee; border-radius:12px; box-sizing:border-box; outline: none;">
-        <p style="font-size:11px; color:#888; margin:15px 0 5px 2px;">လာယူမည့်အချိန်</p>
-        <input type="datetime-local" id="pickup-time" style="width:100%; padding:14px; border:1px solid #eee; border-radius:12px; box-sizing:border-box; outline: none;">
-        <button class="btn-confirm" style="margin-top:25px;" onclick="validateAndSend()">CONFIRM ORDER</button>
-        <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:#aaa; margin-top:15px;">မလုပ်တော့ပါ</button>
-    </div>
-</div>
-
-<div id="v-wrap" style="position:absolute; left:-9999px;">
-    <div id="voucher-card">
-        <div class="v-header">
-            <img src="https://i.ibb.co/k2Xyz9Gs/IMG-20260115-204542.png" alt="Logo">
-            <h2 style="margin:0; font-size:20px;">INVOICE</h2>
-            <p style="margin:5px 0 0 0; opacity:0.8; font-size:12px;">Myin Thar Roast Premium</p>
+        <div class="input-group">
+            <label>Phone</label>
+            <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်ထည့်ပါ">
         </div>
-        <div class="v-body">
-            <div style="display:flex; justify-content:space-between; font-size:12px;">
-                <div><b>BILL TO:</b><br><span id="v-n"></span><br><span id="v-p"></span></div>
-                <div style="text-align:right;"><b>ID:</b> #<span id="v-id"></span><br><span id="v-d"></span></div>
-            </div>
-            <table class="v-table" style="margin-top:20px;">
-                <thead><tr><th>Items</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
-                <tbody id="v-rows"></tbody>
-            </table>
-            <div style="text-align:right; margin-top:20px; border-top:1px solid #eee; padding-top:12px;">
-                <h3 id="v-tot" style="margin:0; color:var(--navy);"></h3>
-            </div>
-        </div>
+        <button class="btn-confirm" onclick="validateAndSend()">အော်ဒါတင်မည်</button>
+        <button onclick="hideCheckout()" style="width:100%; background:none; border:none; color:#94A3B8; margin-top:20px; font-size:13px; font-weight:600;">ပြန်ထွက်မည်</button>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9uiYqn3XsKHGKT7hvQDrEuFWxXc6ZVuSrC7kHrGsgIUQP7Wmb9yWjIbvHfZpcxRMwPA/exec";
-    const TG_TOKEN = "8215695761:AAF1qDjAJn7gjiHyzf8t7W6c8e51cim98sU";
-    const TG_ID = "8116152317";
-
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
+    
     const menuData = [
-        { name: 'ကြက်ပေါင်', price: 4000, img: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?q=80&w=500&auto=format&fit=crop' },
-        { name: 'ကြက်ရင်အုံ', price: 4000, img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=500&auto=format&fit=crop' },
-        { name: 'ဆိတ်သားကင်', price: 1500, img: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=500&auto=format&fit=crop' },
-        { name: 'အသား ချောင်း', price: 800, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Meat' },
-        { name: 'အရေခွံ', price: 500, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Skin' },
-        { name: 'အတောင်ပျံ', price: 500, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Wing' },
-        { name: 'အသည်းမြစ်', price: 500, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Gizzard' },
-        { name: 'အဆီပူး', price: 800, img: 'https://via.placeholder.com/150/001F3F/FFFFFF?text=Fat' }
+        { name: 'ကြက်ပေါင်', price: 4000, img: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?q=80&w=300' },
+        { name: 'ကြက်ရင်အုံ', price: 4000, img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=300' },
+        { name: 'ဆိတ်သားကင်', price: 1500, img: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=300' },
+        { name: 'အသားချောင်း', price: 800, img: 'https://via.placeholder.com/300/0F172A/D4AF37?text=Meat' },
+        { name: 'အရေခွံ', price: 500, img: 'https://via.placeholder.com/300/0F172A/D4AF37?text=Skin' },
+        { name: 'အတောင်ပျံ', price: 500, img: 'https://via.placeholder.com/300/0F172A/D4AF37?text=Wing' }
     ];
 
     let cart = {};
-    let currentOID = "";
 
-    function showToast(msg) {
-        const toast = document.getElementById('toast-msg');
-        document.getElementById('toast-text').innerText = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2500);
-    }
-
-    function renderMenu(items) {
-        document.getElementById('menu-grid').innerHTML = items.map(i => `
+    function renderMenu() {
+        document.getElementById('menu-grid').innerHTML = menuData.map(i => `
             <div class="item-card">
                 <img src="${i.img}">
-                <div class="item-info">
+                <div>
                     <b>${i.name}</b>
                     <span class="price">${i.price.toLocaleString()} K</span>
-                    <button class="btn-add" onclick="add('${i.name}')">Add to Cart</button>
+                    <button class="btn-add" onclick="add('${i.name}')">ထည့်မည်</button>
                 </div>
             </div>`).join('');
     }
 
-    function add(name) { cart[name] = (cart[name] || 0) + 1; update(); showToast(name + " ထည့်ပြီးပါပြီ"); }
-    function change(name, v) { v = parseInt(v); if(isNaN(v) || v <= 0) delete cart[name]; else cart[name] = v; update(); }
-
-    function update() {
-        let count = 0, total = 0, html = "", vRows = "";
-        for(let k in cart) {
-            let item = menuData.find(m => m.name === k);
-            let sub = item.price * cart[k];
-            count += cart[k]; total += sub;
-            html += `<div class="cart-row">
-                <div style="flex:1"><b>${k}</b><br><small>${item.price} K</small></div>
-                <div class="cart-controls">
-                    <i class="fas fa-minus-circle" onclick="change('${k}', ${cart[k]-1})"></i>
-                    <input type="number" class="qty-input" value="${cart[k]}" onchange="change('${k}', this.value)">
-                    <i class="fas fa-plus-circle" onclick="change('${k}', ${cart[k]+1})"></i>
-                </div>
-            </div>`;
-            vRows += `<tr><td>${k}</td><td style="text-align:center;">${cart[k]}</td><td style="text-align:right;">${sub.toLocaleString()}</td></tr>`;
-        }
-        document.getElementById('cart-badge').innerText = count;
-        document.getElementById('total-amt').innerText = total.toLocaleString() + " K";
-        document.getElementById('cart-list').innerHTML = html || "<p style='text-align:center; color:#999; margin-top:50px;'>ခြင်းတောင်းထဲမှာ ဘာမှမရှိသေးပါ</p>";
-        document.getElementById('v-rows').innerHTML = vRows;
-        document.getElementById('v-tot').innerText = "Total: " + total.toLocaleString() + " K";
+    function add(name) {
+        cart[name] = (cart[name] || 0) + 1;
+        updateBadge();
     }
 
-    function toggleCart() { document.getElementById('drawer').classList.toggle('open'); }
-    function openCheckout() { if(Object.keys(cart).length === 0) return showToast("ပစ္စည်းအရင်ရွေးပါ"); document.getElementById('modal-checkout').style.display = 'flex'; }
-    function closeCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+    function updateBadge() {
+        let count = Object.values(cart).reduce((a, b) => a + b, 0);
+        document.getElementById('cart-badge').innerText = count;
+    }
+
+    function showCheckout() {
+        if(Object.keys(cart).length === 0) {
+            alert("ခြင်းတောင်းထဲသို့ ပစ္စည်းအရင်ထည့်ပါ");
+            return;
+        }
+        let summary = Object.keys(cart).map(k => `${k} (${cart[k]} ခု)`).join(", ");
+        document.getElementById('order-summary').innerText = summary;
+        document.getElementById('modal-checkout').style.display = 'flex';
+    }
+
+    function hideCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
 
     async function validateAndSend() {
-    const n = document.getElementById('cust-name').value;
-    const p = document.getElementById('cust-phone').value;
-    const t = document.getElementById('pickup-time').value;
-    
-    if(!n || !p) return showToast("အချက်အလက်ဖြည့်ပါ");
+        const n = document.getElementById('cust-name').value;
+        const p = document.getElementById('cust-phone').value;
+        if(!n || !p) { alert("အချက်အလက်များ ပြည့်စုံအောင် ဖြည့်ပါ"); return; }
 
-    currentOID = Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('loader').style.display = 'flex';
-    document.getElementById('loader-text').innerText = "Order ပို့နေပါသည်...";
-
-    // Voucher အတွက် အချက်အလက်ဖြည့်ခြင်း
-    document.getElementById('v-n').innerText = n;
-    document.getElementById('v-p').innerText = p;
-    document.getElementById('v-id').innerText = currentOID;
-    document.getElementById('v-d').innerText = new Date().toLocaleString();
-
-    let itemsText = Object.keys(cart).map(k => `${k} (${cart[k]} ခု)`).join(", ");
-    
-    // Total ကို အင်္ဂလိပ်ဂဏန်းစစ်စစ် ဖြစ်အောင် ပြောင်းခြင်း
-    let totalRaw = document.getElementById('total-amt').innerText.replace(/[^၀-၉0-9]/g, ""); 
-    const myanNum = {'၀':'0','၁':'1','၂':'2','၃':'3','၄':'4','၅':'5','၆':'6','၇':'7','၈':'8','၉':'9'};
-    let totalVal = totalRaw.replace(/[၀-၉]/g, function(s) { return myanNum[s]; });
-    
-    // ဂဏန်းစစ်စစ် (Integer) အဖြစ် ပြောင်းလဲခြင်း
-    let finalTotal = parseInt(totalVal) || 0;
-
-    try {
-        // ၁။ Google Sheet ဆီသို့ ပို့ခြင်း
-        await fetch(SCRIPT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify({ 
-                name: n, 
-                phone: p, 
-                items: itemsText, 
-                total: finalTotal 
-            }) 
-        });
-
-        // ၂။ Telegram ဆီသို့ ပို့ခြင်း
-        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                chat_id: TG_ID, 
-                text: `📦 *ORDER RECEIVED* (#${currentOID})\n👤 Customer: ${n}\n📞 Phone: ${p}\n⏰ Time: ${t}\n\n*Items:*\n${itemsText.replace(/, /g, '\n')}\n\n💰 *Total: ${finalTotal.toLocaleString()} K*`, 
-                parse_mode: 'Markdown' 
-            })
-        });
-
-        // အောင်မြင်လျှင် Modal ပြခြင်း
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('modal-checkout').style.display = 'none';
-        document.getElementById('modal-success').style.display = 'flex';
-
-    } catch(e) { 
-        document.getElementById('loader').style.display = 'none';
-        showToast("Error ဖြစ်သွားပါသည်"); 
-        console.error(e);
-    }
-    }
-    
-
-    async function downloadVoucher() {
+        const oid = "MT-" + Math.floor(1000 + Math.random() * 9000);
         document.getElementById('loader').style.display = 'flex';
-        document.getElementById('loader-text').innerText = "ဘောက်ချာ ထုတ်ပေးနေပါသည်...";
-        const canvas = await html2canvas(document.querySelector("#voucher-card"), { scale: 2, useCORS: true });
-        const link = document.createElement('a');
-        link.download = `Invoice_${currentOID}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-        document.getElementById('loader').style.display = 'none';
-        location.reload();
+
+        const orderData = {
+            id: oid, name: n, phone: p,
+            items: Object.keys(cart).map(k => `${k} (${cart[k]})`).join(", "),
+            total: Object.keys(cart).reduce((sum, k) => sum + (menuData.find(m => m.name === k).price * cart[k]), 0)
+        };
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(orderData) });
+            window.location.href = `track.html?id=${oid}`;
+        } catch(e) {
+            document.getElementById('loader').style.display = 'none';
+            alert("Error ဖြစ်သွားပါသည်၊ ပြန်ကြိုးစားပေးပါ။");
+        }
     }
 
-    function filterMenu() {
-        let q = document.getElementById('search').value.toLowerCase();
-        renderMenu(menuData.filter(i => i.name.toLowerCase().includes(q)));
-    }
-
-    window.onload = () => renderMenu(menuData);
+    window.onload = renderMenu;
 </script>
 </body>
 </html>
