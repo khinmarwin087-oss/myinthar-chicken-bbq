@@ -127,8 +127,13 @@
         if(!n || !p) return alert("အချက်အလက်ဖြည့်ပါ");
 
         const oid = "MT-" + Math.floor(1000 + Math.random() * 9000);
-        document.getElementById('loader').style.display = 'flex';
-
+    
+    // Order ID စာရင်းကို Array အနေနဲ့ သိမ်းမယ်
+    let orders = JSON.parse(localStorage.getItem('myOrders') || "[]");
+    orders.push(oid);
+    localStorage.setItem('myOrders', JSON.stringify(orders));
+    localStorage.setItem('lastOrderID', oid); // နောက်ဆုံးတစ်ခုကိုလည်း သီးသန့်မှတ်ထားမယ်
+        
         const orderData = {
             id: oid, name: n, phone: p,
             items: Object.keys(cart).map(k => `${k} (${cart[k]})`).join(", "),
