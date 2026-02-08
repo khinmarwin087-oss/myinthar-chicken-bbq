@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracking - Myin Thar Roast</title>
+    <title>My Orders - Myin Thar Roast</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; }
-        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 20px; }
-        .container { width: 100%; max-width: 450px; margin: auto; }
-        .history-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 2px solid transparent; }
+        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 450px; }
+        .history-card { background: white; padding: 18px; border-radius: 18px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .history-card.active { border-color: var(--gold); background: #fffdf5; }
-        
-        #details { display: none; background: white; border-radius: 25px; padding: 25px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); }
-        .status-badge { background: var(--gold); color: white; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; }
-        .item-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 14px; }
-        .btn-back { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 15px; border-radius: 15px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        #details { display: none; background: white; border-radius: 25px; padding: 25px; margin-top: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 6px solid var(--gold); }
+        .item-box { background: #f8fafc; padding: 15px; border-radius: 15px; margin: 15px 0; font-size: 14px; line-height: 1.6; }
+        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 16px; border-radius: 18px; font-weight: 800; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -27,17 +25,17 @@
     <div id="details">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <b id="det-id" style="font-size:18px;">#ID</b>
-            <span id="det-status" class="status-badge">Checking...</span>
+            <span id="det-status" style="background:var(--gold); color:white; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:800;">Loading...</span>
         </div>
         <div class="item-box">
             <b>ပစ္စည်းများ:</b><br>
-            <span id="det-items">...</span>
+            <span id="det-items">-</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-weight:800;">
+        <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px;">
             <span>စုစုပေါင်း:</span>
             <span style="color:var(--gold);"><span id="det-total">0</span> K</span>
         </div>
-        <button class="btn-back" onclick="location.href='index.html'">မီနူးသို့ပြန်သွားမည်</button>
+        <button class="btn-home" onclick="location.href='index.html'">မီနူးသို့ပြန်သွားမည်</button>
     </div>
 </div>
 
@@ -47,19 +45,17 @@
     function load() {
         const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
         const listDiv = document.getElementById('list');
-        
-        if(orders.length === 0) {
-            listDiv.innerHTML = "<p style='text-align:center; color:grey;'>မှတ်တမ်းမရှိသေးပါ</p>";
-            return;
-        }
+        if(orders.length === 0) return listDiv.innerHTML = "<p style='text-align:center;color:grey;margin-top:50px;'>မှာယူမှုမှတ်တမ်းမရှိသေးပါ</p>";
 
         listDiv.innerHTML = orders.map(id => `
             <div class="history-card" id="card-${id}" onclick="fetchStatus('${id}')">
-                <b>#${id}</b> <small style="float:right; color:grey;">စစ်ဆေးရန်နှိပ်ပါ</small>
+                <div style="display:flex; justify-content:space-between;">
+                    <b>#${id}</b>
+                    <small style="color:var(--gold); font-weight:bold;">အခြေအနေစစ်ရန် > </small>
+                </div>
             </div>
         `).join('');
 
-        // URL မှာ ID ပါလာရင် တန်းပြမယ်
         const urlId = new URLSearchParams(window.location.search).get('id');
         if(urlId) fetchStatus(urlId);
     }
@@ -70,16 +66,17 @@
         
         document.getElementById('details').style.display = 'block';
         document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('det-status').innerText = "Loading...";
-        document.getElementById('det-items').innerText = "ဒေတာဆွဲယူနေသည်...";
+        document.getElementById('det-status').innerText = "စစ်ဆေးနေဆဲ...";
+        document.getElementById('det-items').innerText = "-";
+        document.getElementById('det-total').innerText = "0";
 
         try {
-            const res = await fetch(`${SCRIPT_URL}?id=${id}`);
+            // URL ကို အတိအကျ ပို့ပါတယ်
+            const res = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(id)}`);
             const data = await res.json();
             
             if(data.status === "Not Found") {
-                document.getElementById('det-items').innerText = "အော်ဒါမတွေ့သေးပါ။ ခဏနေမှ ပြန်စစ်ပါ။";
-                document.getElementById('det-status').innerText = "မတွေ့ပါ";
+                document.getElementById('det-items').innerText = "Sheet ထဲတွင် ဒေတာမတွေ့သေးပါ။ ခဏနေမှ ပြန်စစ်ကြည့်ပါ။";
             } else {
                 document.getElementById('det-status').innerText = translate(data.status);
                 document.getElementById('det-items').innerText = data.items || "-";
@@ -95,11 +92,10 @@
         if(s === "Pending") return "လက်ခံရရှိ";
         if(s === "Accepted" || s === "Processing") return "ချက်ပြုတ်နေ";
         if(s === "Ready") return "လာယူနိုင်ပြီ";
-        return s;
+        return s || "စောင့်ဆိုင်းဆဲ";
     }
 
     window.onload = load;
 </script>
 </body>
 </html>
-
