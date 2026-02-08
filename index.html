@@ -1,49 +1,21 @@
 <!DOCTYPE html>
 <html lang="my">
 <head>
-    <meta name="google-site-verification" content="6V3jgvARa7qSoviE2DdzuXtyyN8nnHeVxnRmI0dBbOA" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6N321JW2GM"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-6N321JW2GM');
-    </script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-6N321JW2GM');
+</script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <title>🍗 မြင်သာကြက်ကင် - အွန်လိုင်းမှ အလွယ်တကူ မှာယူပါ</title>
-    <meta name="description" content="ရန်ကုန်မြို့ရှိ မြင်သာကြက်ကင် ဆိုင်၏ အွန်လိုင်း Menu ဖြစ်ပါသည်။ ကြက်ကင်၊ ဆိတ်သားကင်နှင့် BBQ အမျိုးမျိုးကို အိမ်အရောက် မှာယူနိုင်ပါသည်။">
-    <meta name="keywords" content="မြင်သာကြက်ကင်, Myin Thar Chicken BBQ, ရန်ကုန် ကြက်ကင်, အကင်စုံ, အွန်လိုင်းမှာယူရန်, POS">
-    <meta name="author" content="မြင်သာကြက်ကင်">
-    
-    <meta property="og:title" content="🍗 မြင်သာကြက်ကင် - မှာယူရန်နှိပ်ပါ">
-    <meta property="og:description" content="အကောင်းဆုံး ကြက်ကင်နှင့် BBQ များကို ဒီမှာ ကြည့်နိုင်ပါပြီ။">
-    <meta property="og:image" content="https://i.ibb.co/JWsqDFX9/1768228481848.png"> <meta property="og:url" content="https://myintharchickenbbq.shop">
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Restaurant",
-      "name": "မြင်သာကြက်ကင် (Myin Thar Chicken BBQ)",
-      "image": "https://i.ibb.co/JWsqDFX9/1768228481848.png",
-      "url": "https://myintharchickenbbq.shop",
-      "servesCuisine": "Barbecue",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Yangon",
-        "addressCountry": "MM"
-      }
-    }
-    </script>
-
+    <title>🍗 မြင်သာကြက်ကင် POS</title>
     <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        /* ခင်ဗျားရဲ့ CSS တွေ အကုန်လုံး ဒီကြားထဲမှာ ရှိပါမယ်... */
-        
         :root { --pearl: #ffffff; --bg: #f1f5f9; --accent: #f59e0b; --text: #1e293b; --sub: #64748b; --danger: #ef4444; }
         body { font-family: 'Pyidaungsu', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; color: var(--text); font-size: 14px; }
 
@@ -100,7 +72,32 @@
         .btn-main { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 15px; font-weight: 800; font-size: 15px; cursor: pointer; }
         .btn-s { border: none; padding: 12px; border-radius: 12px; color: white; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
         .alert-pop { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; width: 80%; max-width: 300px; padding: 25px 20px; border-radius: 20px; z-index: 1000; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-    </style>
+    /* Loading Spinner Style */
+.spinner {
+    display: none; /* ပုံမှန်ဆိုရင် ဖျောက်ထားမယ် */
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ခလုတ်နှိပ်နေစဉ် style */
+.btn-s.loading {
+    pointer-events: none;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+</style>
 </head>
 <body>
 
@@ -166,8 +163,14 @@
                         </p>
                     </div>
                     <div style="display:flex; gap:10px;">        
-                        <button class="btn-s" style="background:#7360f2;" onclick="sendOrder('viber')"><i class="fa-brands fa-viber"></i> Viber</button>
-                        <button class="btn-s" style="background:#0088cc;" onclick="sendOrder('tele')"><i class="fa-brands fa-telegram"></i> Telegram</button>
+    <button id="btn-viber" class="btn-s" style="background:#7360f2;" onclick="sendOrder('viber')">
+        <i class="fa-brands fa-viber"></i> Viber <div class="spinner" id="spin-viber"></div>
+    </button>
+    <button id="btn-tele" class="btn-s" style="background:#0088cc;" onclick="sendOrder('tele')">
+        <i class="fa-brands fa-telegram"></i> Telegram <div class="spinner" id="spin-tele"></div>
+    </button>
+</div>
+
                     </div>
                 </div>
             </div>
@@ -307,28 +310,43 @@
     }
     
     async function sendOrder(via) {
-        const name = document.getElementById('in-name').value;
-        const phone = document.getElementById('in-phone').value;
-        const time = document.getElementById('in-time').value;
-        const otherDate = document.getElementById('in-date').value;
-        if(!name || !phone || !time) return myPop("အချက်အလက်တွေ ပြည့်စုံအောင် ဖြည့်ပေးပါ ✨");
+    const name = document.getElementById('in-name').value;
+    const phone = document.getElementById('in-phone').value;
+    const time = document.getElementById('in-time').value;
+    const otherDate = document.getElementById('in-date').value;
+    
+    if(!name || !phone || !time) return myPop("အချက်အလက်တွေ ပြည့်စုံအောင် ဖြည့်ပေးပါ ✨");
 
-        let dayStr = chosenDay === 'today' ? "ဒီနေ့ (Today)" : otherDate;
-        let items = [];
-        for(let id in cart) {
-            const i = menuData.find(m => m.id == id);
-            items.push(`▪️ ${i.name} (${cart[id]} ခု)`);
-        }
-        const total = document.getElementById('bar-total').innerText;
-        const msg = `🍗 *မြင်သာကြက်ကင် - အော်ဒါ*\n👤 *အမည်:* ${name}\n📞 *ဖုန်း:* ${phone}\n📅 *နေ့ရက်:* ${dayStr}\n🕒 *အချိန်:* ${time}\n━━━━━━━━━━━━━━\n${items.join('\n')}\n━━━━━━━━━━━━━━\n💰 *စုစုပေါင်း:* *${total} MMK*\n\n🛒 *ပြန်လည်မှာယူရန်နှိပ်ပါ* 👇\n${WEB_LINK}`;
-        try {
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: CHAT_ID, text: msg, parse_mode: 'Markdown' })
-            });
+    // --- Loading စတင်ခြင်း ---
+    const btn = via === 'viber' ? document.getElementById('btn-viber') : document.getElementById('btn-tele');
+    const spin = via === 'viber' ? document.getElementById('spin-viber') : document.getElementById('spin-tele');
+    
+    btn.classList.add('loading');
+    spin.style.display = 'inline-block';
+    // ------------------------
 
-           if(via === 'viber') {
+    let dayStr = chosenDay === 'today' ? "ဒီနေ့ (Today)" : otherDate;
+    let items = [];
+    for(let id in cart) {
+        const i = menuData.find(m => m.id == id);
+        items.push(`▪️ ${i.name} (${cart[id]} ခု)`);
+    }
+    const total = document.getElementById('bar-total').innerText;
+    const msg = `🍗 *မြင်သာကြက်ကင် - အော်ဒါ*\n👤 *အမည်:* ${name}\n📞 *ဖုန်း:* ${phone}\n📅 *နေ့ရက်:* ${dayStr}\n🕒 *အချိန်:* ${time}\n━━━━━━━━━━━━━━\n${items.join('\n')}\n━━━━━━━━━━━━━━\n💰 *စုစုပေါင်း:* *${total} MMK*\n\n🛒 *ပြန်လည်မှာယူရန်နှိပ်ပါ* 👇\n${WEB_LINK}`;
+
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CHAT_ID, text: msg, parse_mode: 'Markdown' })
+        });
+
+        // ခဏစောင့်ပြီးမှ ပိတ်ပေးမယ် (Animation ပြချင်လို့)
+        setTimeout(() => {
+            btn.classList.remove('loading');
+            spin.style.display = 'none';
+
+            if(via === 'viber') {
                 navigator.clipboard.writeText(msg).then(() => {
                     myPop("Copy ကူးပြီးပါပြီ။ Viber မှာ Paste လုပ်ပြီး ပို့ပေးပါ!");
                     setTimeout(() => { window.location.href = `viber://chat?number=%2B${MY_PHONE}`; }, 1200);
@@ -337,9 +355,14 @@
                 window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
             }
             cart = {}; updateFloatingBar(); document.getElementById('cart-sheet').style.display = 'none';
-        } catch (e) { myPop("Error! Bot ဆီသို့ အော်ဒါပို့မရပါ။"); }
-    }
+        }, 1000); // ၁ စက္ကန့်လောက် လည်ပြမယ်
 
+    } catch (e) { 
+        btn.classList.remove('loading');
+        spin.style.display = 'none';
+        myPop("Error! Bot ဆီသို့ အော်ဒါပို့မရပါ။"); 
+    }
+    }
     window.onload = renderMenu;
 </script>
 </body>
