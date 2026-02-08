@@ -3,38 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Orders - Myin Thar Roast</title>
+    <title>Track Order</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; }
         body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; }
-        .history-card { background: white; padding: 18px; border-radius: 18px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .history-card.active { border-color: var(--gold); background: #fffdf5; }
-        #details { display: none; background: white; border-radius: 25px; padding: 25px; margin-top: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 6px solid var(--gold); }
-        .item-box { background: #f8fafc; padding: 15px; border-radius: 15px; margin: 15px 0; font-size: 14px; line-height: 1.6; }
-        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 16px; border-radius: 18px; font-weight: 800; cursor: pointer; margin-top: 15px; }
+        .container { width: 100%; max-width: 400px; }
+        .history-list { margin-bottom: 20px; }
+        .order-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 1px solid #ddd; display: flex; justify-content: space-between; }
+        .order-card.active { border: 2px solid var(--gold); background: #fffdf5; }
+        
+        #status-panel { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); }
+        .status-box { background: var(--gold); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 13px; }
+        .info-group { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 14px; }
+        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 15px; border-radius: 12px; font-weight: bold; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h3 style="color:var(--navy);"><i class="fas fa-history"></i> မှာယူမှုမှတ်တမ်း</h3>
-    <div id="list"></div>
+    <div id="order-list" class="history-list"></div>
 
-    <div id="details">
+    <div id="status-panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b id="det-id" style="font-size:18px;">#ID</b>
-            <span id="det-status" style="background:var(--gold); color:white; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:800;">Loading...</span>
+            <b id="display-id" style="font-size:18px;">#ID</b>
+            <span id="display-status" class="status-box">စစ်ဆေးနေဆဲ...</span>
         </div>
-        <div class="item-box">
-            <b>ပစ္စည်းများ:</b><br>
-            <span id="det-items">-</span>
+        
+        <div class="info-group">
+            <b>မှာယူထားသောပစ္စည်းများ:</b><br>
+            <span id="display-items">...</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px;">
-            <span>စုစုပေါင်း:</span>
-            <span style="color:var(--gold);"><span id="det-total">0</span> K</span>
+        
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span>စုစုပေါင်းကျသင့်ငွေ:</span>
+            <span><span id="display-total">0</span> K</span>
         </div>
+        
         <button class="btn-home" onclick="location.href='index.html'">မီနူးသို့ပြန်သွားမည်</button>
     </div>
 </div>
@@ -42,60 +48,67 @@
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
 
-    function load() {
+    function init() {
         const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
-        const listDiv = document.getElementById('list');
-        if(orders.length === 0) return listDiv.innerHTML = "<p style='text-align:center;color:grey;margin-top:50px;'>မှာယူမှုမှတ်တမ်းမရှိသေးပါ</p>";
+        const listDiv = document.getElementById('order-list');
+        
+        if(orders.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center;color:grey;'>မှတ်တမ်းမရှိသေးပါ</p>";
+            return;
+        }
 
         listDiv.innerHTML = orders.map(id => `
-            <div class="history-card" id="card-${id}" onclick="fetchStatus('${id}')">
-                <div style="display:flex; justify-content:space-between;">
-                    <b>#${id}</b>
-                    <small style="color:var(--gold); font-weight:bold;">အခြေအနေစစ်ရန် > </small>
-                </div>
+            <div class="order-card" id="card-${id}" onclick="getDetails('${id}')">
+                <b>#${id}</b>
+                <span style="color:var(--gold); font-size:12px;">အခြေအနေကြည့်ရန် ></span>
             </div>
         `).join('');
 
-        const urlId = new URLSearchParams(window.location.search).get('id');
-        if(urlId) fetchStatus(urlId);
+        // URL က ID ကို အော်တိုဖတ်မယ်
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id');
+        if(idFromUrl) getDetails(idFromUrl);
     }
 
-    async function fetchStatus(id) {
-        document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+    async function getDetails(id) {
+        // UI ပြောင်းလဲခြင်း
+        document.querySelectorAll('.order-card').forEach(c => c.classList.remove('active'));
         if(document.getElementById(`card-${id}`)) document.getElementById(`card-${id}`).classList.add('active');
         
-        document.getElementById('details').style.display = 'block';
-        document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('det-status').innerText = "စစ်ဆေးနေဆဲ...";
-        document.getElementById('det-items').innerText = "-";
-        document.getElementById('det-total').innerText = "0";
+        document.getElementById('status-panel').style.display = 'block';
+        document.getElementById('display-id').innerText = "#" + id;
+        document.getElementById('display-status').innerText = "စစ်ဆေးနေဆဲ...";
+        document.getElementById('display-items').innerText = "ဒေတာဆွဲယူနေသည်...";
 
         try {
-            // URL ကို အတိအကျ ပို့ပါတယ်
-            const res = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(id)}`);
-            const data = await res.json();
+            // Google Sheet ကနေ ဒေတာလှမ်းတောင်းတယ်
+            const response = await fetch(SCRIPT_URL + "?id=" + id);
+            const data = await response.json();
             
             if(data.status === "Not Found") {
-                document.getElementById('det-items').innerText = "Sheet ထဲတွင် ဒေတာမတွေ့သေးပါ။ ခဏနေမှ ပြန်စစ်ကြည့်ပါ။";
+                document.getElementById('display-status').innerText = "မတွေ့ပါ";
+                document.getElementById('display-items').innerText = "Sheet ထဲမှာ ဒေတာရှာမတွေ့သေးပါ။";
             } else {
-                document.getElementById('det-status').innerText = translate(data.status);
-                document.getElementById('det-items').innerText = data.items || "-";
-                let t = String(data.total).replace(/[^0-9]/g, "");
-                document.getElementById('det-total').innerText = Number(t).toLocaleString();
+                document.getElementById('display-status').innerText = translateStatus(data.status);
+                document.getElementById('display-items').innerText = data.items || "-";
+                // Total ကို ဂဏန်းသက်သက်ပြောင်းမယ်
+                let cleanTotal = String(data.total).replace(/[^0-9]/g, "");
+                document.getElementById('display-total').innerText = Number(cleanTotal).toLocaleString();
             }
-        } catch(e) { 
-            document.getElementById('det-status').innerText = "Error";
+        } catch(e) {
+            document.getElementById('display-status').innerText = "Error";
+            document.getElementById('display-items').innerText = "Connection လွဲချော်နေပါသည်။";
         }
     }
 
-    function translate(s) {
+    function translateStatus(s) {
         if(s === "Pending") return "လက်ခံရရှိ";
         if(s === "Accepted" || s === "Processing") return "ချက်ပြုတ်နေ";
         if(s === "Ready") return "လာယူနိုင်ပြီ";
         return s || "စောင့်ဆိုင်းဆဲ";
     }
 
-    window.onload = load;
+    window.onload = init;
 </script>
 </body>
 </html>
