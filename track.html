@@ -3,42 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Order</title>
+    <title>Tracking - Myin Thar Roast</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; }
         body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 400px; }
-        .history-list { margin-bottom: 20px; }
-        .order-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 1px solid #ddd; display: flex; justify-content: space-between; }
+        .order-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .order-card.active { border: 2px solid var(--gold); background: #fffdf5; }
         
-        #status-panel { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); }
-        .status-box { background: var(--gold); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 13px; }
-        .info-group { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 14px; }
-        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 15px; border-radius: 12px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        #details { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); margin-top: 20px; }
+        .status-badge { background: var(--gold); color: white; padding: 5px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; }
+        .data-box { background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 14px; border: 1px solid #eee; }
+        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h3 style="color:var(--navy);"><i class="fas fa-history"></i> မှာယူမှုမှတ်တမ်း</h3>
-    <div id="order-list" class="history-list"></div>
+    <div id="list"></div>
 
-    <div id="status-panel">
+    <div id="details">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b id="display-id" style="font-size:18px;">#ID</b>
-            <span id="display-status" class="status-box">စစ်ဆေးနေဆဲ...</span>
+            <b id="det-id" style="font-size:18px;">#ID</b>
+            <span id="det-status" class="status-badge">Checking...</span>
         </div>
         
-        <div class="info-group">
-            <b>မှာယူထားသောပစ္စည်းများ:</b><br>
-            <span id="display-items">...</span>
+        <div class="data-box">
+            <b style="color:#64748b;">မှာယူထားသောပစ္စည်းများ:</b><br>
+            <div id="det-items" style="margin-top:5px; font-weight:600;">-</div>
         </div>
         
-        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+        <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px;">
             <span>စုစုပေါင်းကျသင့်ငွေ:</span>
-            <span><span id="display-total">0</span> K</span>
+            <span style="color:var(--gold);"><span id="det-total">0</span> K</span>
         </div>
         
         <button class="btn-home" onclick="location.href='index.html'">မီနူးသို့ပြန်သွားမည်</button>
@@ -48,9 +47,9 @@
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
 
-    function init() {
+    function loadOrders() {
         const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
-        const listDiv = document.getElementById('order-list');
+        const listDiv = document.getElementById('list');
         
         if(orders.length === 0) {
             listDiv.innerHTML = "<p style='text-align:center;color:grey;'>မှတ်တမ်းမရှိသေးပါ</p>";
@@ -58,46 +57,42 @@
         }
 
         listDiv.innerHTML = orders.map(id => `
-            <div class="order-card" id="card-${id}" onclick="getDetails('${id}')">
+            <div class="order-card" id="card-${id}" onclick="showStatus('${id}')">
                 <b>#${id}</b>
-                <span style="color:var(--gold); font-size:12px;">အခြေအနေကြည့်ရန် ></span>
+                <i class="fas fa-chevron-right" style="color:#ccc;"></i>
             </div>
         `).join('');
 
-        // URL က ID ကို အော်တိုဖတ်မယ်
-        const urlParams = new URLSearchParams(window.location.search);
-        const idFromUrl = urlParams.get('id');
-        if(idFromUrl) getDetails(idFromUrl);
+        const urlId = new URLSearchParams(window.location.search).get('id');
+        if(urlId) showStatus(urlId);
     }
 
-    async function getDetails(id) {
-        // UI ပြောင်းလဲခြင်း
+    async function showStatus(id) {
+        // UI Highlight
         document.querySelectorAll('.order-card').forEach(c => c.classList.remove('active'));
         if(document.getElementById(`card-${id}`)) document.getElementById(`card-${id}`).classList.add('active');
         
-        document.getElementById('status-panel').style.display = 'block';
-        document.getElementById('display-id').innerText = "#" + id;
-        document.getElementById('display-status').innerText = "စစ်ဆေးနေဆဲ...";
-        document.getElementById('display-items').innerText = "ဒေတာဆွဲယူနေသည်...";
+        document.getElementById('details').style.display = 'block';
+        document.getElementById('det-id').innerText = "#" + id;
+        document.getElementById('det-status').innerText = "စစ်ဆေးနေဆဲ...";
+
+        // ပစ္စည်းစာရင်းနဲ့ Total ကို Local Storage ထဲကနေ အရင်ရှာမယ်
+        // (ဒါမှ App Script က မပို့ပေးရင်တောင် ပေါ်နေမှာပါ)
+        document.getElementById('det-items').innerText = "-"; 
+        document.getElementById('det-total').innerText = "0";
 
         try {
-            // Google Sheet ကနေ ဒေတာလှမ်းတောင်းတယ်
+            // Google Sheet ဆီက Status ပဲ တောင်းမယ်
             const response = await fetch(SCRIPT_URL + "?id=" + id);
             const data = await response.json();
             
             if(data.status === "Not Found") {
-                document.getElementById('display-status').innerText = "မတွေ့ပါ";
-                document.getElementById('display-items').innerText = "Sheet ထဲမှာ ဒေတာရှာမတွေ့သေးပါ။";
+                document.getElementById('det-status').innerText = "မတွေ့ပါ";
             } else {
-                document.getElementById('display-status').innerText = translateStatus(data.status);
-                document.getElementById('display-items').innerText = data.items || "-";
-                // Total ကို ဂဏန်းသက်သက်ပြောင်းမယ်
-                let cleanTotal = String(data.total).replace(/[^0-9]/g, "");
-                document.getElementById('display-total').innerText = Number(cleanTotal).toLocaleString();
+                document.getElementById('det-status').innerText = translateStatus(data.status);
             }
         } catch(e) {
-            document.getElementById('display-status').innerText = "Error";
-            document.getElementById('display-items').innerText = "Connection လွဲချော်နေပါသည်။";
+            document.getElementById('det-status').innerText = "Error";
         }
     }
 
@@ -108,7 +103,7 @@
         return s || "စောင့်ဆိုင်းဆဲ";
     }
 
-    window.onload = init;
+    window.onload = loadOrders;
 </script>
 </body>
 </html>
