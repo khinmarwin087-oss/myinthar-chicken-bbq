@@ -3,128 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Orders - Myin Thar Roast</title>
+    <title>Tracking - Myin Thar Roast</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --white: #FFFFFF; }
-        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        
-        .container { width: 100%; max-width: 450px; }
-        .title { font-weight: 800; color: var(--navy); font-size: 22px; margin: 20px 0; text-align: left; display: flex; align-items: center; gap: 10px; }
-        
-        /* အော်ဒါမှတ်တမ်း ကတ်ပြားများ */
-        .order-history { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .history-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; }
+        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 450px; margin: auto; }
+        .history-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 2px solid transparent; }
         .history-card.active { border-color: var(--gold); background: #fffdf5; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .id-badge { background: var(--navy); color: var(--gold); padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-        .status-text { font-size: 13px; font-weight: 700; }
         
-        /* Status Color Classes */
-        .status-pending { color: #f59e0b; }
-        .status-processing { color: #3b82f6; }
-        .status-ready { color: #10b981; }
-
-        /* အသေးစိတ်ကြည့်ရန် Section */
-        #details-section { display: none; background: white; border-radius: 30px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; position: sticky; bottom: 20px; border-top: 5px solid var(--gold); }
-        .item-list { font-size: 14px; color: #475569; background: #f8fafc; padding: 15px; border-radius: 15px; margin: 15px 0; line-height: 1.6; }
-        
-        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 16px; border-radius: 18px; font-weight: 800; cursor: pointer; margin-top: 15px; }
-        
-        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
+        #details { display: none; background: white; border-radius: 25px; padding: 25px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); }
+        .status-badge { background: var(--gold); color: white; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+        .item-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 14px; }
+        .btn-back { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 15px; border-radius: 15px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="title"><i class="fas fa-history"></i> မှာယူမှုမှတ်တမ်း</div>
-    
-    <div id="order-list" class="order-history">
-        </div>
+    <h3 style="color:var(--navy);"><i class="fas fa-history"></i> မှာယူမှုမှတ်တမ်း</h3>
+    <div id="list"></div>
 
-    <div id="details-section">
+    <div id="details">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b id="det-id" style="color:var(--navy); font-size:18px;">#ID</b>
-            <span id="det-status" class="status-text">Checking...</span>
+            <b id="det-id" style="font-size:18px;">#ID</b>
+            <span id="det-status" class="status-badge">Checking...</span>
         </div>
-        
-        <div class="item-list">
-            <b>မှာယူထားသောပစ္စည်းများ:</b><br>
+        <div class="item-box">
+            <b>ပစ္စည်းများ:</b><br>
             <span id="det-items">...</span>
         </div>
-        
-        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:16px;">
-            <span>စုစုပေါင်းကျသင့်ငွေ:</span>
+        <div style="display:flex; justify-content:space-between; font-weight:800;">
+            <span>စုစုပေါင်း:</span>
             <span style="color:var(--gold);"><span id="det-total">0</span> K</span>
         </div>
-
-        <button class="btn-home" onclick="location.href='index.html'"><i class="fas fa-plus"></i> အသစ်ထပ်မှာမည်</button>
+        <button class="btn-back" onclick="location.href='index.html'">မီနူးသို့ပြန်သွားမည်</button>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
 
-    function loadHistory() {
+    function load() {
         const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
-        const listDiv = document.getElementById('order-list');
+        const listDiv = document.getElementById('list');
         
-        if (orders.length === 0) {
-            listDiv.innerHTML = `<div class="empty-state"><i class="fas fa-shopping-basket fa-3x"></i><br><br>မှာယူထားသော မှတ်တမ်းမရှိသေးပါ</div>`;
+        if(orders.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center; color:grey;'>မှတ်တမ်းမရှိသေးပါ</p>";
             return;
         }
 
         listDiv.innerHTML = orders.map(id => `
-            <div class="history-card" id="card-${id}" onclick="viewOrder('${id}')">
-                <div class="card-header">
-                    <span class="id-badge">#${id}</span>
-                    <i class="fas fa-chevron-right" style="color:#cbd5e1;"></i>
-                </div>
-                <div style="font-size:12px; color:#64748B;">နှိပ်၍ အခြေအနေကို စစ်ဆေးပါ</div>
+            <div class="history-card" id="card-${id}" onclick="fetchStatus('${id}')">
+                <b>#${id}</b> <small style="float:right; color:grey;">စစ်ဆေးရန်နှိပ်ပါ</small>
             </div>
         `).join('');
+
+        // URL မှာ ID ပါလာရင် တန်းပြမယ်
+        const urlId = new URLSearchParams(window.location.search).get('id');
+        if(urlId) fetchStatus(urlId);
     }
 
-    async function viewOrder(id) {
-        // UI ပြောင်းလဲခြင်း
+    async function fetchStatus(id) {
         document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
-        document.getElementById(`card-${id}`).classList.add('active');
-        document.getElementById('details-section').style.display = 'block';
+        if(document.getElementById(`card-${id}`)) document.getElementById(`card-${id}`).classList.add('active');
         
-        // Loading ပြရန်
+        document.getElementById('details').style.display = 'block';
         document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('det-items').innerText = "စစ်ဆေးနေပါသည်...";
         document.getElementById('det-status').innerText = "Loading...";
+        document.getElementById('det-items').innerText = "ဒေတာဆွဲယူနေသည်...";
 
         try {
             const res = await fetch(`${SCRIPT_URL}?id=${id}`);
             const data = await res.json();
             
-            // Status ပြင်ရန်
-            const statusEl = document.getElementById('det-status');
-            statusEl.innerText = translateStatus(data.status);
-            statusEl.className = "status-text status-" + data.status.toLowerCase();
-            
-            // အသေးစိတ်ပြရန်
-            document.getElementById('det-items').innerText = data.items || "မတွေ့ရှိပါ";
-            let total = String(data.total).replace(/[^0-9]/g, "");
-            document.getElementById('det-total').innerText = Number(total).toLocaleString();
-
-            // အော်တို Scroll သွားပေးရန်
-            document.getElementById('details-section').scrollIntoView({ behavior: 'smooth' });
-        } catch (e) {
-            document.getElementById('det-status').innerText = "Error!";
+            if(data.status === "Not Found") {
+                document.getElementById('det-items').innerText = "အော်ဒါမတွေ့သေးပါ။ ခဏနေမှ ပြန်စစ်ပါ။";
+                document.getElementById('det-status').innerText = "မတွေ့ပါ";
+            } else {
+                document.getElementById('det-status').innerText = translate(data.status);
+                document.getElementById('det-items').innerText = data.items || "-";
+                let t = String(data.total).replace(/[^0-9]/g, "");
+                document.getElementById('det-total').innerText = Number(t).toLocaleString();
+            }
+        } catch(e) { 
+            document.getElementById('det-status').innerText = "Error";
         }
     }
 
-    function translateStatus(s) {
-        if(s === "Pending") return "အော်ဒါလက်ခံရရှိပါပြီ";
-        if(s === "Accepted" || s === "Processing") return "ချက်ပြုတ်ပြင်ဆင်နေပါပြီ";
-        if(s === "Ready") return "လာယူနိုင်ပါပြီ";
+    function translate(s) {
+        if(s === "Pending") return "လက်ခံရရှိ";
+        if(s === "Accepted" || s === "Processing") return "ချက်ပြုတ်နေ";
+        if(s === "Ready") return "လာယူနိုင်ပြီ";
         return s;
     }
 
-    window.onload = loadHistory;
+    window.onload = load;
 </script>
 </body>
 </html>
+
