@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MYIN THAR ROAST - Order Now</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --white: #FFFFFF; --shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding-bottom: 120px; position: relative; }
+        
+        /* Header Layer */
+        .header { background: var(--navy); padding: 30px 20px 60px; text-align: center; border-radius: 0 0 40px 40px; position: relative; z-index: 5; }
+        .header img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; }
+        .header h2 { color: var(--gold); margin: 0; font-family: 'Playfair Display', serif; letter-spacing: 1px; }
+
+        /* Tracking Button - အပေါ်ဆုံးမှာထားမယ် */
+        #track-back-btn { position: fixed; top: 15px; right: 15px; background: var(--gold); color: var(--navy); border: none; padding: 10px 15px; border-radius: 12px; font-weight: 800; z-index: 1000; font-size: 11px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; display: none; }
+
+        /* Menu Section - Layer အနိမ့်ဆုံးဖြစ်နေရင် နှိပ်မရဖြစ်တတ်လို့ မြှင့်လိုက်တယ် */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; max-width: 600px; margin: -40px auto 0; position: relative; z-index: 50; }
+        .item-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #eee; text-align: center; pointer-events: auto; }
+        .item-card img { width: 100%; height: 120px; object-fit: cover; }
+        .item-card div { padding: 12px; }
+        .item-card b { display: block; font-size: 14px; color: var(--navy); margin-bottom: 5px; }
+        .price { color: var(--gold); font-weight: 800; font-size: 14px; margin-bottom: 12px; display: block; }
+
+        /* Add Button - Pointer-events သေချာအောင်လုပ်တယ် */
+        .btn-add { background: var(--navy); color: white; border: none; width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; position: relative; z-index: 100; pointer-events: auto; }
+        .btn-add:active { transform: scale(0.95); opacity: 0.9; }
+
+        /* Cart Floating Button */
+        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: var(--gold); width: 65px; height: 65px; border-radius: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; cursor: pointer; }
+        .badge { position: absolute; top: -8px; right: -8px; background: #EF4444; color: white; font-size: 11px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; }
+
+        /* Modals - အပေါ်ဆုံးမှာရှိရမယ် */
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index: 5000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
+        .modal-card { background: white; width: 90%; max-width: 380px; border-radius: 30px; padding: 30px; position: relative; }
+        .btn-confirm { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 18px; border-radius: 20px; font-weight: 800; margin-top: 10px; cursor: pointer; }
+
+        #loader { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.95); z-index: 10000; flex-direction:column; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+<button id="track-back-btn" onclick="goToTracking()"><i class="fas fa-truck-fast"></i> အော်ဒါအခြေအနေကြည့်မည်</button>
+
+<div id="loader"><p style="font-weight:700;">အော်ဒါတင်နေပါသည်...</p></div>
+
+<div class="header">
+    <img src="https://i.ibb.co/k2Xyz9Gs/IMG-20260115-204542.png">
+    <h2>MYIN THAR ROAST</h2>
+</div>
+
+<div id="menu-grid" class="menu-grid"></div>
+
+<div class="cart-fab" onclick="showCheckout()">
+    <i class="fas fa-shopping-basket fa-lg"></i>
+    <div class="badge" id="cart-badge">0</div>
+</div>
+
+<div id="modal-checkout" class="modal">
+    <div class="modal-card">
+        <h3 style="text-align:center;">Confirm Order</h3>
+        <div id="order-summary" style="margin-bottom:20px; font-size:13px; color:#64748B; background: #f8fafc; padding: 10px; border-radius: 10px;"></div>
+        <input type="text" id="cust-name" placeholder="အမည်" style="width:100%; padding:15px; margin-bottom:10px; border-radius:12px; border:1px solid #ddd;">
+        <input type="tel" id="cust-phone" placeholder="ဖုန်း" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd;">
+        <button class="btn-confirm" onclick="validateAndSend()">PLACE ORDER</button>
+        <button onclick="hideCheckout()" style="width:100%; border:none; background:none; margin-top:15px; color:grey;">Cancel</button>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
+    
+    const menuData = [
+        { name: 'ကြက်ပေါင်', price: 4000, img: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?q=80&w=300' },
+        { name: 'ကြက်ရင်အုံ', price: 4000, img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=300' },
+        { name: 'ဆိတ်သားကင်', price: 1500, img: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=300' },
+        { name: 'အသားချောင်း', price: 800, img: 'https://via.placeholder.com/300/0F172A/D4AF37?text=Meat' }
+    ];
+
+    let cart = {};
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-grid');
+        grid.innerHTML = menuData.map(i => `
+            <div class="item-card">
+                <img src="${i.img}">
+                <div>
+                    <b>${i.name}</b>
+                    <span class="price">${i.price.toLocaleString()} K</span>
+                    <button class="btn-add" onclick="add('${i.name}')">ထည့်မည်</button>
+                </div>
+            </div>`).join('');
+        checkLastOrder();
+    }
+
+    function add(name) {
+        cart[name] = (cart[name] || 0) + 1;
+        document.getElementById('cart-badge').innerText = Object.values(cart).reduce((a, b) => a + b, 0);
+    }
+
+    function checkLastOrder() {
+        const lastID = localStorage.getItem('lastOrderID');
+        if(lastID) document.getElementById('track-back-btn').style.display = 'block';
+    }
+
+    function goToTracking() {
+        const lastID = localStorage.getItem('lastOrderID');
+        window.location.href = `track.html?id=${lastID}`;
+    }
+
+    function showCheckout() {
+        if(Object.keys(cart).length === 0) return;
+        document.getElementById('order-summary').innerText = Object.keys(cart).map(k => `${k} (${cart[k]})`).join(", ");
+        document.getElementById('modal-checkout').style.display = 'flex';
+    }
+
+    function hideCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+
+    async function validateAndSend() {
+        const n = document.getElementById('cust-name').value;
+        const p = document.getElementById('cust-phone').value;
+        if(!n || !p) return alert("အချက်အလက်ဖြည့်ပါ");
+
+        const oid = "MT-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('loader').style.display = 'flex';
+
+        const orderData = {
+            id: oid, name: n, phone: p,
+            items: Object.keys(cart).map(k => `${k} (${cart[k]})`).join(", "),
+            total: Object.keys(cart).reduce((sum, k) => sum + (menuData.find(m => m.name === k).price * cart[k]), 0)
+        };
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(orderData) });
+            localStorage.setItem('lastOrderID', oid);
+            window.location.href = `track.html?id=${oid}`;
+        } catch(e) { 
+            document.getElementById('loader').style.display = 'none';
+            alert("Error! Try again."); 
+        }
+    }
+    window.onload = renderMenu;
+</script>
+</body>
+</html>
