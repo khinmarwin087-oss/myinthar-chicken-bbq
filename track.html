@@ -3,73 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Order - Myin Thar Roast</title>
+    <title>My Orders - Myin Thar Roast</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; }
-        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .card { background: white; width: 100%; max-width: 400px; border-radius: 35px; padding: 35px 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.06); text-align: center; }
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --white: #FFFFFF; }
+        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         
-        .stepper { position: relative; display: flex; flex-direction: column; gap: 35px; text-align: left; margin: 30px 0 30px 15px; }
-        .step { display: flex; align-items: center; gap: 20px; opacity: 0.2; transition: 0.5s; }
-        .step.active { opacity: 1; }
-        .step.done { opacity: 1; color: #10B981; }
-        .icon-box { width: 50px; height: 50px; background: #F1F5F9; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .step.active .icon-box { border: 2px solid var(--gold); color: var(--gold); background: white; }
-        .step.done .icon-box { background: #10B981; color: white; }
+        .container { width: 100%; max-width: 450px; }
+        .title { font-weight: 800; color: var(--navy); font-size: 22px; margin: 20px 0; text-align: left; display: flex; align-items: center; gap: 10px; }
+        
+        /* အော်ဒါမှတ်တမ်း ကတ်ပြားများ */
+        .order-history { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .history-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .history-card.active { border-color: var(--gold); background: #fffdf5; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .id-badge { background: var(--navy); color: var(--gold); padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .status-text { font-size: 13px; font-weight: 700; }
+        
+        /* Status Color Classes */
+        .status-pending { color: #f59e0b; }
+        .status-processing { color: #3b82f6; }
+        .status-ready { color: #10b981; }
 
-        .line-progress { position: absolute; left: 24px; top: 0; width: 2px; height: 0%; background: var(--gold); z-index: -1; transition: 1s; }
-        .line-bg { position: absolute; left: 24px; top: 0; width: 2px; height: 100%; background: #eee; z-index: -2; }
-
-        .details { text-align: left; background: #f8fafc; padding: 20px; border-radius: 20px; margin-top: 20px; font-size: 13px; width: 100%; box-sizing: border-box; }
-        .btn-home { margin-top: 30px; width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 18px; border-radius: 20px; font-weight: 800; cursor: pointer; }
+        /* အသေးစိတ်ကြည့်ရန် Section */
+        #details-section { display: none; background: white; border-radius: 30px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; position: sticky; bottom: 20px; border-top: 5px solid var(--gold); }
+        .item-list { font-size: 14px; color: #475569; background: #f8fafc; padding: 15px; border-radius: 15px; margin: 15px 0; line-height: 1.6; }
+        
+        .btn-home { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 16px; border-radius: 18px; font-weight: 800; cursor: pointer; margin-top: 15px; }
+        
+        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <b style="color:var(--gold);">ORDER ID: #<span id="display-id">----</span></b>
+<div class="container">
+    <div class="title"><i class="fas fa-history"></i> မှာယူမှုမှတ်တမ်း</div>
     
-    <div class="stepper">
-        <div class="line-bg"></div>
-        <div class="line-progress" id="line-p"></div>
-        <div class="step" id="s1"><div class="icon-box"><i class="fas fa-receipt"></i></div><div><b>Order Received</b><br><small>လက်ခံရရှိပါပြီ</small></div></div>
-        <div class="step" id="s2"><div class="icon-box"><i class="fas fa-fire-burner"></i></div><div><b>Preparing</b><br><small>ချက်ပြုတ်နေပါပြီ</small></div></div>
-        <div class="step" id="s3"><div class="icon-box"><i class="fas fa-bag-shopping"></i></div><div><b>Ready</b><br><small>လာယူနိုင်ပါပြီ</small></div></div>
-    </div>
+    <div id="order-list" class="order-history">
+        </div>
 
-    <div class="details">
-        <p><b>ပစ္စည်းများ:</b> <br><span id="det-items" style="color:#64748B;">Loading...</span></p>
-        <p><b>စုစုပေါင်းကျသင့်ငွေ:</b> <span id="det-total">0</span> K</p>
-    </div>
+    <div id="details-section">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b id="det-id" style="color:var(--navy); font-size:18px;">#ID</b>
+            <span id="det-status" class="status-text">Checking...</span>
+        </div>
+        
+        <div class="item-list">
+            <b>မှာယူထားသောပစ္စည်းများ:</b><br>
+            <span id="det-items">...</span>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:16px;">
+            <span>စုစုပေါင်းကျသင့်ငွေ:</span>
+            <span style="color:var(--gold);"><span id="det-total">0</span> K</span>
+        </div>
 
-    <button class="btn-home" onclick="location.href='index.html'"><i class="fas fa-arrow-left"></i> BACK TO MENU</button>
+        <button class="btn-home" onclick="location.href='index.html'"><i class="fas fa-plus"></i> အသစ်ထပ်မှာမည်</button>
+    </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('id');
-    document.getElementById('display-id').innerText = orderId || "None";
 
-    async function check() {
-        if(!orderId) return;
+    function loadHistory() {
+        const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
+        const listDiv = document.getElementById('order-list');
+        
+        if (orders.length === 0) {
+            listDiv.innerHTML = `<div class="empty-state"><i class="fas fa-shopping-basket fa-3x"></i><br><br>မှာယူထားသော မှတ်တမ်းမရှိသေးပါ</div>`;
+            return;
+        }
+
+        listDiv.innerHTML = orders.map(id => `
+            <div class="history-card" id="card-${id}" onclick="viewOrder('${id}')">
+                <div class="card-header">
+                    <span class="id-badge">#${id}</span>
+                    <i class="fas fa-chevron-right" style="color:#cbd5e1;"></i>
+                </div>
+                <div style="font-size:12px; color:#64748B;">နှိပ်၍ အခြေအနေကို စစ်ဆေးပါ</div>
+            </div>
+        `).join('');
+    }
+
+    async function viewOrder(id) {
+        // UI ပြောင်းလဲခြင်း
+        document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+        document.getElementById(`card-${id}`).classList.add('active');
+        document.getElementById('details-section').style.display = 'block';
+        
+        // Loading ပြရန်
+        document.getElementById('det-id').innerText = "#" + id;
+        document.getElementById('det-items').innerText = "စစ်ဆေးနေပါသည်...";
+        document.getElementById('det-status').innerText = "Loading...";
+
         try {
-            const res = await fetch(`${SCRIPT_URL}?id=${orderId}`);
+            const res = await fetch(`${SCRIPT_URL}?id=${id}`);
             const data = await res.json();
             
-            const s1=document.getElementById('s1'), s2=document.getElementById('s2'), s3=document.getElementById('s3'), line=document.getElementById('line-p');
-            [s1,s2,s3].forEach(s => s.classList.remove('active','done'));
+            // Status ပြင်ရန်
+            const statusEl = document.getElementById('det-status');
+            statusEl.innerText = translateStatus(data.status);
+            statusEl.className = "status-text status-" + data.status.toLowerCase();
             
-            if(data.status==="Pending"){ s1.classList.add('active'); line.style.height="0%"; }
-            else if(data.status==="Accepted" || data.status==="Processing"){ s1.classList.add('done'); s2.classList.add('active'); line.style.height="50%"; }
-            else if(data.status==="Ready"){ s1.classList.add('done'); s2.classList.add('done'); s3.classList.add('active'); line.style.height="100%"; }
+            // အသေးစိတ်ပြရန်
+            document.getElementById('det-items').innerText = data.items || "မတွေ့ရှိပါ";
+            let total = String(data.total).replace(/[^0-9]/g, "");
+            document.getElementById('det-total').innerText = Number(total).toLocaleString();
 
-            document.getElementById('det-items').innerText = data.items || "-";
-            document.getElementById('det-total').innerText = Number(data.total).toLocaleString();
-        } catch(e) {}
+            // အော်တို Scroll သွားပေးရန်
+            document.getElementById('details-section').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            document.getElementById('det-status').innerText = "Error!";
+        }
     }
-    setInterval(check, 5000); check();
+
+    function translateStatus(s) {
+        if(s === "Pending") return "အော်ဒါလက်ခံရရှိပါပြီ";
+        if(s === "Accepted" || s === "Processing") return "ချက်ပြုတ်ပြင်ဆင်နေပါပြီ";
+        if(s === "Ready") return "လာယူနိုင်ပါပြီ";
+        return s;
+    }
+
+    window.onload = loadHistory;
 </script>
 </body>
 </html>
