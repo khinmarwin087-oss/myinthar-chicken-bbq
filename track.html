@@ -12,92 +12,124 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 20px; color: var(--navy); padding-bottom: 100px; }
 
         .header { margin-bottom: 25px; }
-        .header h3 { font-size: 24px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px; }
+        .header h3 { font-size: 22px; font-weight: 800; margin: 0; }
 
-        /* Order List */
+        /* Order List Section */
         #order-list { display: flex; flex-direction: column; gap: 12px; }
-        .order-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 2px solid transparent; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; justify-content: space-between; align-items: center; }
-        .order-card.active { border-color: var(--gold); background: #FFFDF5; transform: scale(0.98); }
-        .order-card b { font-size: 16px; color: var(--navy); }
-        .order-card span { font-size: 12px; font-weight: 600; color: var(--gold); background: #FDF4E3; padding: 4px 10px; border-radius: 8px; }
+        .order-card { 
+            background: white; padding: 18px; border-radius: 18px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center; 
+            transition: 0.2s;
+        }
+        .order-card:active { transform: scale(0.96); background: #fdfdfd; }
+        .order-card b { font-size: 15px; }
+        .order-card .btn-view { color: var(--gold); font-size: 12px; font-weight: 800; text-transform: uppercase; }
 
-        /* Details Panel */
-        #details { display: none; background: white; border-radius: 30px; padding: 25px; margin-top: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); animation: slideUp 0.5s ease; position: relative; overflow: hidden; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        /* Modern Bottom Sheet (Detail Panel) */
+        #details-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 2000;
+            display: none; transition: 0.3s; backdrop-filter: blur(4px);
+        }
+        #details-sheet {
+            position: fixed; bottom: -100%; left: 0; width: 100%;
+            background: white; border-radius: 30px 30px 0 0;
+            padding: 30px 25px 40px 25px; z-index: 2001;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+            transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        #details-sheet.show { bottom: 0; }
+        
+        /* Drag Handle */
+        .sheet-handle { width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; margin: -15px auto 20px auto; }
 
-        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .status-badge { background: var(--navy); color: var(--gold); padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 800; letter-spacing: 0.5px; }
+        .status-badge { 
+            background: var(--navy); color: var(--gold); 
+            padding: 8px 16px; border-radius: 12px; 
+            font-size: 13px; font-weight: 800;
+        }
 
-        .info-section { background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-        .section-label { font-size: 12px; font-weight: 800; color: var(--slate); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
-        #det-items { font-size: 15px; line-height: 1.6; font-weight: 600; color: var(--navy); }
+        .info-box { 
+            background: #f8fafc; border-radius: 20px; 
+            padding: 20px; margin: 20px 0; border: 1px solid #f1f5f9;
+        }
+        #det-items { font-weight: 600; font-size: 15px; line-height: 1.6; }
 
-        .total-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; }
-        .total-row span:last-child { font-size: 22px; font-weight: 800; color: var(--gold); }
+        .total-box { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+        .total-box b { font-size: 22px; color: var(--gold); }
 
-        /* Loading Animation */
-        .loading-shimmer { position: relative; overflow: hidden; background: #eee; border-radius: 8px; height: 20px; width: 100%; margin-top: 10px; }
-        .loading-shimmer::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        /* Loading Shimmer */
+        .shimmer { height: 20px; background: #f0f0f0; border-radius: 4px; position: relative; overflow: hidden; margin-bottom: 10px; }
+        .shimmer::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: shim 1.5s infinite; }
+        @keyframes shim { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-        /* Pulse Animation for Status */
-        .pulse { animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); } 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); } }
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: white; padding: 15px 40px 25px 40px;
+            display: flex; justify-content: center;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--navy); color: var(--gold);
+            padding: 12px 30px; border-radius: 50px;
+            text-decoration: none; font-weight: 800; font-size: 14px;
+            transition: 0.3s; border: 2px solid transparent;
+        }
+        .nav-item:active { transform: scale(0.9); border-color: var(--gold); }
 
-        /* Bottom Back Button */
-        .back-nav { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 12px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; text-decoration: none; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.3); font-weight: 700; font-size: 14px; z-index: 1000; border: 2px solid rgba(212, 175, 55, 0.3); }
-        .back-nav i { color: var(--gold); font-size: 18px; }
-
-        .empty-state { text-align: center; padding: 100px 40px; color: var(--slate); }
-        .empty-state i { font-size: 50px; opacity: 0.2; margin-bottom: 20px; }
+        .close-btn { position: absolute; right: 20px; top: 20px; color: var(--slate); font-size: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h3><i class="fas fa-box-open" style="color:var(--gold)"></i> အော်ဒါမှတ်တမ်း</h3>
+    <h3>မှာယူမှုမှတ်တမ်း</h3>
 </div>
 
 <div id="order-list"></div>
 
-<div id="details">
-    <div class="status-header">
-        <b id="det-id" style="font-size: 20px;">#ID</b>
-        <span id="det-status" class="status-badge pulse">Checking...</span>
+<div id="details-overlay" onclick="closeDetails()"></div>
+<div id="details-sheet">
+    <div class="sheet-handle"></div>
+    <i class="fas fa-times close-btn" onclick="closeDetails()"></i>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b id="det-id" style="font-size: 22px;">#ID</b>
+        <span id="det-status" class="status-badge">စစ်ဆေးနေဆဲ...</span>
     </div>
     
-    <div class="info-section">
-        <span class="section-label">မှာယူထားသောပစ္စည်းများ</span>
+    <div class="info-box">
+        <span style="font-size:11px; font-weight:800; color:var(--slate); text-transform:uppercase; display:block; margin-bottom:8px;">Items Ordered</span>
         <div id="det-items">...</div>
     </div>
     
-    <div class="total-row">
-        <span style="font-weight: 600; color: var(--slate);">စုစုပေါင်းကျသင့်ငွေ</span>
-        <span><span id="det-total">0</span> K</span>
+    <div class="total-box">
+        <span style="font-weight:600; color:var(--slate);">Total Amount</span>
+        <b><span id="det-total">0</span> K</b>
     </div>
 </div>
 
-<a href="index.html" class="back-nav">
-    <i class="fas fa-arrow-left"></i>
-    <span>မီနူးသို့ပြန်သွားမည်</span>
-</a>
+<div class="bottom-nav">
+    <a href="index.html" class="nav-item">
+        <i class="fas fa-home"></i> ပင်မစာမျက်နှာသို့
+    </a>
+</div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
 
-    function loadOrders() {
+    function loadHistory() {
         const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
         const listDiv = document.getElementById('order-list');
-        
-        if(orders.length === 0) {
-            listDiv.innerHTML = `<div class="empty-state"><i class="fas fa-shopping-bag"></i><br>မှာယူထားသော မှတ်တမ်းမရှိသေးပါ</div>`;
-            return;
-        }
+        if(orders.length === 0) return listDiv.innerHTML = `<div style="text-align:center; padding-top:100px; color:var(--slate); opacity:0.5;"><i class="fas fa-box-open" style="font-size:40px;"></i><br><br>မှတ်တမ်းမရှိသေးပါ</div>`;
 
         listDiv.innerHTML = orders.map(id => `
-            <div class="order-card" id="card-${id}" onclick="fetchUpdate('${id}')">
-                <b>#${id}</b>
-                <span>စစ်ဆေးရန် <i class="fas fa-chevron-right" style="font-size:10px"></i></span>
+            <div class="order-card" onclick="fetchUpdate('${id}')">
+                <b>Order #${id}</b>
+                <span class="btn-view">Status <i class="fas fa-chevron-right"></i></span>
             </div>
         `).join('');
 
@@ -106,16 +138,15 @@
     }
 
     async function fetchUpdate(id) {
-        document.querySelectorAll('.order-card').forEach(c => c.classList.remove('active'));
-        if(document.getElementById(`card-${id}`)) document.getElementById(`card-${id}`).classList.add('active');
+        const overlay = document.getElementById('details-overlay');
+        const sheet = document.getElementById('details-sheet');
         
-        const details = document.getElementById('details');
-        details.style.display = 'block';
+        overlay.style.display = 'block';
+        setTimeout(() => sheet.classList.add('show'), 10);
         
-        // Reset and Show Loading State
         document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('det-status').innerText = "စစ်ဆေးနေဆဲ...";
-        document.getElementById('det-items').innerHTML = `<div class="loading-shimmer"></div><div class="loading-shimmer" style="width:80%"></div>`;
+        document.getElementById('det-status').innerText = "Updating...";
+        document.getElementById('det-items').innerHTML = `<div class="shimmer"></div><div class="shimmer" style="width:70%"></div>`;
         document.getElementById('det-total').innerText = "---";
 
         try {
@@ -124,18 +155,23 @@
             
             if(data.status === "Not Found") {
                 document.getElementById('det-status').innerText = "မတွေ့ပါ";
-                document.getElementById('det-items').innerText = "ဒေတာရှာမတွေ့ပါ။ ခဏနေမှ ပြန်စစ်ကြည့်ပါ။";
+                document.getElementById('det-items').innerText = "အော်ဒါမတွေ့သေးပါ။ ခဏနေမှ ပြန်စစ်ပါ။";
             } else {
                 document.getElementById('det-status').innerText = translate(data.status);
                 document.getElementById('det-items').innerText = data.items || "-";
                 let t = String(data.total).replace(/[^0-9]/g, "");
                 document.getElementById('det-total').innerText = Number(t).toLocaleString();
             }
-            details.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch(e) { 
-            document.getElementById('det-status').innerText = "Error";
-            document.getElementById('det-items').innerText = "အင်တာနက် လိုင်းမကောင်းပါ။";
+            document.getElementById('det-status').innerText = "Offline";
         }
+    }
+
+    function closeDetails() {
+        const sheet = document.getElementById('details-sheet');
+        const overlay = document.getElementById('details-overlay');
+        sheet.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 300);
     }
 
     function translate(s) {
@@ -143,7 +179,7 @@
         return m[s] || s;
     }
 
-    window.onload = loadOrders;
+    window.onload = loadHistory;
 </script>
 </body>
 </html>
