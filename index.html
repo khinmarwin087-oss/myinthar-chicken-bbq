@@ -72,9 +72,9 @@
         .btn-main { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 15px; font-weight: 800; font-size: 15px; cursor: pointer; }
         .btn-s { border: none; padding: 12px; border-radius: 12px; color: white; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
         .alert-pop { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; width: 80%; max-width: 300px; padding: 25px 20px; border-radius: 20px; z-index: 1000; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-    /* Loading Spinner Style */
+    /* Loading Spinner */
 .spinner {
-    display: none; /* ပုံမှန်ဆိုရင် ဖျောက်ထားမယ် */
+    display: none;
     width: 20px;
     height: 20px;
     border: 3px solid rgba(255,255,255,0.3);
@@ -84,11 +84,22 @@
     margin-left: 10px;
 }
 
+/* Alert Pop-up ထဲက Spinner */
+.pop-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+    display: block;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-/* ခလုတ်နှိပ်နေစဉ် style */
 .btn-s.loading {
     pointer-events: none;
     opacity: 0.8;
@@ -96,6 +107,8 @@
     align-items: center;
     justify-content: center;
 }
+        
+
 
 </style>
 </head>
@@ -181,8 +194,9 @@
 
 <div id="alert-bg" class="overlay" style="z-index: 999;"></div>
 <div id="alert-pop" class="alert-pop">
-    <p id="alert-msg" style="font-weight:bold;"></p>
-    <button class="btn-main" onclick="closeAlert()">နားလည်ပါပြီ</button>
+    <div class="pop-spinner" id="pop-load" style="display:none;"></div>
+    <p id="alert-msg" style="font-weight:bold; margin-bottom: 20px;"></p>
+    <button id="alert-btn" class="btn-main" onclick="closeAlert()">နားလည်ပါပြီ</button>
 </div>
 
 <script>
@@ -309,7 +323,25 @@
         }, 100);
     }
     
-    async function sendOrder(via) {
+// myPop ကို အဝိုင်းပြလို့ရအောင် ပြင်မယ်
+function myPop(m, showLoader = false) {
+    document.getElementById('alert-msg').innerText = m;
+    document.getElementById('alert-bg').style.display = 'block';
+    document.getElementById('alert-pop').style.display = 'block';
+    
+    const popLoad = document.getElementById('pop-load');
+    const alertBtn = document.getElementById('alert-btn');
+    
+    if(showLoader) {
+        popLoad.style.display = 'block';
+        alertBtn.style.display = 'none'; // Loading ပြနေတုန်း ခလုတ်ဖျောက်ထားမယ်
+    } else {
+        popLoad.style.display = 'none';
+        alertBtn.style.display = 'block';
+    }
+}
+
+async function sendOrder(via) {
     const name = document.getElementById('in-name').value;
     const phone = document.getElementById('in-phone').value;
     const time = document.getElementById('in-time').value;
@@ -317,13 +349,11 @@
     
     if(!name || !phone || !time) return myPop("အချက်အလက်တွေ ပြည့်စုံအောင် ဖြည့်ပေးပါ ✨");
 
-    // --- Loading စတင်ခြင်း ---
     const btn = via === 'viber' ? document.getElementById('btn-viber') : document.getElementById('btn-tele');
     const spin = via === 'viber' ? document.getElementById('spin-viber') : document.getElementById('spin-tele');
     
     btn.classList.add('loading');
     spin.style.display = 'inline-block';
-    // ------------------------
 
     let dayStr = chosenDay === 'today' ? "ဒီနေ့ (Today)" : otherDate;
     let items = [];
@@ -341,28 +371,38 @@
             body: JSON.stringify({ chat_id: CHAT_ID, text: msg, parse_mode: 'Markdown' })
         });
 
-        // ခဏစောင့်ပြီးမှ ပိတ်ပေးမယ် (Animation ပြချင်လို့)
-        setTimeout(() => {
+        if(via === 'viber') {
+            // ၁။ ခလုတ်မှာ Loading ပြနေတုန်း Copy ကူးမယ်
+            navigator.clipboard.writeText(msg).then(() => {
+                // ၂။ Pop-up မှာ Loading အဝိုင်းနဲ့ စာသားပြမယ်
+                myPop("Copy ကူးပြီးပါပြီ။ Viber ထဲသို့ ခေါ်သွားပေးပါမည်...", true);
+                
+                // ၃။ ၂ စက္ကန့်နေရင် Viber ထဲသွားမယ်
+                setTimeout(() => { 
+                    window.location.href = `viber://chat?number=%2B${MY_PHONE}`;
+                    // Viber ထဲရောက်သွားရင် အကုန်ပြန်ပိတ်မယ်
+                    closeAlert();
+                    btn.classList.remove('loading');
+                    spin.style.display = 'none';
+                }, 2000);
+            });
+        } else {
+            window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
             btn.classList.remove('loading');
             spin.style.display = 'none';
-
-            if(via === 'viber') {
-                navigator.clipboard.writeText(msg).then(() => {
-                    myPop("Copy ကူးပြီးပါပြီ။ Viber မှာ Paste လုပ်ပြီး ပို့ပေးပါ!");
-                    setTimeout(() => { window.location.href = `viber://chat?number=%2B${MY_PHONE}`; }, 1200);
-                });
-            } else {
-                window.location.href = `https://t.me/+${MY_PHONE}?text=${encodeURIComponent(msg)}`;
-            }
-            cart = {}; updateFloatingBar(); document.getElementById('cart-sheet').style.display = 'none';
-        }, 1000); // ၁ စက္ကန့်လောက် လည်ပြမယ်
+        }
+        
+        cart = {}; 
+        updateFloatingBar(); 
+        document.getElementById('cart-sheet').style.display = 'none';
 
     } catch (e) { 
         btn.classList.remove('loading');
         spin.style.display = 'none';
         myPop("Error! Bot ဆီသို့ အော်ဒါပို့မရပါ။"); 
     }
-    }
+}
+    
     window.onload = renderMenu;
 </script>
 </body>
