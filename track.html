@@ -3,192 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Order Tracking - Myin Thar Roast</title>
+    <title>Tracking - Myin Thar Roast</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; --success: #22c55e; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); overflow-x: hidden; }
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); }
 
-        /* 4. Live Refresh Animation */
-        .refresh-status { text-align: center; font-size: 10px; color: var(--slate); padding: 5px; background: #fff; border-bottom: 1px solid #eee; }
+        /* Loading Overlay */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 3000; display: flex; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f1f5f9; border-top: 5px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Status Tabs */
-        .tabs { display: flex; background: white; position: sticky; top: 0; z-index: 100; padding: 15px 10px; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .tab { flex: 1; padding: 12px 5px; border-radius: 12px; font-size: 11px; font-weight: 800; text-align: center; color: var(--slate); background: #f1f5f9; cursor: pointer; transition: 0.3s; }
-        .tab.active { background: var(--navy); color: var(--gold); }
+        /* Date Filter Tabs */
+        .filter-bar { display: flex; background: white; padding: 10px; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; sticky: top; }
+        .filter-btn { padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: 800; border: none; background: #f1f5f9; color: var(--slate); white-space: nowrap; }
+        .filter-btn.active { background: var(--navy); color: var(--gold); }
 
-        /* Order List */
-        #main-view { padding: 20px; padding-bottom: 120px; }
-        .order-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; margin-bottom: 15px; display: none; align-items: center; justify-content: space-between; }
-        .order-card.visible { display: flex; animation: slideIn 0.4s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        /* Main Table Style */
+        .order-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        .order-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--slate); border-bottom: 2px solid #eee; }
+        .order-table td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600; }
+        .col-name { text-align: left; width: 50%; }
+        .col-qty { text-align: center; color: var(--slate); }
+        .col-price { text-align: right; color: var(--gold); }
 
-        /* 3. Copy Button Styling */
-        .copy-btn { background: #f1f5f9; border: none; padding: 5px 10px; border-radius: 8px; font-size: 10px; cursor: pointer; color: var(--navy); margin-left: 10px; }
+        /* Detail View Header */
+        .detail-header { background: white; padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; }
 
-        /* Detail View (Full Screen) */
-        #detail-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pearl); z-index: 2000; display: none; flex-direction: column; }
-        .detail-header { background: white; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-
-        /* 1. Visual Progress Tracker */
-        .progress-container { background: white; padding: 25px; margin: 15px 20px; border-radius: 20px; display: flex; justify-content: space-between; position: relative; }
-        .progress-line { position: absolute; top: 40px; left: 50px; right: 50px; height: 2px; background: #e2e8f0; z-index: 1; }
-        .progress-step { z-index: 2; text-align: center; width: 60px; }
-        .step-icon { width: 35px; height: 35px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #cbd5e1; transition: 0.3s; }
-        .step-label { font-size: 9px; font-weight: 800; color: #94a3b8; }
-        .step-active .step-icon { background: var(--navy); color: var(--gold); transform: scale(1.2); box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
-        .step-active .step-label { color: var(--navy); }
-
-        /* 2. Estimated Waiting Time */
-        .eta-box { background: #fff9eb; border: 1px dashed var(--gold); margin: 0 20px 15px; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
-
-        /* Table & Summary */
-        .content-body { padding: 0 20px 100px; overflow-y: auto; }
-        .order-table { width: 100%; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; margin-top: 10px; }
-        .order-table td { padding: 15px; border-bottom: 1px solid #f8fafc; font-size: 14px; font-weight: 600; }
-        .summary-box { background: var(--navy); color: white; border-radius: 20px; padding: 20px; margin-top: 20px; }
-
-        /* 5. Support Buttons & Nav */
-        .bottom-actions { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px 20px 30px; display: flex; gap: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); }
-        .btn-call { flex: 1; background: #f1f5f9; color: var(--navy); padding: 15px; border-radius: 15px; text-decoration: none; text-align: center; font-weight: 800; font-size: 14px; }
-        .btn-home { flex: 2; background: var(--navy); color: var(--gold); padding: 15px; border-radius: 15px; text-decoration: none; text-align: center; font-weight: 800; font-size: 14px; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px 20px 25px; display: flex; gap: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); }
+        .btn-menu { flex: 1; background: #f1f5f9; color: var(--navy); padding: 15px; border-radius: 15px; text-decoration: none; text-align: center; font-weight: 800; }
+        .btn-home { flex: 1; background: var(--navy); color: var(--gold); padding: 15px; border-radius: 15px; text-decoration: none; text-align: center; font-weight: 800; }
     </style>
 </head>
 <body>
 
-<div class="refresh-status" id="last-update">နောက်ဆုံးစစ်ဆေးချိန်: ယခုတင်</div>
-
-<div class="tabs">
-    <div class="tab active" onclick="filterStatus('Pending', this)">လက်ခံရရှိ</div>
-    <div class="tab" onclick="filterStatus('Processing', this)">ချက်ပြုတ်နေ</div>
-    <div class="tab" onclick="filterStatus('Ready', this)">လာယူနိုင်ပြီ</div>
-</div>
+<div id="loader"><div class="spinner"></div></div>
 
 <div id="main-view">
-    <div id="order-list"></div>
+    <div class="filter-bar" id="date-filters">
+        <button class="filter-btn active" onclick="filterDate('all', this)">All</button>
+        <button class="filter-btn" onclick="filterDate('today', this)">Today</button>
+        <button class="filter-btn" onclick="filterDate('yesterday', this)">Yesterday</button>
+    </div>
+    <div id="order-list" style="padding: 20px;"></div>
 </div>
 
-<div id="detail-view">
+<div id="detail-view" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--pearl); z-index:2000;">
     <div class="detail-header">
         <i class="fas fa-arrow-left" onclick="closeDetail()"></i>
-        <b id="det-id">#ID</b>
-        <button class="copy-btn" onclick="copyId()"><i class="far fa-copy"></i> Copy ID</button>
+        <b id="det-id">Order Details</b>
     </div>
-
-    <div class="content-body">
-        <div class="progress-container">
-            <div class="progress-line"></div>
-            <div class="progress-step" id="step-pending">
-                <div class="step-icon"><i class="fas fa-check"></i></div>
-                <div class="step-label">လက်ခံရရှိ</div>
-            </div>
-            <div class="progress-step" id="step-processing">
-                <div class="step-icon"><i class="fas fa-fire-burner"></i></div>
-                <div class="step-label">ချက်ပြုတ်နေ</div>
-            </div>
-            <div class="progress-step" id="step-ready">
-                <div class="step-icon"><i class="fas fa-bag-shopping"></i></div>
-                <div class="step-label">လာယူနိုင်ပြီ</div>
-            </div>
-        </div>
-
-        <div class="eta-box" id="eta-container">
-            <i class="fas fa-clock" style="color:var(--gold)"></i>
-            <span>ခန့်မှန်းစောင့်ဆိုင်းချိန်: <b id="det-eta">၂၀ မိနစ်</b></span>
-        </div>
-
+    <div style="padding:20px;">
         <table class="order-table">
+            <thead>
+                <tr>
+                    <th class="col-name">Menu</th>
+                    <th class="col-qty">Qty</th>
+                    <th class="col-price">Price</th>
+                </tr>
+            </thead>
             <tbody id="det-items-body"></tbody>
         </table>
-
-        <div class="summary-box">
-            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:18px;">
-                <span>စုစုပေါင်းကျသင့်ငွေ</span>
-                <span style="color:var(--gold)"><span id="det-total">0</span> K</span>
-            </div>
+        <div style="background:var(--navy); color:white; padding:20px; border-radius:15px; margin-top:20px; display:flex; justify-content:space-between; font-weight:800;">
+            <span>Total</span>
+            <span style="color:var(--gold)"><span id="det-total">0</span> K</span>
         </div>
     </div>
+</div>
 
-    <div class="bottom-actions">
-        <a href="tel:09123456789" class="btn-call"><i class="fas fa-phone"></i> ဖုန်းဆက်ရန်</a>
-        <a href="index.html" class="btn-home">ပင်မစာမျက်နှာသို့</a>
-    </div>
+<div class="bottom-nav">
+    <a href="index.html" class="btn-menu">Menu Page</a>
+    <a href="index.html" class="btn-home">Home</a>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
-    let allOrdersData = {};
-    let currentDetailId = "";
 
-    async function loadHistory() {
-        const orderIds = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
-        const listDiv = document.getElementById('order-list');
-        listDiv.innerHTML = "";
-
-        for (const id of orderIds) {
-            try {
-                const res = await fetch(`${SCRIPT_URL}?id=${id}`);
-                const data = await res.json();
-                allOrdersData[id] = data;
-                
-                const card = document.createElement('div');
-                card.className = `order-card visible`;
-                card.setAttribute('data-status', data.status);
-                card.onclick = () => openDetail(id);
-                card.innerHTML = `<div><b>#${id}</b><br><small style="color:var(--slate)">အသေးစိတ်ကြည့်ရန် နှိပ်ပါ</small></div><i class="fas fa-chevron-right" style="color:var(--gold)"></i>`;
-                listDiv.appendChild(card);
-            } catch (e) {}
-        }
-        document.getElementById('last-update').innerText = "နောက်ဆုံးစစ်ဆေးချိန်: " + new Date().toLocaleTimeString();
-        filterStatus('Pending', document.querySelector('.tab'));
+    async function loadData() {
+        document.getElementById('loader').style.display = 'flex';
+        // ... Load order history from localStorage and fetch from Sheet ...
+        // ဒေတာတွေ အကုန်ဆွဲပြီးရင် loader ကို ပိတ်ပါ
+        document.getElementById('loader').style.display = 'none';
     }
 
-    function filterStatus(status, el) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    function filterDate(type, el) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
-        document.querySelectorAll('.order-card').forEach(card => {
-            const s = card.getAttribute('data-status');
-            if (status === 'Processing') {
-                (s === 'Processing' || s === 'Accepted') ? card.classList.add('visible') : card.classList.remove('visible');
-            } else {
-                s === status ? card.classList.add('visible') : card.classList.remove('visible');
-            }
+        // Logic to filter orders by Today/Yesterday date
+    }
+
+    // Items ခွဲထုတ်တဲ့ Logic (Name, Price, Qty)
+    function renderItems(itemsString) {
+        const items = itemsString.split(',');
+        let html = "";
+        items.forEach(item => {
+            const match = item.match(/(.+)\s*\((.+)\)/);
+            const name = match ? match[1].trim() : item.trim();
+            const qty = match ? match[2].trim() : "1";
+            html += `<tr><td class="col-name">${name}</td><td class="col-qty">${qty}</td><td class="col-price">-</td></tr>`;
         });
+        document.getElementById('det-items-body').innerHTML = html;
     }
 
-    function openDetail(id) {
-        currentDetailId = id;
-        const data = allOrdersData[id];
-        document.getElementById('detail-view').style.display = 'flex';
-        document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('det-total').innerText = Number(data.total.toString().replace(/[^0-9]/g, "")).toLocaleString();
-
-        // 1. Update Progress Tracker
-        document.querySelectorAll('.progress-step').forEach(s => s.classList.remove('step-active'));
-        if(data.status === "Pending") document.getElementById('step-pending').classList.add('step-active');
-        if(data.status === "Processing" || data.status === "Accepted") document.getElementById('step-processing').classList.add('step-active');
-        if(data.status === "Ready") document.getElementById('step-ready').classList.add('step-active');
-
-        // 2. ETA Logic (Example)
-        document.getElementById('det-eta').innerText = (data.status === "Ready") ? "အဆင်သင့်ဖြစ်ပါပြီ" : "၁၅-၂၀ မိနစ်ခန့်";
-
-        const tbody = document.getElementById('det-items-body');
-        tbody.innerHTML = data.items.split(',').map(item => `<tr><td>${item}</td></tr>`).join('');
-    }
-
-    // 3. Copy ID Function
-    function copyId() {
-        navigator.clipboard.writeText(currentDetailId);
-        alert("Order ID ကူးယူပြီးပါပြီ!");
-    }
-
-    // 4. Auto Refresh (Every 2 mins)
-    setInterval(loadHistory, 120000);
-
-    function closeDetail() { document.getElementById('detail-view').style.display = 'none'; }
-    window.onload = loadHistory;
+    window.onload = loadData;
 </script>
 </body>
 </html>
