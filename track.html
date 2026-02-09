@@ -11,31 +11,29 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); }
 
         /* Loader */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 3000; display: flex; justify-content: center; align-items: center; }
-        .spinner { width: 35px; height: 35px; border: 3px solid #eee; border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Navigation Header */
-        .header { background: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); sticky: top; z-index: 1000; }
-        .btn-to-menu { background: var(--navy); color: var(--gold); padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 800; border: 1px solid var(--navy); }
+        /* Top Header */
+        .header { background: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
+        .btn-to-menu { background: var(--navy); color: var(--gold); padding: 7px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 800; }
 
-        /* Filter & List */
-        .filter-bar { display: flex; padding: 15px 20px; gap: 8px; background: var(--pearl); }
-        .filter-btn { padding: 6px 14px; border-radius: 15px; font-size: 11px; font-weight: 800; border: 1px solid #ddd; background: white; color: var(--slate); }
-        .filter-btn.active { background: var(--navy); color: var(--gold); border-color: var(--navy); }
-
-        #order-list { padding: 0 20px 100px; }
-        .order-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        /* List Styling */
+        #order-list { padding: 15px 20px 100px; }
+        .order-card { background: white; padding: 14px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
 
         /* Detail View */
         .detail-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pearl); z-index: 2000; display: none; flex-direction: column; }
         .detail-header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
 
-        /* Items Table - Price Fix */
-        .item-row { display: flex; justify-content: space-between; padding: 12px 20px; background: white; border-bottom: 1px solid #f8fafc; font-size: 13px; font-weight: 600; }
+        /* Items Table */
+        .order-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .order-table th { background: #f8fafc; padding: 10px; font-size: 10px; color: var(--slate); text-align: left; }
+        .order-table td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600; }
 
-        /* Footer Actions */
-        .footer { padding: 15px 20px; background: white; border-top: 1px solid #eee; }
+        /* Footer */
+        .footer { padding: 15px 20px 25px; background: white; border-top: 1px solid #eee; }
         .btn-call { background: #f8fafc; color: var(--navy); padding: 12px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 800; font-size: 13px; border: 1px solid #eee; flex: 1; }
         .btn-back { background: var(--navy); color: var(--gold); padding: 12px; border-radius: 10px; border: none; font-weight: 800; font-size: 13px; flex: 2; }
     </style>
@@ -49,23 +47,21 @@
     <a href="index.html" class="btn-to-menu"><i class="fas fa-home"></i> ပင်မမီနူး</a>
 </div>
 
-<div id="main-view">
-    <div class="filter-bar">
-        <button class="filter-btn active" onclick="render('all', this)">အားလုံး</button>
-        <button class="filter-btn" onclick="render('today', this)">ယနေ့</button>
-    </div>
-    <div id="order-list"></div>
-</div>
+<div id="order-list"></div>
 
 <div id="detail-view" class="detail-view">
     <div class="detail-header">
         <i class="fas fa-chevron-left" onclick="closeDetail()"></i>
-        <b id="det-id">#ID</b>
+        <b id="det-id" style="font-size: 15px;">#ID</b>
         <button onclick="copyId()" style="font-size:10px; background:#f1f5f9; border:none; padding:5px 10px; border-radius:5px;">Copy ID</button>
     </div>
-    <div style="flex-grow: 1; overflow-y: auto; padding-top: 10px;">
-        <div id="status-text" style="text-align:center; padding: 15px; font-weight:800; color:var(--gold); background:white; margin-bottom:10px;"></div>
-        <div id="items-list"></div>
+    <div style="flex-grow: 1; overflow-y: auto; padding: 20px;">
+        <div id="status-tag" style="text-align:center; padding:10px; background:white; border-radius:10px; color:var(--gold); font-weight:800; margin-bottom:15px; border: 1px solid #eee;"></div>
+        
+        <table class="order-table">
+            <thead><tr><th>Menu</th><th style="text-align:center">Qty</th></tr></thead>
+            <tbody id="det-items-body"></tbody>
+        </table>
     </div>
     <div class="footer">
         <div style="display:flex; justify-content:space-between; font-weight:800; margin-bottom:15px;">
@@ -73,69 +69,63 @@
             <span style="color:var(--gold); font-size:18px;"><span id="det-total">0</span> K</span>
         </div>
         <div style="display:flex; gap:10px;">
-            <a href="tel:09xxxxxxxxx" class="btn-call">ဖုန်းဆက်ရန်</a>
-            <button class="btn-back" onclick="closeDetail()">နောက်သို့ပြန်သွားရန်</button>
+            <a href="tel:09xxxxxxxxx" class="btn-call">Call Shop</a>
+            <button class="btn-back" onclick="closeDetail()">Back</button>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "ခင်ဗျားရဲ့_Google_Apps_Script_Exec_URL_ဒီမှာထည့်ပါ"; // အရေးကြီးသည်
+    // ခင်ဗျားရဲ့ Google Apps Script URL ကို ဒီမှာ အတိအကျ ပြန်ထည့်ပေးပါဗျ
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec"; 
     let orders = [];
 
-    async function load() {
-        document.getElementById('loader').style.display = 'flex';
+    async function loadHistory() {
+        const loader = document.getElementById('loader');
+        loader.style.display = 'flex';
         const myIds = JSON.parse(localStorage.getItem('myOrders') || "[]");
-        
+
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
-            // Local မှာရှိတဲ့ ID တွေနဲ့ပဲ ပြမယ်
             orders = data.filter(o => myIds.includes(o.id.toString())).reverse();
-            render('all');
+            
+            const listDiv = document.getElementById('order-list');
+            if(orders.length === 0) {
+                listDiv.innerHTML = "<p style='text-align:center; margin-top:50px; color:var(--slate);'>မှတ်တမ်းမရှိသေးပါ။</p>";
+            } else {
+                listDiv.innerHTML = orders.map(o => `
+                    <div class="order-card" onclick="showDetail('${o.id}')">
+                        <div><b>#${o.id}</b><br><small style="color:var(--slate);">${new Date(o.date).toLocaleDateString()}</small></div>
+                        <div style="color:var(--gold); font-size:12px; font-weight:800;">${o.status} ></div>
+                    </div>
+                `).join('');
+            }
         } catch (e) {
-            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding:20px;'>ဒေတာဖတ်မရပါ။ Internet ပြန်စစ်ပေးပါ။</p>";
+            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding:20px; color:red;'>ဒေတာဖတ်မရပါ။ URL သို့မဟုတ် Internet ကို စစ်ဆေးပေးပါ။</p>";
         } finally {
-            document.getElementById('loader').style.display = 'none';
+            loader.style.display = 'none';
         }
     }
 
-    function render(f, el) {
-        if(el) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-        }
-        const list = document.getElementById('order-list');
-        let filtered = orders;
-        if(f === 'today') {
-            const today = new Date().toLocaleDateString();
-            filtered = orders.filter(o => new Date(o.date).toLocaleDateString() === today);
-        }
-        list.innerHTML = filtered.map(o => `
-            <div class="order-card" onclick="show('${o.id}')">
-                <div><b>#${o.id}</b><br><small style="color:var(--slate);">${new Date(o.date).toLocaleDateString()}</small></div>
-                <div style="color:var(--gold); font-size:12px; font-weight:800;">${o.status} ></div>
-            </div>
-        `).join('');
-    }
-
-    function show(id) {
+    function showDetail(id) {
         const o = orders.find(x => x.id == id);
         document.getElementById('detail-view').style.display = 'flex';
         document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('status-text').innerText = "အခြေအနေ: " + o.status;
+        document.getElementById('status-tag').innerText = "Status: " + o.status;
         document.getElementById('det-total').innerText = o.total;
-        
-        // Price Table Logic
-        const container = document.getElementById('items-list');
-        container.innerHTML = o.items.split(',').map(item => {
+
+        const tbody = document.getElementById('det-items-body');
+        tbody.innerHTML = o.items.split(',').map(item => {
             const parts = item.match(/(.+)\s*\((.+)\)/) || [null, item, "1"];
-            return `<div class="item-row"><span>${parts[1]}</span><span>x${parts[2]}</span><span>-</span></div>`;
+            return `<tr><td>${parts[1].trim()}</td><td style="text-align:center">${parts[2].trim()}</td></tr>`;
         }).join('');
     }
 
     function closeDetail() { document.getElementById('detail-view').style.display = 'none'; }
-    window.onload = load;
+    function copyId() { navigator.clipboard.writeText(document.getElementById('det-id').innerText.replace('#','')); alert("Copied!"); }
+    
+    window.onload = loadHistory;
 </script>
 </body>
 </html>
