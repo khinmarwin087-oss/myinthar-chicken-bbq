@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YNS Kitchen - Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 120px; }
+
+        /* Header & Search */
+        .header { background: var(--pearl); padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .top-nav { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .back-link { text-decoration: none; color: var(--text); font-size: 18px; }
+        .search-box { background: #F2F2F7; border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
+        .search-box input { border: none; background: none; outline: none; width: 100%; font-size: 14px; }
+
+        /* Categories */
+        .categories { padding: 10px 15px; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+        .cat-item { background: white; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .cat-item.active { background: var(--primary); color: white; }
+
+        /* Menu Display */
+        .menu-container { padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .food-card { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .food-img { width: 100%; height: 110px; border-radius: 15px; object-fit: cover; }
+        .food-name { font-weight: 700; font-size: 14px; margin: 8px 0 4px; display: block; height: 35px; overflow: hidden; }
+        .food-price { color: var(--primary); font-weight: 800; font-size: 13px; display: block; margin-bottom: 10px; }
+        .add-btn { background: var(--primary); color: white; border: none; width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        /* Floating Cart Bar */
+        .cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: var(--text); color: white; padding: 15px 20px; border-radius: 22px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; z-index: 500; }
+
+        /* Cart Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; border-radius: 30px 30px 0 0; padding: 25px; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+        
+        /* Cart Item Row */
+        .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F2F2F7; }
+        .cart-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; }
+        .cart-info { flex: 1; }
+        .cart-name { font-weight: 700; font-size: 14px; display: block; }
+        .cart-price { color: var(--primary); font-weight: 700; font-size: 12px; }
+        .cart-qty-ctrl { display: flex; align-items: center; gap: 8px; background: #F2F2F7; padding: 5px; border-radius: 10px; }
+        .qty-btn { border: none; background: white; width: 24px; height: 24px; border-radius: 6px; font-weight: 800; color: var(--primary); cursor: pointer; }
+        .qty-input { width: 40px; border: none; background: transparent; text-align: center; font-weight: 700; font-size: 14px; outline: none; }
+        .del-item { color: #FF3B30; font-size: 18px; margin-left: 5px; }
+
+        /* Form */
+        .form-group { margin-top: 20px; }
+        .input-box { margin-bottom: 12px; }
+        .input-box label { font-size: 11px; font-weight: 800; color: var(--gray); display: block; margin-bottom: 5px; }
+        .input-box input, .input-box textarea { width: 100%; padding: 12px; border: 1px solid #E5E5EA; border-radius: 12px; font-family: inherit; box-sizing: border-box; }
+        .submit-btn { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 15px; font-weight: 800; font-size: 16px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="top-nav">
+            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+            <h2 style="margin:0;">Menu</h2>
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search" style="color:var(--gray)"></i>
+            <input type="text" id="search" placeholder="Search menu..." oninput="filterItems()">
+        </div>
+    </div>
+
+    <div class="categories" id="cat-list"></div>
+    <div class="menu-container" id="menu-display"></div>
+
+    <div class="cart-bar" id="cart-bar">
+        <div><b id="total-ks">0 Ks</b><br><span id="total-items" style="font-size:11px">0 Items</span></div>
+        <button onclick="toggleModal(true)" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:700;">View Cart</button>
+    </div>
+
+    <div class="modal" id="cart-modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0;">Your Cart</h2>
+                <i class="fas fa-times" onclick="toggleModal(false)" style="font-size:22px; color:var(--gray);"></i>
+            </div>
+
+            <div id="cart-items-list"></div>
+
+            <div class="form-group">
+                <div class="input-box"><label>Name</label><input type="text" id="o-name" placeholder="သင့်နာမည်"></div>
+                <div class="input-box"><label>Phone</label><input type="tel" id="o-phone" placeholder="09xxxxxxx"></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="input-box"><label>Date</label><input type="date" id="o-date"></div>
+                    <div class="input-box"><label>Time</label><input type="time" id="o-time"></div>
+                </div>
+                <div class="input-box"><label>Special Note</label><textarea id="o-note" rows="2" placeholder="အသားပို၊ အစပ်လျှော့..."></textarea></div>
+                <button class="submit-btn" onclick="sendOrder()">Confirm Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
+            authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
+            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "myrestaurantapp-a14d4",
+            storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
+            messagingSenderId: "123788707874",
+            appId: "1:123788707874:web:6593b827b284cc7cb9a27b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let menuData = [];
+        let cart = {};
+
+        function init() {
+            db.ref('menu').on('value', snap => {
+                const data = snap.val();
+                menuData = [];
+                const cats = new Set(['All']);
+                for(let id in data) {
+                    menuData.push({...data[id], id});
+                    if(data[id].category) cats.add(data[id].category);
+                }
+                renderCats(cats);
+                renderMenu(menuData);
+            });
+        }
+
+        function renderCats(cats) {
+            const list = document.getElementById('cat-list');
+            list.innerHTML = Array.from(cats).map(c => `<div class="cat-item ${c==='All'?'active':''}" onclick="filterCat('${c}', this)">${c}</div>`).join('');
+        }
+
+        function renderMenu(items) {
+            const display = document.getElementById('menu-display');
+            display.innerHTML = items.map(i => `
+                <div class="food-card">
+                    <img src="${i.image || 'https://via.placeholder.com/150'}" class="food-img">
+                    <b class="food-name">${i.name}</b>
+                    <span class="food-price">${parseInt(i.price).toLocaleString()} Ks</span>
+                    <button class="add-btn" onclick="addToCart('${i.id}')">Add to Cart</button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id) {
+            const item = menuData.find(m => m.id === id);
+            if(!cart[id]) cart[id] = { name: item.name, price: item.price, image: item.image, qty: 1 };
+            else cart[id].qty += 1;
+            updateCartBar();
+        }
+
+        function updateQty(id, delta) {
+            cart[id].qty += delta;
+            if(cart[id].qty <= 0) delete cart[id];
+            updateCartBar();
+            renderCartList();
+        }
+
+        function manualQty(id, val) {
+            let n = parseInt(val);
+            if(isNaN(n) || n <= 0) delete cart[id];
+            else cart[id].qty = n;
+            updateCartBar();
+            renderCartList();
+        }
+
+        function updateCartBar() {
+            const bar = document.getElementById('cart-bar');
+            const qty = Object.values(cart).reduce((s, i) => s + i.qty, 0);
+            const amt = Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0);
+            if(qty > 0) {
+                bar.style.display = 'flex';
+                document.getElementById('total-ks').innerText = amt.toLocaleString() + " Ks";
+                document.getElementById('total-items').innerText = qty + " items";
+            } else {
+                bar.style.display = 'none';
+                toggleModal(false);
+            }
+        }
+
+        function renderCartList() {
+            const container = document.getElementById('cart-items-list');
+            let html = "";
+            for(let id in cart) {
+                const item = cart[id];
+                html += `
+                <div class="cart-item">
+                    <img src="${item.image || 'https://via.placeholder.com/50'}" class="cart-img">
+                    <div class="cart-info"><span class="cart-name">${item.name}</span><span class="cart-price">${(item.qty * item.price).toLocaleString()} Ks</span></div>
+                    <div class="cart-qty-ctrl">
+                        <button class="qty-btn" onclick="updateQty('${id}', -1)">-</button>
+                        <input type="number" class="qty-input" value="${item.qty}" onchange="manualQty('${id}', this.value)">
+                        <button class="qty-btn" onclick="updateQty('${id}', 1)">+</button>
+                    </div>
+                    <i class="fas fa-trash del-item" onclick="delete cart['${id}']; updateCartBar(); renderCartList();"></i>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function toggleModal(show) {
+            document.getElementById('cart-modal').style.display = show ? 'flex' : 'none';
+            if(show) {
+                renderCartList();
+                document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('o-time').value = new Date().toLocaleTimeString('en-GB',{hour:'2-digit', minute:'2-digit'});
+            }
+        }
+
+        function filterItems() {
+            const val = document.getElementById('search').value.toLowerCase();
+            renderMenu(menuData.filter(m => m.name.toLowerCase().includes(val)));
+        }
+
+        function filterCat(c, el) {
+            document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            renderMenu(c === 'All' ? menuData : menuData.filter(m => m.category === c));
+        }
+
+        function sendOrder() {
+            const name = document.getElementById('o-name').value;
+            const phone = document.getElementById('o-phone').value;
+            if(!name || !phone || Object.keys(cart).length === 0) return alert("အချက်အလက်ဖြည့်စွက်ပါ");
+
+            const order = {
+                orderId: "ORD-" + Date.now(),
+                customerName: name,
+                customerPhone: phone,
+                date: document.getElementById('o-date').value,
+                time: document.getElementById('o-time').value,
+                note: document.getElementById('o-note').value,
+                items: Object.values(cart),
+                total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
+                status: "Pending"
+            };
+
+            db.ref('orders').push(order).then(() => {
+                localStorage.setItem('lastPhone', phone);
+                alert("Order တင်ပြီးပါပြီ။ Track Page သို့ သွားပါမည်။");
+                window.location.href = "track.html";
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
