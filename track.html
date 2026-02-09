@@ -19,27 +19,27 @@
         .header { background: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
         .btn-to-menu { background: var(--navy); color: var(--gold); padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 800; border: none; }
 
-        /* Order List Section */
+        /* Order List */
         #order-list { padding: 15px 20px 100px; }
         .order-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
 
-        /* Detail View (Fixed Overlay) */
+        /* Detail View Overlay */
         .detail-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pearl); z-index: 2000; display: none; flex-direction: column; }
         .detail-header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
 
-        /* Status Tracker */
+        /* Progress Steps */
         .status-box { background: white; padding: 20px; border-radius: 12px; margin: 15px 20px; text-align: center; border: 1px solid #eee; }
         .progress-bar { display: flex; justify-content: space-between; margin-top: 15px; position: relative; }
         .step { z-index: 2; font-size: 10px; font-weight: 800; color: #cbd5e1; }
         .step.active { color: var(--navy); }
         .step i { display: block; font-size: 16px; margin-bottom: 5px; }
 
-        /* Order Table */
+        /* Table */
         .order-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
         .order-table th { background: #f8fafc; padding: 10px; font-size: 10px; color: var(--slate); text-align: left; }
         .order-table td { padding: 12px 10px; border-bottom: 1px solid #f8fafc; font-size: 13px; font-weight: 600; }
 
-        /* Footer Actions */
+        /* Footer */
         .footer-action { padding: 15px 20px 25px; background: white; border-top: 1px solid #eee; margin-top: auto; }
         .footer-btns { display: flex; gap: 10px; }
         .btn-call { flex: 1; background: #f8fafc; color: var(--navy); padding: 12px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 800; font-size: 13px; border: 1px solid #eee; }
@@ -133,18 +133,18 @@
         const myIds = JSON.parse(localStorage.getItem('myOrders') || "[]");
 
         if(myIds.length === 0) {
-            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding-top:50px; color:var(--slate);'>မှတ်တမ်းမရှိသေးပါ။</p>";
+            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding-top:50px; color:var(--slate);'>မှာယူမှုမှတ်တမ်း မရှိသေးပါ။</p>";
             loader.style.display = 'none';
             return;
         }
 
         try {
-            const res = await fetch(SCRIPT_URL + "?t=" + new Date().getTime());
+            const res = await fetch(SCRIPT_URL + "?admin=true&t=" + new Date().getTime());
             const data = await res.json();
             orders = data.filter(o => myIds.includes(o.id.toString())).reverse();
             renderOrders();
         } catch (e) {
-            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding:20px; color:red; font-size:12px;'>ဒေတာဖတ်မရပါ။ Internet ပြန်စစ်ပေးပါ။</p>";
+            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding:20px; color:red; font-size:12px;'>ဒေတာဖတ်မရပါ။ Internet သို့မဟုတ် URL ကို စစ်ဆေးပေးပါ။</p>";
         } finally {
             loader.style.display = 'none';
         }
@@ -161,21 +161,21 @@
     }
 
     function showDetail(id) {
-        const o = orders.find(x => x.id == id);
+        const o = orders.find(x => x.id.toString() === id.toString());
         if(!o) return;
 
         document.getElementById('detail-view').style.display = 'flex';
         document.getElementById('det-id').innerText = "#" + id;
         document.getElementById('status-text').innerText = o.status;
-        document.getElementById('det-total').innerText = Number(o.total).toLocaleString();
+        document.getElementById('det-total').innerText = Number(o.total.toString().replace(/[^0-9]/g, "")).toLocaleString();
 
         const tbody = document.getElementById('det-items-body');
         tbody.innerHTML = o.items.split(',').map(item => {
-            const parts = item.match(/(.+)\s*\((.+)\)/) || [null, item, "1"];
-            const name = parts[1].trim();
-            const qty = parseInt(parts[2].trim());
+            const match = item.match(/(.+)\s*\((.+)\)/) || [null, item, "1"];
+            const name = match[1].trim();
+            const qty = parseInt(match[2].trim());
 
-            // Menu Data ထဲက ဈေးနှုန်းနဲ့ တိုက်စစ်သည်
+            // ဈေးနှုန်းတွက်ချက်မှု Logic
             const found = menuData.find(m => m.name === name);
             const lineTotal = found ? (found.price * qty).toLocaleString() : "-";
 
@@ -186,7 +186,7 @@
             </tr>`;
         }).join('');
 
-        // Progress Steps Activation
+        // Progress Steps Logic
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         if(o.status === "Pending") document.getElementById('s1').classList.add('active');
         if(o.status === "Processing" || o.status === "Accepted") document.getElementById('s2').classList.add('active');
@@ -194,10 +194,14 @@
     }
 
     function closeDetail() { document.getElementById('detail-view').style.display = 'none'; }
-    function copyId() { navigator.clipboard.writeText(document.getElementById('det-id').innerText.replace('#','')); alert("ID Copied!"); }
+    function copyId() { 
+        const idText = document.getElementById('det-id').innerText.replace('#','');
+        navigator.clipboard.writeText(idText); 
+        alert("ID Copied!"); 
+    }
     
     window.onload = loadHistory;
-    setInterval(loadHistory, 120000); // Auto-refresh every 2 mins
+    setInterval(loadHistory, 60000); // 1 min auto-refresh
 </script>
 </body>
 </html>
