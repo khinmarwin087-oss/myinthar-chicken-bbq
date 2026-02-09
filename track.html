@@ -8,34 +8,42 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); overflow-x: hidden; }
 
         /* Loader */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #f1f5f9; border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Top Header */
+        /* Navigation Header */
         .header { background: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
-        .btn-to-menu { background: var(--navy); color: var(--gold); padding: 7px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 800; }
+        .btn-to-menu { background: var(--navy); color: var(--gold); padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 800; border: none; }
 
-        /* List Styling */
+        /* Order List Section */
         #order-list { padding: 15px 20px 100px; }
-        .order-card { background: white; padding: 14px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .order-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
 
-        /* Detail View */
+        /* Detail View (Fixed Overlay) */
         .detail-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pearl); z-index: 2000; display: none; flex-direction: column; }
         .detail-header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
 
-        /* Items Table */
-        .order-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .order-table th { background: #f8fafc; padding: 10px; font-size: 10px; color: var(--slate); text-align: left; }
-        .order-table td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600; }
+        /* Status Tracker */
+        .status-box { background: white; padding: 20px; border-radius: 12px; margin: 15px 20px; text-align: center; border: 1px solid #eee; }
+        .progress-bar { display: flex; justify-content: space-between; margin-top: 15px; position: relative; }
+        .step { z-index: 2; font-size: 10px; font-weight: 800; color: #cbd5e1; }
+        .step.active { color: var(--navy); }
+        .step i { display: block; font-size: 16px; margin-bottom: 5px; }
 
-        /* Footer */
-        .footer { padding: 15px 20px 25px; background: white; border-top: 1px solid #eee; }
-        .btn-call { background: #f8fafc; color: var(--navy); padding: 12px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 800; font-size: 13px; border: 1px solid #eee; flex: 1; }
-        .btn-back { background: var(--navy); color: var(--gold); padding: 12px; border-radius: 10px; border: none; font-weight: 800; font-size: 13px; flex: 2; }
+        /* Order Table */
+        .order-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        .order-table th { background: #f8fafc; padding: 10px; font-size: 10px; color: var(--slate); text-align: left; }
+        .order-table td { padding: 12px 10px; border-bottom: 1px solid #f8fafc; font-size: 13px; font-weight: 600; }
+
+        /* Footer Actions */
+        .footer-action { padding: 15px 20px 25px; background: white; border-top: 1px solid #eee; margin-top: auto; }
+        .footer-btns { display: flex; gap: 10px; }
+        .btn-call { flex: 1; background: #f8fafc; color: var(--navy); padding: 12px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 800; font-size: 13px; border: 1px solid #eee; }
+        .btn-back { flex: 2; background: var(--navy); color: var(--gold); padding: 12px; border-radius: 10px; border: none; font-weight: 800; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -52,32 +60,71 @@
 <div id="detail-view" class="detail-view">
     <div class="detail-header">
         <i class="fas fa-chevron-left" onclick="closeDetail()"></i>
-        <b id="det-id" style="font-size: 15px;">#ID</b>
+        <b id="det-id" style="font-size:15px;">#ID</b>
         <button onclick="copyId()" style="font-size:10px; background:#f1f5f9; border:none; padding:5px 10px; border-radius:5px;">Copy ID</button>
     </div>
-    <div style="flex-grow: 1; overflow-y: auto; padding: 20px;">
-        <div id="status-tag" style="text-align:center; padding:10px; background:white; border-radius:10px; color:var(--gold); font-weight:800; margin-bottom:15px; border: 1px solid #eee;"></div>
-        
-        <table class="order-table">
-            <thead><tr><th>Menu</th><th style="text-align:center">Qty</th></tr></thead>
-            <tbody id="det-items-body"></tbody>
-        </table>
-    </div>
-    <div class="footer">
-        <div style="display:flex; justify-content:space-between; font-weight:800; margin-bottom:15px;">
-            <span style="color:var(--slate);">စုစုပေါင်း</span>
-            <span style="color:var(--gold); font-size:18px;"><span id="det-total">0</span> K</span>
+
+    <div style="flex-grow: 1; overflow-y: auto;">
+        <div class="status-box">
+            <div id="status-text" style="font-weight: 800; color: var(--gold); font-size: 15px;">Pending</div>
+            <div class="progress-bar">
+                <div class="step" id="s1"><i class="fas fa-receipt"></i>လက်ခံရရှိ</div>
+                <div class="step" id="s2"><i class="fas fa-fire-burner"></i>ချက်ပြုတ်နေ</div>
+                <div class="step" id="s3"><i class="fas fa-bag-shopping"></i>လာယူနိုင်ပြီ</div>
+            </div>
         </div>
-        <div style="display:flex; gap:10px;">
-            <a href="tel:09xxxxxxxxx" class="btn-call">Call Shop</a>
-            <button class="btn-back" onclick="closeDetail()">Back</button>
+
+        <div style="padding: 0 20px;">
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>MENU</th>
+                        <th style="text-align:center">QTY</th>
+                        <th style="text-align:right">PRICE</th>
+                    </tr>
+                </thead>
+                <tbody id="det-items-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer-action">
+        <div style="display:flex; justify-content:space-between; font-weight:800; margin-bottom:15px;">
+            <span style="color:var(--slate); font-size: 13px;">စုစုပေါင်းကျသင့်ငွေ</span>
+            <span style="color:var(--gold); font-size: 18px;"><span id="det-total">0</span> K</span>
+        </div>
+        <div class="footer-btns">
+            <a href="tel:09xxxxxxxxx" class="btn-call"><i class="fas fa-phone"></i> Call Shop</a>
+            <button class="btn-back" onclick="closeDetail()">Back to History</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ခင်ဗျားရဲ့ Google Apps Script URL ကို ဒီမှာ အတိအကျ ပြန်ထည့်ပေးပါဗျ
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
+
+    const menuData = [
+        { id: 1, name: 'ကြက်ပေါင်', price: 4000 },
+        { id: 2, name: 'ကြက်ရင်အုံ', price: 4000 },
+        { id: 3, name: 'ဆိတ်သားကင်', price: 1500 },
+        { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800 },
+        { id: 5, name: 'အရေခွံ', price: 500 },
+        { id: 6, name: 'အတောင်ပျံ', price: 500 },
+        { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000 },
+        { id: 8, name: 'အူ', price: 500 },
+        { id: 9, name: 'ခေါင်း', price: 300 },
+        { id: 10, name: 'လည် ချောင်း', price: 300 },
+        { id: 11, name: 'အသည်းမြစ်', price: 500 },
+        { id: 12, name: 'ခြေထောက်', price: 300 },
+        { id: 13, name: 'ခြေထောက်(CP)', price: 700 },
+        { id: 14, name: 'လက်မောင်းလုံး', price: 1000 },
+        { id: 15, name: 'အဆီပူး', price: 800 },
+        { id: 16, name: 'အသားတု', price: 400 },
+        { id: 17, name: 'ရုံးပတေသီး', price: 300 },
+        { id: 18, name: 'အပ်မှို', price: 1000 },
+        { id: 19, name: 'ငုံးဥ', price: 1000 }
+    ];
+
     let orders = [];
 
     async function loadHistory() {
@@ -85,47 +132,72 @@
         loader.style.display = 'flex';
         const myIds = JSON.parse(localStorage.getItem('myOrders') || "[]");
 
+        if(myIds.length === 0) {
+            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding-top:50px; color:var(--slate);'>မှတ်တမ်းမရှိသေးပါ။</p>";
+            loader.style.display = 'none';
+            return;
+        }
+
         try {
-            const res = await fetch(SCRIPT_URL);
+            const res = await fetch(SCRIPT_URL + "?t=" + new Date().getTime());
             const data = await res.json();
             orders = data.filter(o => myIds.includes(o.id.toString())).reverse();
-            
-            const listDiv = document.getElementById('order-list');
-            if(orders.length === 0) {
-                listDiv.innerHTML = "<p style='text-align:center; margin-top:50px; color:var(--slate);'>မှတ်တမ်းမရှိသေးပါ။</p>";
-            } else {
-                listDiv.innerHTML = orders.map(o => `
-                    <div class="order-card" onclick="showDetail('${o.id}')">
-                        <div><b>#${o.id}</b><br><small style="color:var(--slate);">${new Date(o.date).toLocaleDateString()}</small></div>
-                        <div style="color:var(--gold); font-size:12px; font-weight:800;">${o.status} ></div>
-                    </div>
-                `).join('');
-            }
+            renderOrders();
         } catch (e) {
-            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding:20px; color:red;'>ဒေတာဖတ်မရပါ။ URL သို့မဟုတ် Internet ကို စစ်ဆေးပေးပါ။</p>";
+            document.getElementById('order-list').innerHTML = "<p style='text-align:center; padding:20px; color:red; font-size:12px;'>ဒေတာဖတ်မရပါ။ Internet ပြန်စစ်ပေးပါ။</p>";
         } finally {
             loader.style.display = 'none';
         }
     }
 
+    function renderOrders() {
+        const listDiv = document.getElementById('order-list');
+        listDiv.innerHTML = orders.map(o => `
+            <div class="order-card" onclick="showDetail('${o.id}')">
+                <div><b>#${o.id}</b><br><small style="color:var(--slate); font-size:10px;">${new Date(o.date).toLocaleDateString()}</small></div>
+                <div style="color:var(--gold); font-size:11px; font-weight:800;">${o.status} <i class="fas fa-chevron-right"></i></div>
+            </div>
+        `).join('');
+    }
+
     function showDetail(id) {
         const o = orders.find(x => x.id == id);
+        if(!o) return;
+
         document.getElementById('detail-view').style.display = 'flex';
         document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('status-tag').innerText = "Status: " + o.status;
-        document.getElementById('det-total').innerText = o.total;
+        document.getElementById('status-text').innerText = o.status;
+        document.getElementById('det-total').innerText = Number(o.total).toLocaleString();
 
         const tbody = document.getElementById('det-items-body');
         tbody.innerHTML = o.items.split(',').map(item => {
             const parts = item.match(/(.+)\s*\((.+)\)/) || [null, item, "1"];
-            return `<tr><td>${parts[1].trim()}</td><td style="text-align:center">${parts[2].trim()}</td></tr>`;
+            const name = parts[1].trim();
+            const qty = parseInt(parts[2].trim());
+
+            // Menu Data ထဲက ဈေးနှုန်းနဲ့ တိုက်စစ်သည်
+            const found = menuData.find(m => m.name === name);
+            const lineTotal = found ? (found.price * qty).toLocaleString() : "-";
+
+            return `<tr>
+                <td>${name}</td>
+                <td style="text-align:center">${qty}</td>
+                <td style="text-align:right">${lineTotal} K</td>
+            </tr>`;
         }).join('');
+
+        // Progress Steps Activation
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        if(o.status === "Pending") document.getElementById('s1').classList.add('active');
+        if(o.status === "Processing" || o.status === "Accepted") document.getElementById('s2').classList.add('active');
+        if(o.status === "Ready") document.getElementById('s3').classList.add('active');
     }
 
     function closeDetail() { document.getElementById('detail-view').style.display = 'none'; }
-    function copyId() { navigator.clipboard.writeText(document.getElementById('det-id').innerText.replace('#','')); alert("Copied!"); }
+    function copyId() { navigator.clipboard.writeText(document.getElementById('det-id').innerText.replace('#','')); alert("ID Copied!"); }
     
     window.onload = loadHistory;
+    setInterval(loadHistory, 120000); // Auto-refresh every 2 mins
 </script>
 </body>
 </html>
