@@ -226,28 +226,45 @@
         }
 
         function sendOrder() {
-            const name = document.getElementById('o-name').value;
-            const phone = document.getElementById('o-phone').value;
-            if(!name || !phone || Object.keys(cart).length === 0) return alert("အချက်အလက်ဖြည့်စွက်ပါ");
+    const n = document.getElementById('o-name').value;
+    const p = document.getElementById('o-phone').value;
+    
+    // ပစ္စည်းမရှိလျှင် သို့မဟုတ် အမည်/ဖုန်း လိုအပ်လျှင် Alert ပြရန်
+    if(!n || !p || Object.keys(cart).length === 0) {
+        return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်စွက်ပါ");
+    }
 
-            const order = {
-                orderId: "ORD-" + Date.now(),
-                customerName: name,
-                customerPhone: phone,
-                date: document.getElementById('o-date').value,
-                time: document.getElementById('o-time').value,
-                note: document.getElementById('o-note').value,
-                items: Object.values(cart),
-                total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
-                status: "Pending"
-            };
+    const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000); // ဥပမာ - ORD5241
+    
+    // Privacy အတွက် Device UID ကို browser agent နှင့် random number ပေါင်းပြီး ထုတ်ယူခြင်း
+    const deviceUID = navigator.userAgent + Math.random(); 
 
-            db.ref('orders').push(order).then(() => {
-                localStorage.setItem('lastPhone', phone);
-                alert("Order တင်ပြီးပါပြီ။ Track Page သို့ သွားပါမည်။");
-                window.location.href = "track.html";
-            });
+    const order = {
+        orderId: orderId,
+        deviceUID: deviceUID, // Device Privacy အတွက် ထည့်သွင်းခြင်း
+        customerName: n,
+        customerPhone: p,
+        date: document.getElementById('o-date').value,
+        time: document.getElementById('o-time').value,
+        note: document.getElementById('o-note').value,
+        items: Object.values(cart), // Cart ထဲရှိ ပစ္စည်းများ
+        total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
+        status: "Pending"
+    };
+
+    // Firebase Database ဆီသို့ 'orders' path ဖြင့် ပို့ဆောင်ခြင်း
+    db.ref('orders').push(order).then(() => {
+        // နောက်မှ ပြန်ရှာရန် Device ID နှင့် Order ID ကို သိမ်းဆည်းခြင်း
+        localStorage.setItem('myDeviceUID', deviceUID);
+        localStorage.setItem('lastOrderId', orderId); 
+        
+        alert("Order တင်ခြင်း အောင်မြင်ပါသည်။ ID: " + orderId);
+        window.location.href = "track.html"; // track.html သို့ တန်းပို့ခြင်း
+    }).catch(err => {
+        alert("Error: " + err.message);
+    });
         }
+        
 
         window.onload = init;
     </script>
