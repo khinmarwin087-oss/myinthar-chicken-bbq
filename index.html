@@ -2,135 +2,104 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MYIN THAR ROAST - Menu</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - YNS Kitchen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: var(--pearl); margin: 0; padding-bottom: 100px; }
-        
-        .header { background: var(--navy); padding: 40px 20px 60px; text-align: center; border-radius: 0 0 40px 40px; }
-        .header h2 { color: var(--gold); margin: 0; letter-spacing: 1px; }
+        :root { --pearl: #ffffff; --bg: #F2F2F7; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --accent: #AF52DE; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
 
-        #track-btn { position: fixed; top: 20px; right: 20px; background: var(--gold); color: var(--navy); border: none; padding: 10px 15px; border-radius: 12px; font-weight: 800; z-index: 1000; font-size: 11px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        /* Welcome Section */
+        .welcome-header { margin-bottom: 25px; padding: 10px 5px; }
+        .welcome-header h1 { margin: 0; font-size: 24px; font-weight: 800; }
+        .welcome-header p { margin: 5px 0 0; color: var(--gray); font-size: 14px; }
 
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; max-width: 600px; margin: -40px auto 0; }
-        .item-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; }
-        .item-card img { width: 100%; height: 120px; object-fit: cover; }
-        .item-card div { padding: 12px; }
-        .price { color: var(--gold); font-weight: 800; display: block; margin-bottom: 10px; }
-        .btn-add { background: var(--navy); color: white; border: none; width: 100%; padding: 10px; border-radius: 10px; cursor: pointer; }
+        /* Stats Cards Style (Admin Dashboard နဲ့ တူအောင်) */
+        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--pearl); padding: 20px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid rgba(0,0,0,0.02); }
+        .stat-card:active { transform: scale(0.95); }
+        .icon-circle { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; font-size: 20px; }
 
-        .cart-fab { position: fixed; bottom: 25px; right: 20px; background: var(--navy); color: var(--gold); width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .badge { position: absolute; top: -5px; right: -5px; background: #EF4444; color: white; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        /* Specific Colors */
+        .bg-blue { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
+        .bg-purple { background: rgba(175, 82, 222, 0.1); color: var(--accent); }
+        .bg-orange { background: rgba(255, 149, 0, 0.1); color: #FF9500; }
 
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index: 2000; align-items:center; justify-content:center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 25px; padding: 25px; }
-        input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; }
-        .btn-order { width: 100%; background: var(--navy); color: var(--gold); border: none; padding: 15px; border-radius: 15px; font-weight: 800; }
+        .stat-card b { display: block; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .stat-card span { font-size: 11px; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Large Banner Card */
+        .banner-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 24px; padding: 25px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .banner-card h2 { margin: 0; font-size: 20px; font-weight: 800; position: relative; z-index: 2; }
+        .banner-card p { margin: 10px 0 0; font-size: 13px; opacity: 0.9; position: relative; z-index: 2; line-height: 1.5; }
+        .banner-card i { position: absolute; right: -20px; bottom: -20px; font-size: 120px; opacity: 0.2; }
+
+        /* Quick Action List */
+        .section-title { font-size: 16px; font-weight: 800; margin-bottom: 15px; padding-left: 5px; }
+        .action-item { background: var(--pearl); display: flex; align-items: center; padding: 15px; border-radius: 18px; margin-bottom: 10px; text-decoration: none; color: inherit; gap: 15px; }
+        .action-item i { font-size: 18px; color: var(--primary); width: 25px; text-align: center; }
+        .action-item div { flex: 1; font-weight: 700; font-size: 14px; }
+        .action-item .chevron { color: #C7C7CC; font-size: 14px; }
+
+        .footer-note { text-align: center; margin-top: 30px; color: var(--gray); font-size: 12px; font-weight: 600; }
     </style>
 </head>
 <body>
 
-<button id="track-btn" onclick="location.href='track.html'"><i class="fas fa-truck"></i> အော်ဒါမှတ်တမ်း</button>
-
-<div class="header">
-    <h2>MYIN THAR ROAST</h2>
-</div>
-
-<div id="menu-grid" class="menu-grid"></div>
-
-<div class="cart-fab" onclick="showModal()">
-    <i class="fas fa-shopping-cart"></i>
-    <div class="badge" id="cart-count">0</div>
-</div>
-
-<div id="order-modal" class="modal">
-    <div class="modal-card">
-        <h3>အော်ဒါတင်ရန်</h3>
-        <div id="summary" style="margin-bottom: 15px; font-size: 14px; color: #666;"></div>
-        <input type="text" id="name" placeholder="အမည်">
-        <input type="tel" id="phone" placeholder="ဖုန်းနံပါတ်">
-        <button class="btn-order" onclick="placeOrder()">အော်ဒါတင်မည်</button>
-        <button onclick="hideModal()" style="width:100%; border:none; background:none; margin-top:10px; color:grey;">ပယ်ဖျက်မည်</button>
+    <div class="welcome-header">
+        <p id="current-date">Tuesday, Feb 10</p>
+        <h1>YNS Kitchen 👋</h1>
     </div>
-</div>
 
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
-        const menuData = [
-        { id: 1, name: 'ကြက်ပေါင်', price: 4000, category: 'အသား', image: 'https://i.ibb.co/JWsqDFX9/1768228481848.png' },
-        { id: 2, name: 'ကြက်ရင်အုံ', price: 4000, category: 'အသား', image: '' },
-        { id: 3, name: 'ဆိတ်သားကင်', price: 1500, category: 'အသား', image: 'https://i.ibb.co/twQjTScV/IMG-20251231-003231.png' },
-        { id: 4, name: 'အသား ချောင်း(ကြက်)', price: 800, category: 'အသား', image: 'https://i.ibb.co/rRd5P91j/1767118697374.png' },
-        { id: 5, name: 'အရေခွံ', price: 500, category: 'အရေခွံ', image: 'https://i.ibb.co/MkJqnDyG/1767147480724.png' },
-        { id: 6, name: 'အတောင်ပျံ', price: 500, category: 'အရိုး', image: 'https://i.ibb.co/rKJY26TM/1767147666947.png' },
-        { id: 7, name: 'အတောင်ပျံ (CP)', price: 1000, category: 'အရိုး', image: '' },
-        { id: 8, name: 'အူ', price: 500, category: 'ကလီစာ', image: '' },
-        { id: 9, name: 'ခေါင်း', price: 300, category: 'အရိုး', image: '' },
-        { id: 10, name: 'လည် ချောင်း', price: 300, category: 'အရိုး', image: 'https://i.ibb.co/bjL850PP/1768208169381.png' },
-        { id: 11, name: 'အသည်းမြစ်', price: 500, category: 'ကလီစာ', image: 'https://i.ibb.co/twRsK5S7/1767147537379.png' },
-        { id: 12, name: 'ခြေထောက်', price: 300, category: 'အရိုး', image: '' },
-        { id: 13, name: 'ခြေထောက်(CP)', price: 700, category: 'အရိုး', image: '' },
-        { id: 14, name: 'လက်မောင်းလုံး', price: 1000, category: 'အသား', image: '' },
-        { id: 15, name: 'အဆီပူး', price: 800, category: 'အရေခွံ', image: 'https://i.ibb.co/PGcW9j6r/1767118749960.png' },
-        { id: 16, name: 'အသားတု', price: 400, category: 'အသီးအရွက်', image: 'https://i.ibb.co/hpPRPDr/1768208099763.png' },
-        { id: 17, name: 'ရုံးပတေသီး', price: 300, category: 'အသီးအရွက်', image: 'https://i.ibb.co/cSCzCKN5/1768228376693.png' },
-        { id: 18, name: 'အပ်မှို', price: 1000, category: 'အသီးအရွက်', image: 'https://i.ibb.co/PsGSSTK4/1768228089572.png' },
-        { id: 19, name: 'ငုံးဥ', price: 1000, category: 'ဥ', image: 'https://i.ibb.co/xtyy8V0N/1768211447515.png' }
-    ];
+    <div class="banner-card">
+        <h2>Special Offer!</h2>
+        <p>ယနေ့ မှာယူတဲ့ ဟင်းပွဲတိုင်းအတွက် <br>10% Discount ရရှိနိုင်ပါတယ်။</p>
+        <i class="fas fa-utensils"></i>
+    </div>
 
-    let cart = {};
+    <div class="section-title">Main Services</div>
+    <div class="grid-menu">
+        <a href="customer_menu.html" class="stat-card">
+            <div class="icon-circle bg-blue"><i class="fas fa-shopping-basket"></i></div>
+            <span>Order</span>
+            <b>ဟင်းပွဲမှာယူရန်</b>
+        </a>
+        <a href="track.html" class="stat-card">
+            <div class="icon-circle bg-purple"><i class="fas fa-route"></i></div>
+            <span>Tracking</span>
+            <b>အော်ဒါကြည့်ရန်</b>
+        </a>
+    </div>
 
-    function render() {
-        document.getElementById('menu-grid').innerHTML = menuData.map(m => `
-            <div class="item-card">
-                <img src="${m.img}">
-                <div>
-                    <b>${m.name}</b><br>
-                    <span class="price">${m.price} K</span>
-                    <button class="btn-add" onclick="add('${m.name}')">ထည့်မည်</button>
-                </div>
-            </div>`).join('');
-        if(localStorage.getItem('myOrders')) document.getElementById('track-btn').style.display = 'block';
-    }
+    <div class="section-title">Quick Links</div>
+    
+    <a href="#" class="action-item">
+        <i class="fas fa-heart"></i>
+        <div>My Favorites</div>
+        <i class="fas fa-chevron-right chevron"></i>
+    </a>
 
-    function add(n) {
-        cart[n] = (cart[n] || 0) + 1;
-        document.getElementById('cart-count').innerText = Object.values(cart).reduce((a,b)=>a+b,0);
-    }
+    <a href="#" class="action-item">
+        <i class="fas fa-history"></i>
+        <div>Order History</div>
+        <i class="fas fa-chevron-right chevron"></i>
+    </a>
 
-    function showModal() {
-        if(Object.keys(cart).length === 0) return;
-        document.getElementById('summary').innerText = Object.keys(cart).map(k=>`${k} (${cart[k]})`).join(', ');
-        document.getElementById('order-modal').style.display = 'flex';
-    }
+    <a href="admin.html" class="action-item">
+        <i class="fas fa-user-shield"></i>
+        <div>Staff Portal</div>
+        <i class="fas fa-chevron-right chevron"></i>
+    </a>
 
-    function hideModal() { document.getElementById('order-modal').style.display = 'none'; }
+    <div class="footer-note">
+        YNS Kitchen - Version 2.0.1
+    </div>
 
-    async function placeOrder() {
-        const n = document.getElementById('name').value;
-        const p = document.getElementById('phone').value;
-        if(!n || !p) return alert("အချက်အလက်ဖြည့်ပါ");
-
-        const oid = "MT-" + Math.floor(1000 + Math.random() * 9000);
-        const total = Object.keys(cart).reduce((s,k)=> s + (menuData.find(m=>m.name===k).price * cart[k]), 0);
-
-        const data = { id: oid, name: n, phone: p, items: document.getElementById('summary').innerText, total: total };
-
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) });
-            
-            // ID စာရင်းထဲ ထည့်သိမ်းမယ်
-            let orders = JSON.parse(localStorage.getItem('myOrders') || "[]");
-            orders.push(oid);
-            localStorage.setItem('myOrders', JSON.stringify(orders));
-            
-            window.location.href = `track.html?id=${oid}`;
-        } catch(e) { alert("Error!"); }
-    }
-    render();
-</script>
+    <script>
+        // ရက်စွဲပြရန်
+        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options);
+    </script>
 </body>
 </html>
