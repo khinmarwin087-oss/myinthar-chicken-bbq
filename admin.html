@@ -2,218 +2,175 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Myin Thar Roast</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YNS Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 70px; }
-        
-        .header { background: var(--navy); color: white; padding: 20px; border-radius: 0 0 25px 25px; position: sticky; top: 0; z-index: 100; }
-        .tab-bar { display: flex; background: white; margin: 15px; border-radius: 15px; padding: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: 800; cursor: pointer; border-radius: 12px; color: var(--slate); transition: 0.3s; }
-        .tab-btn.active { background: var(--gold); color: var(--navy); }
+        :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
 
-        /* Inline Form Section */
-        .form-section { background: white; margin: 15px; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: none; }
-        .form-title { font-weight: 800; color: var(--navy); margin-bottom: 15px; display: flex; justify-content: space-between; }
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--slate); margin-bottom: 5px; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; }
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        /* Welcome Section */
+        .welcome-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .welcome-row p { margin: 0; font-size: 12px; color: var(--gray); font-weight: 600; }
+        .welcome-row h1 { margin: 0; font-size: 22px; font-weight: 800; }
+        .user-btn { width: 35px; height: 35px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 
-        .order-card, .menu-item-card { background: white; border-radius: 20px; padding: 15px; margin: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
-        .menu-item-card { display: flex; align-items: center; gap: 15px; }
-        .menu-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; }
-        .stock-tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: #f0fdf4; color: #166534; font-weight: 800; }
-        
-        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        /* Date Filter */
+        .filter-box { margin-bottom: 15px; }
+        .filter-box input { border: none; background: #fff; padding: 8px 12px; border-radius: 10px; font-weight: 700; color: var(--primary); font-family: inherit; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); outline: none; }
+
+        /* Top Gradient Card (ပုံထဲကအတိုင်း) */
+        .main-gradient-card {
+            background: linear-gradient(135deg, #007AFF, #00D2FF);
+            border-radius: 20px; padding: 22px; color: white; position: relative;
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.2); margin-bottom: 15px;
+        }
+        .main-gradient-card h3 { margin: 0; font-size: 11px; font-weight: 700; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+        .main-gradient-card .amount { font-size: 32px; font-weight: 800; display: block; margin: 8px 0; }
+        .main-gradient-card .update-text { font-size: 10px; opacity: 0.7; }
+        .main-gradient-card .icon-watermark { position: absolute; right: 15px; bottom: 15px; font-size: 35px; opacity: 0.15; }
+
+        /* Secondary Stats (Orders & Customers) */
+        .secondary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .stat-mini-card { background: white; padding: 15px; border-radius: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 5px; }
+        .stat-mini-card span:first-child { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; }
+        .stat-mini-card span:last-child { font-size: 18px; font-weight: 800; color: var(--text); }
+
+        .label-text { font-size: 11px; font-weight: 800; color: var(--gray); text-transform: uppercase; margin-bottom: 12px; display: block; padding-left: 5px; }
+
+        /* Management Grid (ပုံထဲကအတိုင်း ၄ ခု) */
+        .grid-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .nav-card {
+            background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: var(--text);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 12px; transition: 0.2s;
+        }
+        .nav-card:active { transform: scale(0.96); }
+        .nav-icon-box { width: 32px; height: 32px; border-radius: 10px; background: #F8F9FC; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .nav-card b { font-size: 15px; font-weight: 700; display: block; }
+        .nav-card span { font-size: 11px; color: var(--gray); }
+
+        .badge { background: #FF3B30; color: white; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; float: right; }
     </style>
 </head>
 <body>
 
-<div class="loader" id="loader"><i class="fas fa-spinner fa-spin fa-2x" style="color:var(--gold);"></i></div>
-
-<div class="header">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:18px; font-weight:800;">Admin Central</span>
-        <button onclick="refreshData()" style="color:var(--gold); background:none; border:none; font-size:18px;"><i class="fas fa-sync-alt"></i></button>
+    <div class="welcome-row">
+        <div><p>Mingalaba!</p><h1>YNS Kitchen</h1></div>
+        <div class="user-btn"><i class="fas fa-user"></i></div>
     </div>
-</div>
 
-<div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('orders', this)">Orders</button>
-    <button class="tab-btn" onclick="switchTab('menu', this)">Menu Manage</button>
-</div>
+    <div class="filter-box">
+        <input type="date" id="datePicker" onchange="loadStats()">
+    </div>
 
-<div id="orders-section">
-    <div id="active-orders-list"></div>
-</div>
+    <div class="main-gradient-card">
+        <h3>Total Revenue</h3>
+        <span class="amount" id="revenue-amt">0 Ks</span>
+        <span class="update-text">Updated just now</span>
+        <i class="fas fa-chart-line icon-watermark"></i>
+    </div>
 
-<div id="menu-section" style="display:none;">
-    <div id="menuForm" class="form-section">
-        <div class="form-title">
-            <span id="formTitleText">Add New Item</span>
-            <i class="fas fa-times" onclick="closeForm()" style="cursor:pointer; color:var(--slate);"></i>
+    <div class="secondary-stats">
+        <div class="stat-mini-card">
+            <span>Total Orders</span>
+            <span id="stat-orders">0</span>
         </div>
-        <div class="input-group">
-            <label>ဟင်းပွဲအမည်</label>
-            <input type="text" id="menuName">
+        <div class="stat-mini-card">
+            <span>Customers</span>
+            <span id="stat-customers">0</span>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div class="input-group">
-                <label>ဈေးနှုန်း</label>
-                <input type="number" id="menuPrice">
+    </div>
+
+    <span class="label-text">Management</span>
+
+    <div class="grid-nav">
+        <a href="order.html" class="nav-card">
+            <div class="nav-icon-box" style="color: #007AFF;"><i class="fas fa-shopping-basket"></i></div>
+            <div>
+                <b>Orders <span id="pending-badge" class="badge" style="display:none;">0</span></b>
+                <span>Live Orders</span>
             </div>
-            <div class="input-group">
-                <label>Stock</label>
-                <input type="number" id="menuStock">
+        </a>
+
+        <a href="menu.html" class="nav-card">
+            <div class="nav-icon-box" style="color: #5856D6;"><i class="fas fa-utensils"></i></div>
+            <div>
+                <b>Menus</b>
+                <span>Edit Dishes</span>
             </div>
-        </div>
-        <div class="input-group">
-            <label>Category</label>
-            <input type="text" id="menuCategory">
-        </div>
-        <div class="input-group">
-            <label>Image URL</label>
-            <input type="text" id="menuImage">
-        </div>
-        <div class="btn-row">
-            <button onclick="saveMenu()" style="background:var(--gold); border:none; padding:12px; border-radius:10px; font-weight:800; color:var(--navy);">SAVE</button>
-            <button onclick="closeForm()" style="background:#f1f5f9; border:none; padding:12px; border-radius:10px; font-weight:800; color:var(--slate);">CANCEL</button>
-        </div>
+        </a>
+
+        <a href="#" class="nav-card">
+            <div class="nav-icon-box" style="color: #34C759;"><i class="fas fa-history"></i></div>
+            <div>
+                <b>History</b>
+                <span>Past Sales</span>
+            </div>
+        </a>
+
+        <a href="#" class="nav-card">
+            <div class="nav-icon-box" style="color: #FF3B30;"><i class="fas fa-cog"></i></div>
+            <div>
+                <b>Settings</b>
+                <span>App Config</span>
+            </div>
+        </a>
     </div>
 
-    <div style="padding: 0 15px;">
-        <button id="addBtn" onclick="openForm(false)" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--navy); color:white; font-weight:800;">+ Add Menu Item</button>
-    </div>
-    
-    <div id="admin-menu-list"></div>
-</div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxtisMKR4yXZgfTgt4vy39n8ZtDfrRXpsK4hgMlhoLIcfKaEacbpBuE0St_Wcfu9Bm/exec";
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
+            authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
+            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "myrestaurantapp-a14d4",
+            storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
+            messagingSenderId: "123788707874",
+            appId: "1:123788707874:web:6593b827b284cc7cb9a27b"
+        };
 
-    async function refreshData() {
-        document.getElementById('loader').style.display = 'flex';
-        try {
-            const [orderRes, menuRes] = await Promise.all([
-                fetch(SCRIPT_URL + "?admin=true"),
-                fetch(SCRIPT_URL + "?getMenu=true")
-            ]);
-            renderOrders(await orderRes.json());
-            renderMenu(await menuRes.json());
-        } catch (e) { alert("Data Loading Error"); }
-        finally { document.getElementById('loader').style.display = 'none'; }
-    }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    function renderOrders(orders) {
-        const container = document.getElementById('active-orders-list');
-        container.innerHTML = orders.reverse().map(o => `
-            <div class="order-card status-${o.status}" style="border-left: 5px solid ${getStatusColor(o.status)}">
-                <div style="display:flex; justify-content:space-between; font-weight:800;">
-                    <span>#${o.id} - ${o.name}</span>
-                    <span style="color:var(--gold);">${o.total} K</span>
-                </div>
-                <div style="font-size:12px; color:var(--slate); margin:8px 0;">
-                    <i class="far fa-clock"></i> ${o.pickDate} | ${o.pickTime}
-                </div>
-                <div style="font-size:13px; font-weight:600; background:#f8fafc; padding:10px; border-radius:10px;">${o.items}</div>
-                ${o.note ? `<div style="font-size:11px; color:#ef4444; margin-top:5px;">Note: ${o.note}</div>` : ''}
+        window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('datePicker').value = today;
+            loadStats();
+        };
+
+        function loadStats() {
+            const selectedDate = document.getElementById('datePicker').value;
+            db.ref('orders').on('value', snap => {
+                const data = snap.val();
+                let revenue = 0, orders = 0, pending = 0;
+                let customerSet = new Set();
+
+                for (let id in data) {
+                    const o = data[id];
+                    if (o.date === selectedDate) {
+                        orders++;
+                        if (o.status === 'Done') revenue += parseInt(o.total || 0);
+                        if (o.customerName) customerSet.add(o.customerName);
+                    }
+                    if (o.status === 'Pending') pending++;
+                }
+
+                document.getElementById('revenue-amt').innerText = revenue.toLocaleString() + " Ks";
+                document.getElementById('stat-orders').innerText = orders;
+                document.getElementById('stat-customers').innerText = customerSet.size;
                 
-                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-top:10px;">
-                    <button onclick="updateStatus('${o.id}', 'Cooking', '${o.items}')" style="background:#e0f2fe; color:#0369a1; border:none; padding:8px; border-radius:8px; font-size:10px; font-weight:800;">COOK</button>
-                    <button onclick="updateStatus('${o.id}', 'Ready', '${o.items}')" style="background:#dcfce7; color:#15803d; border:none; padding:8px; border-radius:8px; font-size:10px; font-weight:800;">READY</button>
-                    <button onclick="updateStatus('${o.id}', 'Done', '${o.items}')" style="background:var(--navy); color:white; border:none; padding:8px; border-radius:8px; font-size:10px; font-weight:800;">DONE</button>
-                    <button onclick="updateStatus('${o.id}', 'Cancelled', '${o.items}')" style="background:#fee2e2; color:#b91c1c; border:none; padding:8px; border-radius:8px; font-size:10px; font-weight:800;">X</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function renderMenu(menu) {
-        const container = document.getElementById('admin-menu-list');
-        container.innerHTML = menu.map(m => `
-            <div class="menu-item-card">
-                <img src="${m.image || 'https://via.placeholder.com/50'}" class="menu-img">
-                <div style="flex:1;">
-                    <div style="font-weight:800; font-size:14px;">${m.name}</div>
-                    <div style="font-size:12px; color:var(--gold); font-weight:800;">${m.price} K</div>
-                </div>
-                <div style="text-align:right;">
-                    <div class="stock-tag">Stock: ${m.stock}</div>
-                    <button onclick='openForm(true, ${JSON.stringify(m).replace(/'/g, "&apos;")})' style="margin-top:5px; border:none; background:none; color:var(--slate); font-weight:800; font-size:12px;">Edit</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // Form Logic
-    function openForm(isEdit, data = {}) {
-        document.getElementById('menuForm').style.display = 'block';
-        document.getElementById('addBtn').style.display = 'none';
-        document.getElementById('formTitleText').innerText = isEdit ? "Edit Item" : "Add New Item";
-        document.getElementById('menuName').value = data.name || "";
-        document.getElementById('menuName').disabled = isEdit;
-        document.getElementById('menuPrice').value = data.price || "";
-        document.getElementById('menuStock').value = data.stock || "";
-        document.getElementById('menuCategory').value = data.category || "";
-        document.getElementById('menuImage').value = data.image || "";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function closeForm() {
-        document.getElementById('menuForm').style.display = 'none';
-        document.getElementById('addBtn').style.display = 'block';
-    }
-
-    async function saveMenu() {
-        const name = document.getElementById('menuName').value;
-        const price = document.getElementById('menuPrice').value;
-        const stock = document.getElementById('menuStock').value;
-        if(!name || !price) return alert("ဖြည့်စွက်ပေးပါ");
-
-        document.getElementById('loader').style.display = 'flex';
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: "manageMenu",
-                name, price, stock,
-                category: document.getElementById('menuCategory').value,
-                image: document.getElementById('menuImage').value
-            })
-        });
-        closeForm();
-        refreshData();
-    }
-
-    async function updateStatus(id, status, items) {
-        if(!confirm("Change status?")) return;
-        document.getElementById('loader').style.display = 'flex';
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "updateStatus", id, status, items })
-        });
-        refreshData();
-    }
-
-    function switchTab(tab, btn) {
-        document.getElementById('orders-section').style.display = tab === 'orders' ? 'block' : 'none';
-        document.getElementById('menu-section').style.display = tab === 'menu' ? 'block' : 'none';
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        closeForm();
-    }
-
-    function getStatusColor(s) {
-        if(s === 'Cooking') return '#3b82f6';
-        if(s === 'Ready') return '#22c55e';
-        if(s === 'Cancelled') return '#ef4444';
-        return '#e2e8f0';
-    }
-
-    window.onload = refreshData;
-</script>
+                const badge = document.getElementById('pending-badge');
+                if (pending > 0) {
+                    badge.innerText = pending;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+    </script>
 </body>
 </html>
