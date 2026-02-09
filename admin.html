@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Myin Thar Roast</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; --success: #22c55e; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); }
+
+        /* Login Screen */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--navy); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; text-align: center; }
+        .login-box { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); width: 80%; max-width: 300px; }
+        .pin-input { width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 20px; text-align: center; margin-top: 20px; outline: none; }
+
+        /* Dashboard Header */
+        .admin-header { background: white; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .stat-card { background: var(--pearl); padding: 15px; border-radius: 12px; border: 1px solid #eee; text-align: center; }
+        .stat-val { display: block; font-size: 18px; font-weight: 800; color: var(--gold); }
+        .stat-label { font-size: 11px; color: var(--slate); font-weight: 600; }
+
+        /* Order List */
+        #admin-orders { padding: 20px; }
+        .order-row { background: white; padding: 18px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 15px; border: 1px solid #eee; }
+        .row-top { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 10px; margin-bottom: 10px; }
+        .items-list { font-size: 13px; color: var(--slate); margin-bottom: 15px; font-weight: 600; line-height: 1.6; }
+        
+        /* Action Buttons */
+        .action-btns { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .btn-status { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; color: white; cursor: pointer; min-width: 80px; }
+        .btn-pending { background: #f59e0b; }
+        .btn-processing { background: #3b82f6; }
+        .btn-ready { background: var(--success); }
+        .btn-complete { background: var(--navy); }
+
+        /* Loader */
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 5000; justify-content: center; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box">
+        <i class="fas fa-lock" style="font-size: 40px; color: var(--gold);"></i>
+        <h2>Admin Access</h2>
+        <p style="font-size: 12px; opacity: 0.7;">အက်ဒမင် PIN နံပါတ်ရိုက်ထည့်ပါ</p>
+        <input type="password" id="pin" class="pin-input" placeholder="****" maxlength="4">
+        <button onclick="checkPin()" style="margin-top:20px; background:var(--gold); color:var(--navy); border:none; padding:12px 30px; border-radius:10px; font-weight:800;">Login</button>
+    </div>
+</div>
+
+<div id="loader"><i class="fas fa-circle-notch fa-spin" style="font-size: 30px; color: var(--gold);"></i></div>
+
+<div class="admin-header">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b style="font-size: 18px;">Admin Dashboard</b>
+        <button onclick="loadData()" style="background:none; border:none; color:var(--gold);"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="summary-grid">
+        <div class="stat-card">
+            <span class="stat-val" id="count-today">0</span>
+            <span class="stat-label">ယနေ့အော်ဒါ</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-val" id="sales-today">0 K</span>
+            <span class="stat-label">ရောင်းရငွေစုစုပေါင်း</span>
+        </div>
+    </div>
+</div>
+
+<div id="admin-orders"></div>
+
+<audio id="order-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
+    const ADMIN_PIN = "1234"; // ဒီနေရာမှာ Password ပြောင်းနိုင်ပါတယ်
+    let lastOrderCount = 0;
+
+    function checkPin() {
+        if(document.getElementById('pin').value === ADMIN_PIN) {
+            document.getElementById('login-screen').style.display = 'none';
+            loadData();
+        } else {
+            alert("PIN မှားယွင်းနေပါသည်။");
+        }
+    }
+
+    async function loadData() {
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const res = await fetch(SCRIPT_URL + "?admin=true&t=" + new Date().getTime());
+            const data = await res.json();
+            
+            // Notification Sound Logic
+            if(lastOrderCount > 0 && data.length > lastOrderCount) {
+                document.getElementById('order-sound').play();
+            }
+            lastOrderCount = data.length;
+
+            renderAdminOrders(data);
+            updateSummary(data);
+        } catch (e) {
+            console.log(e);
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    function updateSummary(data) {
+        const today = new Date().toLocaleDateString();
+        const todayOrders = data.filter(o => new Date(o.date).toLocaleDateString() === today);
+        const totalSales = todayOrders.reduce((sum, o) => sum + parseInt(o.total.toString().replace(/[^0-9]/g, "")), 0);
+        
+        document.getElementById('count-today').innerText = todayOrders.length;
+        document.getElementById('sales-today').innerText = totalSales.toLocaleString() + " K";
+    }
+
+    function renderAdminOrders(data) {
+        const listDiv = document.getElementById('admin-orders');
+        listDiv.innerHTML = data.map(o => `
+            <div class="order-row">
+                <div class="row-top">
+                    <div><b>#${o.id}</b> <span style="font-size:11px; margin-left:10px; color:var(--slate);">${o.name}</span></div>
+                    <div style="color:var(--gold); font-weight:800;">${o.total}</div>
+                </div>
+                <div class="items-list">${o.items}</div>
+                <div style="margin-bottom:15px; font-size:12px;">
+                    <a href="tel:${o.phone}" style="color:var(--navy); text-decoration:none;"><i class="fas fa-phone"></i> ${o.phone}</a>
+                </div>
+                <div class="action-btns">
+                    <button class="btn-status btn-processing" onclick="updateStatus('${o.id}', 'Processing')">Cooking</button>
+                    <button class="btn-status btn-ready" onclick="updateStatus('${o.id}', 'Ready')">Ready</button>
+                    <button class="btn-status btn-complete" onclick="updateStatus('${o.id}', 'Completed')">Done</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function updateStatus(id, status) {
+        if(!confirm(id + " ကို " + status + " သို့ ပြောင်းမလား?")) return;
+        document.getElementById('loader').style.display = 'flex';
+        
+        try {
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "updateStatus", id: id, status: status })
+            });
+            loadData(); // ဒေတာပြန် refresh လုပ်မယ်
+        } catch (e) {
+            alert("Error updating status");
+        }
+    }
+
+    // Auto Refresh Every 60 Seconds
+    setInterval(loadData, 60000);
+</script>
+</body>
+</html>
+
