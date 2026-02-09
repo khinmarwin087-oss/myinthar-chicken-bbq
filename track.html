@@ -3,182 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tracking - Myin Thar Roast</title>
+    <title>Order Tracking - Myin Thar Roast</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; }
+        :root { --gold: #D4AF37; --navy: #0F172A; --pearl: #F8FAFC; --slate: #64748b; --success: #22c55e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 20px; color: var(--navy); padding-bottom: 100px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--pearl); margin: 0; padding: 0; color: var(--navy); overflow-x: hidden; }
 
-        .header { margin-bottom: 25px; }
-        .header h3 { font-size: 22px; font-weight: 800; margin: 0; }
+        /* 4. Live Refresh Animation */
+        .refresh-status { text-align: center; font-size: 10px; color: var(--slate); padding: 5px; background: #fff; border-bottom: 1px solid #eee; }
 
-        /* Order List Section */
-        #order-list { display: flex; flex-direction: column; gap: 12px; }
-        .order-card { 
-            background: white; padding: 18px; border-radius: 18px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #eee;
-            display: flex; justify-content: space-between; align-items: center; 
-            transition: 0.2s;
-        }
-        .order-card:active { transform: scale(0.96); background: #fdfdfd; }
-        .order-card b { font-size: 15px; }
-        .order-card .btn-view { color: var(--gold); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+        /* Status Tabs */
+        .tabs { display: flex; background: white; position: sticky; top: 0; z-index: 100; padding: 15px 10px; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .tab { flex: 1; padding: 12px 5px; border-radius: 12px; font-size: 11px; font-weight: 800; text-align: center; color: var(--slate); background: #f1f5f9; cursor: pointer; transition: 0.3s; }
+        .tab.active { background: var(--navy); color: var(--gold); }
 
-        /* Modern Bottom Sheet (Detail Panel) */
-        #details-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 2000;
-            display: none; transition: 0.3s; backdrop-filter: blur(4px);
-        }
-        #details-sheet {
-            position: fixed; bottom: -100%; left: 0; width: 100%;
-            background: white; border-radius: 30px 30px 0 0;
-            padding: 30px 25px 40px 25px; z-index: 2001;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-            transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        #details-sheet.show { bottom: 0; }
-        
-        /* Drag Handle */
-        .sheet-handle { width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; margin: -15px auto 20px auto; }
+        /* Order List */
+        #main-view { padding: 20px; padding-bottom: 120px; }
+        .order-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; margin-bottom: 15px; display: none; align-items: center; justify-content: space-between; }
+        .order-card.visible { display: flex; animation: slideIn 0.4s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-        .status-badge { 
-            background: var(--navy); color: var(--gold); 
-            padding: 8px 16px; border-radius: 12px; 
-            font-size: 13px; font-weight: 800;
-        }
+        /* 3. Copy Button Styling */
+        .copy-btn { background: #f1f5f9; border: none; padding: 5px 10px; border-radius: 8px; font-size: 10px; cursor: pointer; color: var(--navy); margin-left: 10px; }
 
-        .info-box { 
-            background: #f8fafc; border-radius: 20px; 
-            padding: 20px; margin: 20px 0; border: 1px solid #f1f5f9;
-        }
-        #det-items { font-weight: 600; font-size: 15px; line-height: 1.6; }
+        /* Detail View (Full Screen) */
+        #detail-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pearl); z-index: 2000; display: none; flex-direction: column; }
+        .detail-header { background: white; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 
-        .total-box { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
-        .total-box b { font-size: 22px; color: var(--gold); }
+        /* 1. Visual Progress Tracker */
+        .progress-container { background: white; padding: 25px; margin: 15px 20px; border-radius: 20px; display: flex; justify-content: space-between; position: relative; }
+        .progress-line { position: absolute; top: 40px; left: 50px; right: 50px; height: 2px; background: #e2e8f0; z-index: 1; }
+        .progress-step { z-index: 2; text-align: center; width: 60px; }
+        .step-icon { width: 35px; height: 35px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #cbd5e1; transition: 0.3s; }
+        .step-label { font-size: 9px; font-weight: 800; color: #94a3b8; }
+        .step-active .step-icon { background: var(--navy); color: var(--gold); transform: scale(1.2); box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+        .step-active .step-label { color: var(--navy); }
 
-        /* Loading Shimmer */
-        .shimmer { height: 20px; background: #f0f0f0; border-radius: 4px; position: relative; overflow: hidden; margin-bottom: 10px; }
-        .shimmer::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: shim 1.5s infinite; }
-        @keyframes shim { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        /* 2. Estimated Waiting Time */
+        .eta-box { background: #fff9eb; border: 1px dashed var(--gold); margin: 0 20px 15px; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
 
-        /* Bottom Navigation Bar */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; padding: 15px 40px 25px 40px;
-            display: flex; justify-content: center;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            background: var(--navy); color: var(--gold);
-            padding: 12px 30px; border-radius: 50px;
-            text-decoration: none; font-weight: 800; font-size: 14px;
-            transition: 0.3s; border: 2px solid transparent;
-        }
-        .nav-item:active { transform: scale(0.9); border-color: var(--gold); }
+        /* Table & Summary */
+        .content-body { padding: 0 20px 100px; overflow-y: auto; }
+        .order-table { width: 100%; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; margin-top: 10px; }
+        .order-table td { padding: 15px; border-bottom: 1px solid #f8fafc; font-size: 14px; font-weight: 600; }
+        .summary-box { background: var(--navy); color: white; border-radius: 20px; padding: 20px; margin-top: 20px; }
 
-        .close-btn { position: absolute; right: 20px; top: 20px; color: var(--slate); font-size: 20px; cursor: pointer; }
+        /* 5. Support Buttons & Nav */
+        .bottom-actions { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px 20px 30px; display: flex; gap: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); }
+        .btn-call { flex: 1; background: #f1f5f9; color: var(--navy); padding: 15px; border-radius: 15px; text-decoration: none; text-align: center; font-weight: 800; font-size: 14px; }
+        .btn-home { flex: 2; background: var(--navy); color: var(--gold); padding: 15px; border-radius: 15px; text-decoration: none; text-align: center; font-weight: 800; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h3>မှာယူမှုမှတ်တမ်း</h3>
+<div class="refresh-status" id="last-update">နောက်ဆုံးစစ်ဆေးချိန်: ယခုတင်</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="filterStatus('Pending', this)">လက်ခံရရှိ</div>
+    <div class="tab" onclick="filterStatus('Processing', this)">ချက်ပြုတ်နေ</div>
+    <div class="tab" onclick="filterStatus('Ready', this)">လာယူနိုင်ပြီ</div>
 </div>
 
-<div id="order-list"></div>
-
-<div id="details-overlay" onclick="closeDetails()"></div>
-<div id="details-sheet">
-    <div class="sheet-handle"></div>
-    <i class="fas fa-times close-btn" onclick="closeDetails()"></i>
-    
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <b id="det-id" style="font-size: 22px;">#ID</b>
-        <span id="det-status" class="status-badge">စစ်ဆေးနေဆဲ...</span>
-    </div>
-    
-    <div class="info-box">
-        <span style="font-size:11px; font-weight:800; color:var(--slate); text-transform:uppercase; display:block; margin-bottom:8px;">Items Ordered</span>
-        <div id="det-items">...</div>
-    </div>
-    
-    <div class="total-box">
-        <span style="font-weight:600; color:var(--slate);">Total Amount</span>
-        <b><span id="det-total">0</span> K</b>
-    </div>
+<div id="main-view">
+    <div id="order-list"></div>
 </div>
 
-<div class="bottom-nav">
-    <a href="index.html" class="nav-item">
-        <i class="fas fa-home"></i> ပင်မစာမျက်နှာသို့
-    </a>
+<div id="detail-view">
+    <div class="detail-header">
+        <i class="fas fa-arrow-left" onclick="closeDetail()"></i>
+        <b id="det-id">#ID</b>
+        <button class="copy-btn" onclick="copyId()"><i class="far fa-copy"></i> Copy ID</button>
+    </div>
+
+    <div class="content-body">
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="progress-step" id="step-pending">
+                <div class="step-icon"><i class="fas fa-check"></i></div>
+                <div class="step-label">လက်ခံရရှိ</div>
+            </div>
+            <div class="progress-step" id="step-processing">
+                <div class="step-icon"><i class="fas fa-fire-burner"></i></div>
+                <div class="step-label">ချက်ပြုတ်နေ</div>
+            </div>
+            <div class="progress-step" id="step-ready">
+                <div class="step-icon"><i class="fas fa-bag-shopping"></i></div>
+                <div class="step-label">လာယူနိုင်ပြီ</div>
+            </div>
+        </div>
+
+        <div class="eta-box" id="eta-container">
+            <i class="fas fa-clock" style="color:var(--gold)"></i>
+            <span>ခန့်မှန်းစောင့်ဆိုင်းချိန်: <b id="det-eta">၂၀ မိနစ်</b></span>
+        </div>
+
+        <table class="order-table">
+            <tbody id="det-items-body"></tbody>
+        </table>
+
+        <div class="summary-box">
+            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:18px;">
+                <span>စုစုပေါင်းကျသင့်ငွေ</span>
+                <span style="color:var(--gold)"><span id="det-total">0</span> K</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-actions">
+        <a href="tel:09123456789" class="btn-call"><i class="fas fa-phone"></i> ဖုန်းဆက်ရန်</a>
+        <a href="index.html" class="btn-home">ပင်မစာမျက်နှာသို့</a>
+    </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywjHKV0aed5dV41xkLi_sZOOkXSzpkL6PAqJbMc1OR_JgQOmCyqIr_yE6C9eD2G4zy/exec";
+    let allOrdersData = {};
+    let currentDetailId = "";
 
-    function loadHistory() {
-        const orders = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
+    async function loadHistory() {
+        const orderIds = JSON.parse(localStorage.getItem('myOrders') || "[]").reverse();
         const listDiv = document.getElementById('order-list');
-        if(orders.length === 0) return listDiv.innerHTML = `<div style="text-align:center; padding-top:100px; color:var(--slate); opacity:0.5;"><i class="fas fa-box-open" style="font-size:40px;"></i><br><br>မှတ်တမ်းမရှိသေးပါ</div>`;
+        listDiv.innerHTML = "";
 
-        listDiv.innerHTML = orders.map(id => `
-            <div class="order-card" onclick="fetchUpdate('${id}')">
-                <b>Order #${id}</b>
-                <span class="btn-view">Status <i class="fas fa-chevron-right"></i></span>
-            </div>
-        `).join('');
-
-        const urlId = new URLSearchParams(window.location.search).get('id');
-        if(urlId) fetchUpdate(urlId);
-    }
-
-    async function fetchUpdate(id) {
-        const overlay = document.getElementById('details-overlay');
-        const sheet = document.getElementById('details-sheet');
-        
-        overlay.style.display = 'block';
-        setTimeout(() => sheet.classList.add('show'), 10);
-        
-        document.getElementById('det-id').innerText = "#" + id;
-        document.getElementById('det-status').innerText = "Updating...";
-        document.getElementById('det-items').innerHTML = `<div class="shimmer"></div><div class="shimmer" style="width:70%"></div>`;
-        document.getElementById('det-total').innerText = "---";
-
-        try {
-            const res = await fetch(`${SCRIPT_URL}?id=${id}`);
-            const data = await res.json();
-            
-            if(data.status === "Not Found") {
-                document.getElementById('det-status').innerText = "မတွေ့ပါ";
-                document.getElementById('det-items').innerText = "အော်ဒါမတွေ့သေးပါ။ ခဏနေမှ ပြန်စစ်ပါ။";
-            } else {
-                document.getElementById('det-status').innerText = translate(data.status);
-                document.getElementById('det-items').innerText = data.items || "-";
-                let t = String(data.total).replace(/[^0-9]/g, "");
-                document.getElementById('det-total').innerText = Number(t).toLocaleString();
-            }
-        } catch(e) { 
-            document.getElementById('det-status').innerText = "Offline";
+        for (const id of orderIds) {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?id=${id}`);
+                const data = await res.json();
+                allOrdersData[id] = data;
+                
+                const card = document.createElement('div');
+                card.className = `order-card visible`;
+                card.setAttribute('data-status', data.status);
+                card.onclick = () => openDetail(id);
+                card.innerHTML = `<div><b>#${id}</b><br><small style="color:var(--slate)">အသေးစိတ်ကြည့်ရန် နှိပ်ပါ</small></div><i class="fas fa-chevron-right" style="color:var(--gold)"></i>`;
+                listDiv.appendChild(card);
+            } catch (e) {}
         }
+        document.getElementById('last-update').innerText = "နောက်ဆုံးစစ်ဆေးချိန်: " + new Date().toLocaleTimeString();
+        filterStatus('Pending', document.querySelector('.tab'));
     }
 
-    function closeDetails() {
-        const sheet = document.getElementById('details-sheet');
-        const overlay = document.getElementById('details-overlay');
-        sheet.classList.remove('show');
-        setTimeout(() => overlay.style.display = 'none', 300);
+    function filterStatus(status, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        document.querySelectorAll('.order-card').forEach(card => {
+            const s = card.getAttribute('data-status');
+            if (status === 'Processing') {
+                (s === 'Processing' || s === 'Accepted') ? card.classList.add('visible') : card.classList.remove('visible');
+            } else {
+                s === status ? card.classList.add('visible') : card.classList.remove('visible');
+            }
+        });
     }
 
-    function translate(s) {
-        const m = { 'Pending': 'လက်ခံရရှိ', 'Accepted': 'ချက်ပြုတ်နေ', 'Processing': 'ချက်ပြုတ်နေ', 'Ready': 'လာယူနိုင်ပြီ' };
-        return m[s] || s;
+    function openDetail(id) {
+        currentDetailId = id;
+        const data = allOrdersData[id];
+        document.getElementById('detail-view').style.display = 'flex';
+        document.getElementById('det-id').innerText = "#" + id;
+        document.getElementById('det-total').innerText = Number(data.total.toString().replace(/[^0-9]/g, "")).toLocaleString();
+
+        // 1. Update Progress Tracker
+        document.querySelectorAll('.progress-step').forEach(s => s.classList.remove('step-active'));
+        if(data.status === "Pending") document.getElementById('step-pending').classList.add('step-active');
+        if(data.status === "Processing" || data.status === "Accepted") document.getElementById('step-processing').classList.add('step-active');
+        if(data.status === "Ready") document.getElementById('step-ready').classList.add('step-active');
+
+        // 2. ETA Logic (Example)
+        document.getElementById('det-eta').innerText = (data.status === "Ready") ? "အဆင်သင့်ဖြစ်ပါပြီ" : "၁၅-၂၀ မိနစ်ခန့်";
+
+        const tbody = document.getElementById('det-items-body');
+        tbody.innerHTML = data.items.split(',').map(item => `<tr><td>${item}</td></tr>`).join('');
     }
 
+    // 3. Copy ID Function
+    function copyId() {
+        navigator.clipboard.writeText(currentDetailId);
+        alert("Order ID ကူးယူပြီးပါပြီ!");
+    }
+
+    // 4. Auto Refresh (Every 2 mins)
+    setInterval(loadHistory, 120000);
+
+    function closeDetail() { document.getElementById('detail-view').style.display = 'none'; }
     window.onload = loadHistory;
 </script>
 </body>
