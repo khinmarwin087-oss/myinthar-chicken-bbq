@@ -312,35 +312,36 @@
 
         // sendOrder ထဲမှာ deviceUID ပါအောင် ပြင်ပေးထားပါတယ် (အသစ်)
         function sendOrder() {
-            const user = auth.currentUser;
-            if (!user) return alert("Login အရင်ဝင်ပါ");
+    const user = auth.currentUser;
+    if (!user) return alert("Login အရင်ဝင်ပါ");
 
-            const n = document.getElementById('o-name').value;
-            const p = document.getElementById('o-phone').value;
-            if(!n || !p) return showToast("ကျေးဇူးပြု၍ နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပါ");
-            if(Object.keys(cart).length === 0) return showToast("ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိပါ");
+    const n = document.getElementById('o-name').value;
+    const p = document.getElementById('o-phone').value;
+    if(!n || !p) return showToast("ကျေးဇူးပြု၍ နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပါ");
+    if(Object.keys(cart).length === 0) return showToast("ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိပါ");
 
-            const btn = document.getElementById('submit-btn');
-            btn.innerText = "လုပ်ဆောင်နေပါသည်..."; btn.disabled = true;
+    const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+    const orderData = {
+        orderId: orderId,
+        customerName: n,
+        customerPhone: p,
+        date: document.getElementById('o-date').value,
+        time: document.getElementById('o-time').value,
+        note: document.getElementById('o-note').value,
+        items: Object.values(cart),
+        total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
+        status: "Pending",
+        deviceUID: user.uid
+    };
 
-            const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
-            const order = {
-                orderId: orderId,
-                deviceUID: user.uid, // History အတွက် ဒါက အရေးကြီးဆုံး
-                customerName: n, 
-                customerPhone: p,
-                date: document.getElementById('o-date').value,
-                time: document.getElementById('o-time').value,
-                note: document.getElementById('o-note').value,
-                items: Object.values(cart),
-                total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
-                status: "Pending",
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            };
-
-            db.ref('orders').push(order).then(() => {
-                localStorage.setItem('myDeviceUID', user.uid); // Track နဲ့ History အတွက် UID သိမ်းလိုက်တယ်
-                window.location.href = "order_success.html";
+    // Database ထဲ ထည့်မယ်
+    db.ref('orders').push(orderData).then(() => {
+        // --- အရေးကြီးဆုံးအပိုင်း- အဟောင်းကို အစားထိုးဖို့ အသစ်ကို သိမ်းလိုက်မယ် ---
+        localStorage.setItem('lastPlacedOrder', JSON.stringify(orderData)); 
+        window.location.href = "order_success.html";
+    });
+        }
+        
             }).catch(err => {
                 showToast("မှားယွင်းမှုရှိနေပါသည်");
                 btn.innerText = "အော်ဒါတင်မည်"; btn.disabled = false;
