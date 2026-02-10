@@ -3,62 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Order - Secure</title>
+    <title>Track Order - YNS Kitchen</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --green: #34C759; --orange: #FF9500; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; padding-bottom: 50px; }
         
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
         .back-btn { background: white; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 
-        /* Admin Style Search */
+        /* User Profile & Auth */
+        .auth-bar { background: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .auth-bar img { width: 35px; height: 35px; border-radius: 50%; }
+        .g-login-btn { background: white; border: 1px solid #ddd; padding: 8px 15px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
         .search-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 25px; }
-        .search-box { display: flex; gap: 10px; background: #F2F2F7; padding: 10px; border-radius: 12px; }
-        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-weight: 600; }
+        .search-box { display: flex; gap: 10px; background: #F2F2F7; padding: 8px; border-radius: 12px; }
+        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-weight: 600; padding-left: 5px; }
         .search-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
-        .section-title { font-size: 14px; font-weight: 800; color: var(--gray); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; }
+        .section-title { font-size: 13px; font-weight: 800; color: var(--gray); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
 
-        /* Order Card Admin Style */
-        .order-card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 10px 25px rgba(0,0,0,0.02); }
+        .order-card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 18px; border: 1px solid rgba(0,0,0,0.02); box-shadow: 0 8px 20px rgba(0,0,0,0.02); }
         .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .order-id-label { background: rgba(0,122,255,0.1); color: var(--primary); padding: 5px 12px; border-radius: 10px; font-weight: 800; font-size: 13px; }
-        .status-pill { padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; }
-        .Pending { background: #FFF5CC; color: #FF9500; }
-        .Done { background: #CCF5D6; color: #34C759; }
+        .order-id-label { background: rgba(0,122,255,0.08); color: var(--primary); padding: 5px 12px; border-radius: 10px; font-weight: 800; font-size: 13px; }
+        
+        .status-pill { padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .Pending { background: #FFF5CC; color: var(--orange); }
+        .Done, .Complete { background: #CCF5D6; color: var(--green); }
 
         .detail-item { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #F8F9FC; }
         .total-box { margin-top: 15px; padding-top: 15px; border-top: 2px dashed #F2F2F7; display: flex; justify-content: space-between; align-items: center; }
-        .total-price { color: var(--primary); font-size: 18px; font-weight: 800; }
+        .total-price { color: var(--primary); font-size: 17px; font-weight: 800; }
         
-        .no-data { text-align: center; padding: 40px; color: var(--gray); }
+        .no-data { text-align: center; padding: 40px; color: var(--gray); font-size: 14px; font-weight: 600; }
+        .loading-spinner { text-align: center; padding: 20px; color: var(--primary); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
-        <h2 style="margin:0; font-size:20px; font-weight:800;">Track Order</h2>
+        <h2 style="margin:0; font-size:18px; font-weight:800;">Track My Orders</h2>
         <div style="width:40px;"></div>
     </div>
 
+    <div id="auth-section" class="auth-bar">
+        <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Checking account...</div>
+    </div>
+
     <div class="search-container">
-        <div class="section-title">Find by Order ID</div>
+        <div class="section-title">Order ID ဖြင့် ရှာရန်</div>
         <div class="search-box">
-            <i class="fas fa-search" style="color:var(--gray); margin-top:3px;"></i>
-            <input type="text" id="searchID" placeholder="Enter Order ID (e.g. ORD1234)">
+            <input type="text" id="searchID" placeholder="ဥပမာ - ORD1234">
             <button class="search-btn" onclick="searchByOrder()">Search</button>
         </div>
     </div>
 
-    <div class="section-title" id="list-title">My Recent Orders</div>
+    <div class="section-title">
+        <span id="list-title">Active Orders</span>
+        <span id="order-count" style="color:var(--primary)">0</span>
+    </div>
+
     <div id="order-list">
-        </div>
+        <div class="no-data">Login အရင်ဝင်ပေးပါဗျာ</div>
+    </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-auth-compat.min.js"></script>
 
 <script>
     const firebaseConfig = {
@@ -72,83 +86,128 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    let currentUID = null;
 
-    // --- VPN ကျော်ရန် အဓိကထည့်ရမည့်အပိုင်း ---
+    // --- VPN Fix ---
     try {
-        const dbRef = firebase.database().ref(".info/connected");
-        dbRef.on("value", (snap) => {
-            if (snap.val() === false) {
-                if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
-                    firebase.database.INTERNAL.forceLongPolling(true);
+        db.ref(".info/connected").on("value", s => {
+            if(s.val() === false && firebase.database.INTERNAL?.forceLongPolling) 
+                firebase.database.INTERNAL.forceLongPolling(true);
+        });
+    } catch(e){}
+
+    // --- Google Login Function ---
+    function googleLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
+    }
+
+    // --- Auth Listener ---
+    auth.onAuthStateChanged(user => {
+        const authDiv = document.getElementById('auth-section');
+        if (user) {
+            currentUID = user.uid;
+            localStorage.setItem('myDeviceUID', user.uid);
+            authDiv.innerHTML = `
+                <img src="${user.photoURL}" alt="User">
+                <div style="flex:1">
+                    <div style="font-weight:800; font-size:14px;">${user.displayName}</div>
+                    <div style="font-size:11px; color:var(--gray)">Verified Account</div>
+                </div>
+                <button onclick="auth.signOut()" style="border:none; background:none; color:red; font-size:12px; font-weight:700;">Logout</button>
+            `;
+            renderOrders(); // Login ဝင်ပြီးရင် အော်ဒါတွေပြမယ်
+        } else {
+            currentUID = null;
+            authDiv.innerHTML = `
+                <button class="g-login-btn" onclick="googleLogin()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Color_Icon.svg" width="18">
+                    Sign in with Google
+                </button>
+                <div style="font-size:12px; color:var(--gray); margin-left:10px;">Login ဝင်မှ History ပေါ်ပါမည်</div>
+            `;
+            document.getElementById('order-list').innerHTML = `<div class="no-data">သင့်အော်ဒါများ ကြည့်ရန် Login အရင်ဝင်ပါ</div>`;
+        }
+    });
+
+    function renderOrders(filterID = null) {
+        if(!currentUID && !filterID) return;
+
+        db.ref('orders').on('value', snap => {
+            const data = snap.val();
+            const list = document.getElementById('order-list');
+            list.innerHTML = "";
+            let count = 0;
+
+            if(!data) {
+                list.innerHTML = `<div class="no-data">အော်ဒါမှတ်တမ်း မရှိသေးပါ</div>`;
+                return;
+            }
+
+            // Object ကို Array ပြောင်းပြီး အချိန်နဲ့ Sort လုပ်မယ် (အသစ်ဆုံးက အပေါ်ဆုံး)
+            const orderArray = Object.values(data).reverse();
+
+            orderArray.forEach(o => {
+                const isMyOrder = (currentUID && o.deviceUID === currentUID);
+                const isSearched = (filterID && o.orderId.toUpperCase() === filterID.toUpperCase());
+                
+                // သတ်မှတ်ချက်- 
+                // ၁။ Search လုပ်ရင် အကုန်ပြမယ် (Complete ရော Pending ရော)
+                // ၂။ ပုံမှန်ဆိုရင် ကိုယ့်အော်ဒါထဲက "Pending" ဖြစ်နေတာတွေကိုပဲ ပြမယ်
+                let shouldShow = false;
+                if (filterID) {
+                    if (isSearched) shouldShow = true;
+                } else {
+                    if (isMyOrder && o.status !== "Complete" && o.status !== "Done") shouldShow = true;
                 }
+
+                if (shouldShow) {
+                    count++;
+                    list.innerHTML += `
+                        <div class="order-card">
+                            <div class="card-top">
+                                <span class="order-id-label">#${o.orderId}</span>
+                                <span class="status-pill ${o.status}">${o.status}</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--gray); margin-bottom:15px;">
+                                <i class="far fa-calendar-alt"></i> ${o.date || 'N/A'} | <i class="far fa-clock"></i> ${o.time || 'N/A'}
+                            </div>
+                            
+                            ${o.items.map(i => `
+                                <div class="detail-item">
+                                    <span>${i.name} x ${i.qty}</span>
+                                    <span style="font-weight:700;">${(i.price * i.qty).toLocaleString()} Ks</span>
+                                </div>
+                            `).join('')}
+
+                            <div class="total-box">
+                                <span style="font-weight:700; color:var(--gray);">Total Amount</span>
+                                <span class="total-price">${o.total.toLocaleString()} Ks</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('order-count').innerText = count;
+            if(count === 0) {
+                list.innerHTML = `<div class="no-data">${filterID ? "အော်ဒါ ID မမှန်ကန်ပါ" : "လက်ရှိမှာ အော်ဒါအသစ် မရှိပါ"}</div>`;
             }
         });
-    } catch (e) { console.error(e); }
-    // ------------------------------------
+    }
 
-    const db = firebase.database();
-    
-    // ကျန်တဲ့ function တွေ (Order ရှာတာ၊ Status ပြတာ) ကို ဒီအောက်မှာ ဆက်ထားပါ
-
-
-
-        // ကိုယ့် Device UID ကို ယူမယ်
-        const myUID = localStorage.getItem('myDeviceUID');
-
-        function renderOrders(filterID = null) {
-            db.ref('orders').on('value', snap => {
-                const data = snap.val();
-                const list = document.getElementById('order-list');
-                list.innerHTML = "";
-                let found = false;
-
-                for(let id in data) {
-                    const o = data[id];
-                    
-                    // ပထမအခြေအနေ - Search ID နဲ့ ကိုက်ရင် ပြမယ်
-                    // ဒုတိယအခြေအနေ - Search မလုပ်ထားရင် ကိုယ့် Device က မှာထားတာတွေပဲ ပြမယ်
-                    const isMyDevice = (myUID && o.deviceUID === myUID);
-                    const isSearched = (filterID && o.orderId === filterID);
-
-                    if (isSearched || (!filterID && isMyDevice)) {
-                        found = true;
-                        list.innerHTML += `
-                            <div class="order-card">
-                                <div class="card-top">
-                                    <span class="order-id-label">#${o.orderId}</span>
-                                    <span class="status-pill ${o.status}">${o.status}</span>
-                                </div>
-                                <div style="font-size:12px; color:var(--gray); margin-bottom:15px;">
-                                    <i class="far fa-calendar-alt"></i> ${o.date} | <i class="far fa-clock"></i> ${o.time}
-                                </div>
-                                
-                                ${o.items.map(i => `
-                                    <div class="detail-item">
-                                        <span>${i.name} x ${i.qty}</span>
-                                        <span style="font-weight:700;">${(i.price*i.qty).toLocaleString()} Ks</span>
-                                    </div>
-                                `).join('')}
-
-                                <div class="total-box">
-                                    <span style="font-weight:700; color:var(--gray);">Total Amount</span>
-                                    <span class="total-price">${o.total.toLocaleString()} Ks</span>
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-                if(!found) list.innerHTML = `<div class="no-data">No orders found.</div>`;
-            });
+    function searchByOrder() {
+        const id = document.getElementById('searchID').value.trim();
+        if(!id) {
+            document.getElementById('list-title').innerText = "Active Orders";
+            renderOrders(null); // ID မပါရင် ပုံမှန်အတိုင်းပြန်ပြ
+            return;
         }
-
-        function searchByOrder() {
-            const id = document.getElementById('searchID').value.toUpperCase().trim();
-            if(!id) return alert("Order ID ရိုက်ထည့်ပါ");
-            document.getElementById('list-title').innerText = "Search Result";
-            renderOrders(id);
-        }
-
-        window.onload = () => renderOrders();
-    </script>
+        document.getElementById('list-title').innerText = "Search Result";
+        renderOrders(id);
+    }
+</script>
 </body>
 </html>
