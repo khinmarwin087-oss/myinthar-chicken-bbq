@@ -11,22 +11,29 @@
         :root { --main: #1a1a1a; --accent: #007AFF; --gray: #999; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
 
+        /* Loading Spinner Style */
+        #loader { 
+            position: fixed; inset: 0; background: #f0f2f5; z-index: 9999; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         #voucher-area { 
             background: white; width: 100%; max-width: 400px; 
             border-radius: 28px; padding: 35px 25px; box-sizing: border-box;
             box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+            display: none; /* စစချင်းမှာ ဝှက်ထားမယ် */
         }
         
         .header-section { text-align: center; margin-bottom: 30px; }
         .check-icon { width: 55px; height: 55px; background: #E8F2FF; color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 22px; }
         .order-id { font-size: 12px; color: var(--gray); letter-spacing: 1px; text-transform: uppercase; margin-top: 8px; }
 
-        /* Customer Info */
         .info-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; padding: 15px 0; border-top: 1px solid #f2f2f2; }
         .info-item label { display: block; font-size: 11px; color: var(--gray); font-weight: 700; margin-bottom: 4px; }
         .info-item span { font-size: 13px; font-weight: 600; color: var(--main); }
 
-        /* Items Box (သီးသန့် Box နှင့် Table Style) */
         .items-container { border: 1px solid #f0f0f0; border-radius: 16px; overflow: hidden; margin-bottom: 25px; }
         .items-header { background: #fafafa; padding: 12px 15px; display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 11px; font-weight: 800; color: var(--gray); text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
         .item-row { padding: 12px 15px; display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 13px; border-bottom: 1px solid #f8f8f8; align-items: center; }
@@ -34,21 +41,24 @@
         .item-qty { text-align: center; font-weight: 600; color: var(--accent); }
         .item-price { text-align: right; font-weight: 700; color: var(--main); }
 
-        /* Total Section */
         .total-section { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
         .total-label { font-size: 15px; font-weight: 700; color: var(--main); }
         .total-val { font-size: 24px; font-weight: 800; color: var(--accent); }
 
         .footer-note { text-align: center; margin-top: 30px; font-size: 11px; color: #ccc; }
 
-        /* Buttons */
-        .action-btns { width: 100%; max-width: 400px; margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .action-btns { width: 100%; max-width: 400px; margin-top: 25px; display: none; grid-template-columns: 1fr 1fr; gap: 12px; }
         .btn { padding: 16px; border-radius: 18px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; transition: 0.2s; }
         .btn-home { background: white; color: var(--main); border: 1px solid #eee; }
         .btn-dl { background: var(--main); color: white; }
     </style>
 </head>
 <body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="margin-top:15px; color:var(--gray); font-size:13px; font-weight:600;">အော်ဒါအချက်အလက်များကို ရယူနေပါသည်...</p>
+    </div>
 
     <div id="voucher-area">
         <div class="header-section">
@@ -70,8 +80,7 @@
                 <span style="text-align:center;">Qty</span>
                 <span style="text-align:right;">Price</span>
             </div>
-            <div id="v-items-list">
-                </div>
+            <div id="v-items-list"></div>
         </div>
 
         <div class="total-section">
@@ -82,7 +91,7 @@
         <div class="footer-note">Thank you for your order!</div>
     </div>
 
-    <div class="action-btns">
+    <div class="action-btns" id="action-btns">
         <a href="index.html" class="btn btn-home">Back to Home</a>
         <button class="btn btn-dl" onclick="downloadVoucher()">Download PNG</button>
     </div>
@@ -104,32 +113,63 @@
         const db = firebase.database();
 
         window.onload = function() {
-            const lastId = localStorage.getItem('lastOrderId');
-            if(!lastId) return;
+            // အသစ်ဆုံး အချက်အလက်ကို localStorage ကနေ အရင်စစ်မယ်
+            const savedOrder = localStorage.getItem('lastPlacedOrder');
+            
+            if(savedOrder) {
+                const order = JSON.parse(savedOrder);
+                // ID လည်း ကိုက်ရမယ် (အဟောင်းကြီး မဖြစ်နေစေဖို့)
+                const lastId = localStorage.getItem('lastOrderId');
+                
+                if(order.orderId === lastId) {
+                    showData(order);
+                } else {
+                    fetchFromDB(lastId);
+                }
+            } else {
+                const lastId = localStorage.getItem('lastOrderId');
+                if(lastId) fetchFromDB(lastId);
+                else {
+                    document.getElementById('loader').innerHTML = "<p>အော်ဒါ ID မတွေ့ပါ</p>";
+                }
+            }
+        };
 
-            db.ref('orders').orderByChild('orderId').equalTo(lastId).once('value', snap => {
+        function fetchFromDB(id) {
+            // DB ကနေ ရှာတဲ့အခါ တွေ့မှသာ အဝိုင်းကို ပိတ်မယ်
+            db.ref('orders').orderByChild('orderId').equalTo(id).on('value', snap => {
                 const data = snap.val();
                 if(data) {
                     const order = Object.values(data)[0];
-                    document.getElementById('v-order-id').innerText = "ID: #" + order.orderId;
-                    document.getElementById('v-name').innerText = order.customerName;
-                    document.getElementById('v-phone').innerText = order.customerPhone;
-                    document.getElementById('v-date').innerText = order.date;
-                    document.getElementById('v-time').innerText = order.time;
-                    document.getElementById('v-total').innerText = order.total.toLocaleString() + " Ks";
-
-                    document.getElementById('v-items-list').innerHTML = order.items.map(i => `
-                        <div class="item-row">
-                            <span style="font-weight:500;">${i.name}</span>
-                            <span class="item-qty">${i.qty}</span>
-                            <span class="item-price">${(i.price * i.qty).toLocaleString()}</span>
-                        </div>
-                    `).join('');
-
-                    setTimeout(downloadVoucher, 1500);
+                    showData(order);
                 }
             });
-        };
+        }
+
+        function showData(order) {
+            document.getElementById('v-order-id').innerText = "ID: #" + order.orderId;
+            document.getElementById('v-name').innerText = order.customerName;
+            document.getElementById('v-phone').innerText = order.customerPhone;
+            document.getElementById('v-date').innerText = order.date;
+            document.getElementById('v-time').innerText = order.time;
+            document.getElementById('v-total').innerText = order.total.toLocaleString() + " Ks";
+
+            document.getElementById('v-items-list').innerHTML = order.items.map(i => `
+                <div class="item-row">
+                    <span style="font-weight:500;">${i.name}</span>
+                    <span class="item-qty">${i.qty}</span>
+                    <span class="item-price">${(i.price * i.qty).toLocaleString()}</span>
+                </div>
+            `).join('');
+
+            // အချက်အလက်တွေ အကုန်ရပြီဆိုမှ UI ကို ဖော်ပြမယ်
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('voucher-area').style.display = 'block';
+            document.getElementById('action-btns').style.display = 'grid';
+
+            // ဒေါင်းလုဒ်စနစ်
+            setTimeout(downloadVoucher, 1500);
+        }
 
         function downloadVoucher() {
             const area = document.getElementById('voucher-area');
@@ -143,4 +183,3 @@
     </script>
 </body>
 </html>
-
