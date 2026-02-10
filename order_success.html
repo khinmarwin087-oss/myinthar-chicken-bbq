@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - YNS Kitchen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --main: #1a1a1a; --accent: #007AFF; --gray: #999; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+
+        #voucher-area { 
+            background: white; width: 100%; max-width: 400px; 
+            border-radius: 28px; padding: 35px 25px; box-sizing: border-box;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+        }
+        
+        .header-section { text-align: center; margin-bottom: 30px; }
+        .check-icon { width: 55px; height: 55px; background: #E8F2FF; color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 22px; }
+        .order-id { font-size: 12px; color: var(--gray); letter-spacing: 1px; text-transform: uppercase; margin-top: 8px; }
+
+        /* Customer Info */
+        .info-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; padding: 15px 0; border-top: 1px solid #f2f2f2; }
+        .info-item label { display: block; font-size: 11px; color: var(--gray); font-weight: 700; margin-bottom: 4px; }
+        .info-item span { font-size: 13px; font-weight: 600; color: var(--main); }
+
+        /* Items Box (သီးသန့် Box နှင့် Table Style) */
+        .items-container { border: 1px solid #f0f0f0; border-radius: 16px; overflow: hidden; margin-bottom: 25px; }
+        .items-header { background: #fafafa; padding: 12px 15px; display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 11px; font-weight: 800; color: var(--gray); text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
+        .item-row { padding: 12px 15px; display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 13px; border-bottom: 1px solid #f8f8f8; align-items: center; }
+        .item-row:last-child { border-bottom: none; }
+        .item-qty { text-align: center; font-weight: 600; color: var(--accent); }
+        .item-price { text-align: right; font-weight: 700; color: var(--main); }
+
+        /* Total Section */
+        .total-section { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
+        .total-label { font-size: 15px; font-weight: 700; color: var(--main); }
+        .total-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+
+        .footer-note { text-align: center; margin-top: 30px; font-size: 11px; color: #ccc; }
+
+        /* Buttons */
+        .action-btns { width: 100%; max-width: 400px; margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn { padding: 16px; border-radius: 18px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; transition: 0.2s; }
+        .btn-home { background: white; color: var(--main); border: 1px solid #eee; }
+        .btn-dl { background: var(--main); color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="voucher-area">
+        <div class="header-section">
+            <div class="check-icon"><i class="fas fa-check"></i></div>
+            <h2 style="margin:0; font-size: 22px;">Order Placed!</h2>
+            <div class="order-id" id="v-order-id">ID: #------</div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-item"><label>CUSTOMER</label><span id="v-name">-</span></div>
+            <div class="info-item" style="text-align:right;"><label>PHONE</label><span id="v-phone">-</span></div>
+            <div class="info-item"><label>DATE</label><span id="v-date">-</span></div>
+            <div class="info-item" style="text-align:right;"><label>TIME</label><span id="v-time">-</span></div>
+        </div>
+
+        <div class="items-container">
+            <div class="items-header">
+                <span>Item Name</span>
+                <span style="text-align:center;">Qty</span>
+                <span style="text-align:right;">Price</span>
+            </div>
+            <div id="v-items-list">
+                </div>
+        </div>
+
+        <div class="total-section">
+            <span class="total-label">Total Amount</span>
+            <span class="total-val" id="v-total">0 Ks</span>
+        </div>
+
+        <div class="footer-note">Thank you for your order!</div>
+    </div>
+
+    <div class="action-btns">
+        <a href="index.html" class="btn btn-home">Back to Home</a>
+        <button class="btn btn-dl" onclick="downloadVoucher()">Download PNG</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
+            authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
+            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "myrestaurantapp-a14d4",
+            storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
+            messagingSenderId: "123788707874",
+            appId: "1:123788707874:web:6593b827b284cc7cb9a27b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        window.onload = function() {
+            const lastId = localStorage.getItem('lastOrderId');
+            if(!lastId) return;
+
+            db.ref('orders').orderByChild('orderId').equalTo(lastId).once('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    const order = Object.values(data)[0];
+                    document.getElementById('v-order-id').innerText = "ID: #" + order.orderId;
+                    document.getElementById('v-name').innerText = order.customerName;
+                    document.getElementById('v-phone').innerText = order.customerPhone;
+                    document.getElementById('v-date').innerText = order.date;
+                    document.getElementById('v-time').innerText = order.time;
+                    document.getElementById('v-total').innerText = order.total.toLocaleString() + " Ks";
+
+                    document.getElementById('v-items-list').innerHTML = order.items.map(i => `
+                        <div class="item-row">
+                            <span style="font-weight:500;">${i.name}</span>
+                            <span class="item-qty">${i.qty}</span>
+                            <span class="item-price">${(i.price * i.qty).toLocaleString()}</span>
+                        </div>
+                    `).join('');
+
+                    setTimeout(downloadVoucher, 1500);
+                }
+            });
+        };
+
+        function downloadVoucher() {
+            const area = document.getElementById('voucher-area');
+            html2canvas(area, { scale: 3, backgroundColor: "#f0f2f5", borderRadius: 28 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'YNS-Voucher-' + Date.now() + '.png';
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
+
