@@ -8,58 +8,66 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --success: #34C759; --warning: #FF9500; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
 
-        /* Premium Header */
-        .header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); padding: 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
-        .back-btn { width: 40px; height: 40px; border-radius: 12px; background: var(--pearl); display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s; }
-        .back-btn:active { transform: scale(0.9); }
-        .header h2 { margin: 0; font-size: 20px; font-weight: 800; }
+        /* Header */
+        .header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .top-nav { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .back-btn { width: 35px; height: 35px; border-radius: 10px; background: white; display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        /* Filter Section */
+        .filter-box { display: flex; gap: 10px; align-items: center; background: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .filter-box input { border: none; outline: none; font-family: inherit; font-size: 14px; width: 100%; color: var(--text); }
+        .filter-box i { color: var(--gray); }
 
-        /* Content Area */
-        .container { padding: 20px; animation: fadeIn 0.6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .container { padding: 20px; }
 
-        /* Order Card */
-        .history-card { background: var(--pearl); border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01); position: relative; overflow: hidden; }
-        .status-badge { position: absolute; top: 20px; right: 20px; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        /* History Card */
+        .history-card { background: var(--pearl); border-radius: 20px; padding: 18px; margin-bottom: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01); cursor: pointer; transition: 0.3s; }
+        .history-card:active { transform: scale(0.98); }
+        
+        .card-main { display: flex; justify-content: space-between; align-items: flex-start; }
+        .info-left h4 { margin: 0 0 5px 0; font-size: 15px; font-weight: 800; }
+        .info-left span { font-size: 12px; color: var(--gray); font-weight: 600; }
+
+        .status-badge { padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
         .status-pending { background: #E5F1FF; color: var(--primary); }
         .status-cooking { background: #FFF4E5; color: var(--warning); }
         .status-ready { background: #EAF9EE; color: var(--success); }
         .status-done { background: #F2F2F7; color: var(--gray); }
 
-        .order-id { font-size: 12px; color: var(--gray); font-weight: 700; margin-bottom: 5px; display: block; }
-        .order-date { font-size: 13px; color: var(--text); opacity: 0.7; margin-bottom: 15px; display: block; }
+        /* Detail Accordion */
+        .order-detail { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
+        .order-detail.active { max-height: 500px; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #EEE; }
 
-        /* Items List */
-        .items-box { background: #F8F9FC; border-radius: 16px; padding: 15px; margin: 15px 0; }
-        .item-row { display: flex; justify-content: space-between; font-size: 14px; padding: 5px 0; border-bottom: 1px dashed #E5E5EA; }
-        .item-row:last-child { border-bottom: none; }
-        .item-name { font-weight: 600; flex: 2; }
-        .item-qty { color: var(--primary); font-weight: 800; flex: 1; text-align: center; }
-        .item-price { font-weight: 700; flex: 1; text-align: right; }
+        .item-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; color: #444; }
+        .item-name { flex: 2; font-weight: 600; }
+        .item-qty { flex: 1; text-align: center; color: var(--primary); font-weight: 800; }
+        .item-total { flex: 1; text-align: right; font-weight: 700; }
 
-        .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
-        .total-label { font-size: 14px; font-weight: 600; color: var(--gray); }
-        .total-amt { font-size: 18px; font-weight: 800; color: var(--text); }
+        .grand-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F5F5F5; }
+        .grand-total b { color: var(--text); font-size: 16px; font-weight: 800; }
 
-        /* Empty State */
-        .empty-state { text-align: center; padding: 100px 40px; }
-        .empty-state i { font-size: 60px; color: #E5E5EA; margin-bottom: 20px; }
-        .empty-state p { color: var(--gray); font-weight: 600; }
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--gray); }
+        .empty-state i { font-size: 50px; margin-bottom: 15px; opacity: 0.3; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
-        <h2>My Orders</h2>
+        <div class="top-nav">
+            <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <h2 style="margin:0; font-size:18px; font-weight:800;">Order History</h2>
+        </div>
+        <div class="filter-box">
+            <i class="fas fa-calendar-alt"></i>
+            <input type="date" id="dateFilter" onchange="filterHistory()">
+        </div>
     </div>
 
     <div class="container" id="history-list">
-        <div style="text-align: center; padding: 50px;">
-            <i class="fas fa-circle-notch fa-spin" style="font-size: 30px; color: var(--primary);"></i>
-            <p style="margin-top: 10px; color: var(--gray);">Loading history...</p>
+        <div style="text-align:center; padding:40px; color:var(--gray);">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
         </div>
     </div>
 
@@ -79,7 +87,6 @@
 
         firebase.initializeApp(firebaseConfig);
         
-        // Connection tweak for Myanmar networks
         try {
             if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
                 firebase.database.INTERNAL.forceLongPolling(true);
@@ -87,65 +94,66 @@
         } catch(e) {}
 
         const db = firebase.database();
-        const myUID = localStorage.getItem('myDeviceUID'); // Get current device ID
+        const myUID = localStorage.getItem('myDeviceUID');
+        let allMyOrders = [];
 
         function loadHistory() {
-            if (!myUID) {
-                showEmpty();
-                return;
-            }
+            if (!myUID) { renderOrders([]); return; }
 
-            // Fetch only orders belonging to this device
             db.ref('orders').orderByChild('deviceUID').equalTo(myUID).on('value', snap => {
                 const data = snap.val();
-                if (!data) {
-                    showEmpty();
-                    return;
-                }
-
-                let historyHtml = '';
-                const orders = Object.values(data).reverse(); // Newest first
-
-                orders.forEach(order => {
-                    const statusClass = order.status ? order.status.toLowerCase() : 'pending';
-                    const itemsList = (order.items || []).map(i => `
-                        <div class="item-row">
-                            <span class="item-name">${i.name}</span>
-                            <span class="item-qty">x${i.qty}</span>
-                            <span class="item-price">${(i.price * i.qty).toLocaleString()} Ks</span>
-                        </div>
-                    `).join('');
-
-                    historyHtml += `
-                        <div class="history-card">
-                            <span class="status-badge status-${statusClass}">${order.status}</span>
-                            <span class="order-id">#${order.orderId || 'N/A'}</span>
-                            <span class="order-date"><i class="far fa-calendar-alt"></i> ${order.date || ''} • ${order.time || ''}</span>
-                            
-                            <div class="items-box">
-                                ${itemsList}
-                            </div>
-
-                            <div class="total-row">
-                                <span class="total-label">Total Payment</span>
-                                <span class="total-amt">${(order.total || 0).toLocaleString()} Ks</span>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                document.getElementById('history-list').innerHTML = historyHtml;
+                allMyOrders = data ? Object.values(data).reverse() : []; // အသစ်ဆုံးကို ထိပ်မှာထား
+                renderOrders(allMyOrders);
             });
         }
 
-        function showEmpty() {
-            document.getElementById('history-list').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-receipt"></i>
-                    <p>No order history found yet.</p>
-                    <a href="customer_menu.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">Order Now</a>
+        function renderOrders(orders) {
+            const list = document.getElementById('history-list');
+            if (orders.length === 0) {
+                list.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i><p>ယနေ့အထိ အော်ဒါမှတ်တမ်းမရှိသေးပါ။</p></div>`;
+                return;
+            }
+
+            list.innerHTML = orders.map((order, index) => `
+                <div class="history-card" onclick="toggleDetail(this)">
+                    <div class="card-main">
+                        <div class="info-left">
+                            <h4>ID: #${order.orderId || 'N/A'}</h4>
+                            <span><i class="far fa-clock"></i> ${order.date || ''} | ${order.time || ''}</span>
+                        </div>
+                        <span class="status-badge status-${(order.status || 'pending').toLowerCase()}">${order.status}</span>
+                    </div>
+
+                    <div class="order-detail">
+                        ${(order.items || []).map(i => `
+                            <div class="item-row">
+                                <span class="item-name">${i.name}</span>
+                                <span class="item-qty">x${i.qty}</span>
+                                <span class="item-total">${(i.price * i.qty).toLocaleString()} Ks</span>
+                            </div>
+                        `).join('')}
+                        <div class="grand-total">
+                            <span>Total Amount</span>
+                            <b>${(order.total || 0).toLocaleString()} Ks</b>
+                        </div>
+                    </div>
                 </div>
-            `;
+            `).join('');
+        }
+
+        function toggleDetail(card) {
+            const detail = card.querySelector('.order-detail');
+            detail.classList.toggle('active');
+        }
+
+        function filterHistory() {
+            const selectedDate = document.getElementById('dateFilter').value;
+            if(!selectedDate) {
+                renderOrders(allMyOrders);
+                return;
+            }
+            const filtered = allMyOrders.filter(o => o.date === selectedDate);
+            renderOrders(filtered);
         }
 
         window.onload = loadHistory;
