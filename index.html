@@ -2,53 +2,56 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Customer Dashboard - YNS Kitchen</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --pearl: #ffffff; --bg: #F2F2F7; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --accent: #AF52DE; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        :root { --pearl: #ffffff; --bg: #F2F2F7; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --accent: #AF52DE; --orange: #FF9500; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; animation: fadeIn 0.5s ease-in-out; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Welcome Section */
         .welcome-header { margin-bottom: 25px; padding: 10px 5px; }
         .welcome-header h1 { margin: 0; font-size: 24px; font-weight: 800; }
-        .welcome-header p { margin: 5px 0 0; color: var(--gray); font-size: 14px; }
+        .welcome-header p { margin: 5px 0 0; color: var(--gray); font-size: 14px; text-transform: capitalize; }
 
-        /* Stats Cards Style (Admin Dashboard နဲ့ တူအောင်) */
+        /* Grid Menu */
         .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: var(--pearl); padding: 20px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid rgba(0,0,0,0.02); }
-        .stat-card:active { transform: scale(0.95); }
+        .stat-card { background: var(--pearl); padding: 20px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid rgba(0,0,0,0.02); display: block; }
+        .stat-card:active { transform: scale(0.95); background: #f9f9fb; }
+        
         .icon-circle { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; font-size: 20px; }
 
-        /* Specific Colors */
         .bg-blue { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
         .bg-purple { background: rgba(175, 82, 222, 0.1); color: var(--accent); }
-        .bg-orange { background: rgba(255, 149, 0, 0.1); color: #FF9500; }
+        .bg-orange { background: rgba(255, 149, 0, 0.1); color: var(--orange); }
 
-        .stat-card b { display: block; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .stat-card span { font-size: 11px; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card b { display: block; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .stat-card span { font-size: 10px; color: var(--gray); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Large Banner Card */
-        .banner-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 24px; padding: 25px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; }
+        /* Banner */
+        .banner-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 24px; padding: 25px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,122,255,0.2); }
         .banner-card h2 { margin: 0; font-size: 20px; font-weight: 800; position: relative; z-index: 2; }
         .banner-card p { margin: 10px 0 0; font-size: 13px; opacity: 0.9; position: relative; z-index: 2; line-height: 1.5; }
         .banner-card i { position: absolute; right: -20px; bottom: -20px; font-size: 120px; opacity: 0.2; }
 
-        /* Quick Action List */
+        /* Action List */
         .section-title { font-size: 16px; font-weight: 800; margin-bottom: 15px; padding-left: 5px; }
-        .action-item { background: var(--pearl); display: flex; align-items: center; padding: 15px; border-radius: 18px; margin-bottom: 10px; text-decoration: none; color: inherit; gap: 15px; }
-        .action-item i { font-size: 18px; color: var(--primary); width: 25px; text-align: center; }
+        .action-item { background: var(--pearl); display: flex; align-items: center; padding: 18px; border-radius: 20px; margin-bottom: 12px; text-decoration: none; color: inherit; gap: 15px; transition: 0.2s; border: 1px solid rgba(0,0,0,0.01); }
+        .action-item:active { transform: scale(0.98); background: #f9f9fb; }
+        .action-item i:first-child { font-size: 18px; width: 25px; text-align: center; }
         .action-item div { flex: 1; font-weight: 700; font-size: 14px; }
-        .action-item .chevron { color: #C7C7CC; font-size: 14px; }
+        .action-item .chevron { color: #C7C7CC; font-size: 12px; }
 
-        .footer-note { text-align: center; margin-top: 30px; color: var(--gray); font-size: 12px; font-weight: 600; }
+        .footer-note { text-align: center; margin-top: 40px; color: var(--gray); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <div class="welcome-header">
-        <p id="current-date">Tuesday, Feb 10</p>
+        <p id="current-date">Loading date...</p>
         <h1>YNS Kitchen 👋</h1>
     </div>
 
@@ -62,11 +65,11 @@
     <div class="grid-menu">
         <a href="customer_menu.html" class="stat-card">
             <div class="icon-circle bg-blue"><i class="fas fa-shopping-basket"></i></div>
-            <span>Order</span>
+            <span>Menu</span>
             <b>ဟင်းပွဲမှာယူရန်</b>
         </a>
         <a href="track.html" class="stat-card">
-            <div class="icon-circle bg-purple"><i class="fas fa-route"></i></div>
+            <div class="icon-circle bg-purple"><i class="fas fa-truck-loading"></i></div>
             <span>Tracking</span>
             <b>အော်ဒါကြည့်ရန်</b>
         </a>
@@ -75,30 +78,30 @@
     <div class="section-title">Quick Links</div>
     
     <a href="#" class="action-item">
-        <i class="fas fa-heart"></i>
+        <i class="fas fa-heart" style="color: #FF2D55;"></i>
         <div>My Favorites</div>
         <i class="fas fa-chevron-right chevron"></i>
     </a>
 
-    <a href="#" class="action-item">
-        <i class="fas fa-history"></i>
+    <a href="customer_history.html" class="action-item">
+        <i class="fas fa-history" style="color: var(--orange);"></i>
         <div>Order History</div>
         <i class="fas fa-chevron-right chevron"></i>
     </a>
 
     <a href="admin.html" class="action-item">
-        <i class="fas fa-user-shield"></i>
+        <i class="fas fa-user-shield" style="color: var(--gray);"></i>
         <div>Staff Portal</div>
         <i class="fas fa-chevron-right chevron"></i>
     </a>
 
     <div class="footer-note">
-        YNS Kitchen - Version 2.0.1
+        YNS KITCHEN • VERSION 2.0.1
     </div>
 
     <script>
-        // ရက်စွဲပြရန်
-        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        // ရက်စွဲကို ပိုလှပအောင်ပြသရန်
+        const options = { weekday: 'long', month: 'long', day: 'numeric' };
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options);
     </script>
 </body>
