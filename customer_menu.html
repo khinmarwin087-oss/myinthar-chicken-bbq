@@ -348,45 +348,77 @@
             renderMenu(c === 'All' ? menuData : menuData.filter(m => m.category === c));
         }
 
-        function sendOrder() {
-            const user = auth.currentUser;
-            if (!user) { document.getElementById('login-modal').style.display = 'flex'; return; }
+        // ... (အရင် HTML/CSS တွေ အကုန်အတိုင်းပဲ ထားပါ) ...
 
-            const n = document.getElementById('o-name').value;
-            const p = document.getElementById('o-phone').value;
-            if(!n || !p || Object.keys(cart).length === 0) return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်စွက်ပါ");
+function sendOrder() {
+    const user = auth.currentUser;
+    if (!user) { document.getElementById('login-modal').style.display = 'flex'; return; }
 
-            const btn = document.getElementById('submit-btn');
-            btn.innerText = "လုပ်ဆောင်နေပါသည်..."; btn.disabled = true;
+    const n = document.getElementById('o-name').value;
+    const p = document.getElementById('o-phone').value;
+    if(!n || !p || Object.keys(cart).length === 0) return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်စွက်ပါ");
 
-            const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+    const btn = document.getElementById('submit-btn');
+    btn.innerText = "လုပ်ဆောင်နေပါသည်..."; btn.disabled = true;
+
+    const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+    
+    // Total တွက်ချက်ခြင်း
+    const totalAmt = Object.values(cart).reduce((s, i) => {
+        const price = typeof i.price === 'string' ? parseInt(i.price.replace(/,/g, '')) : i.price;
+        return s + (i.qty * price);
+    }, 0);
+
+    const orderData = {
+        orderId: orderId,
+        deviceUID: user.uid,
+        customerName: n,
+        customerPhone: p,
+        date: document.getElementById('o-date').value,
+        time: document.getElementById('o-time').value,
+        note: document.getElementById('o-note').value,
+        items: Object.values(cart),
+        total: totalAmt,
+        status: "Pending",
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // --- STOCK နှုတ်မည့်အပိုင်း ---
+    const promises = [];
+    for (const id in cart) {
+        const itemQty = cart[id].qty;
+        // menu/{id}/stock နေရာကိုသွားပြီး လက်ရှိရှိတဲ့အရေအတွက်ထဲက ဝယ်တဲ့အရေအတွက်ကို နှုတ်မယ်
+        const stockRef = db.ref(`menu/${id}/stock`);
+        
+        const promise = stockRef.transaction((currentStock) => {
+            if (currentStock === null) return 0; // stock မရှိရင် 0 ထား
+            if (currentStock < itemQty) {
+                alert(cart[id].name + " သည် stock မလုံလောက်တော့ပါ။");
+                return; // Stock မလောက်ရင် မနှုတ်ဘူး
+            }
+            return currentStock - itemQty;
+        });
+        promises.push(promise);
+    }
+
+    // Stock နှုတ်တာ အောင်မြင်မှ Order တင်မယ်
+    Promise.all(promises).then(() => {
+        return db.ref('orders').push(orderData);
+    }).then(() => {
+        showVoucher(orderData);
+        cart = {}; // Cart ရှင်းမယ်
+        updateCartBar();
+        btn.innerText = "Confirm Order"; btn.disabled = false;
+    }).catch(err => {
+        alert("Error: " + err.message);
+        btn.innerText = "Confirm Order"; btn.disabled = false;
+    });
+}
+
+// ... (ကျန်တဲ့ function တွေ အကုန်အတိုင်းပဲ ထားပါ) ...
+        
+
             
-            // Total ကို ဂဏန်းစစ်စစ် ဖြစ်အောင် နောက်တစ်ခါ ထပ်တွက်မယ်
-            const totalAmt = Object.values(cart).reduce((s, i) => {
-                const p = typeof i.price === 'string' ? parseInt(i.price.replace(/,/g, '')) : i.price;
-                return s + (i.qty * p);
-            }, 0);
-            
-            const orderData = {
-                orderId: orderId,
-                deviceUID: user.uid,
-                customerName: n,
-                customerPhone: p,
-                date: document.getElementById('o-date').value,
-                time: document.getElementById('o-time').value,
-                note: document.getElementById('o-note').value,
-                items: Object.values(cart),
-                total: totalAmt,
-                status: "Pending"
-            };
-
-            db.ref('orders').push(orderData).then(() => {
-                showVoucher(orderData);
-            }).catch(err => {
-                alert("Error: " + err.message);
-                btn.innerText = "Confirm Order"; btn.disabled = false;
-            });
-        }
 
         function showVoucher(data) {
             document.getElementById('cart-modal').style.display = 'none';
