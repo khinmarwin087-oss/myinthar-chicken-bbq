@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YNS Orders</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>YNS Admin - Orders</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --pearl: #ffffff; --bg: #F2F2F7; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --card-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -15,35 +15,36 @@
         .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .back-link { text-decoration: none; color: var(--primary); font-weight: 600; font-size: 14px; }
         
-        /* Segmented Control (Tabs) */
+        /* Tabs */
         .tabs { display: flex; background: #E3E3E6; padding: 2px; border-radius: 10px; margin: 0 5px; }
-        .tab { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #48484A; cursor: pointer; transition: 0.2s; }
+        .tab { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #48484A; cursor: pointer; }
         .tab.active { background: var(--pearl); box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: var(--text); }
 
-        /* Order List Area */
+        /* Order Cards */
         .content { padding: 15px; }
-        .order-card { background: var(--pearl); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: var(--card-shadow); border: 1px solid rgba(0,0,0,0.02); }
-        .order-top { display: flex; justify-content: space-between; border-bottom: 1px solid #F2F2F7; padding-bottom: 12px; margin-bottom: 12px; }
+        .order-card { background: var(--pearl); border-radius: 20px; padding: 18px; margin-bottom: 15px; box-shadow: var(--card-shadow); }
+        .order-top { display: flex; justify-content: space-between; border-bottom: 1px solid #F2F2F7; padding-bottom: 10px; margin-bottom: 12px; }
         .order-id { font-size: 11px; font-weight: 800; color: var(--gray); }
-        .order-time { font-size: 11px; color: var(--gray); }
-        
-        .customer-info { margin-bottom: 12px; }
-        .customer-name { font-size: 17px; font-weight: 700; display: block; }
-        
-        .item-row { display: flex; justify-content: space-between; font-size: 14px; color: #3A3A3C; margin-bottom: 6px; }
-        .item-qty { font-weight: 700; color: var(--primary); margin-right: 8px; }
+        .customer-info { margin-bottom: 15px; }
+        .customer-name { font-size: 18px; font-weight: 700; display: block; }
+        .customer-phone { font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none; }
 
+        /* Item Table Style */
+        .item-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: var(--gray); text-transform: uppercase; margin-bottom: 8px; padding: 0 5px; }
+        .items-area { background: #F8F9FB; padding: 12px; border-radius: 12px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #E5E5EA; font-size: 14px; }
+        .item-row:last-child { border-bottom: none; }
+        .col-name { flex: 2; font-weight: 600; }
+        .col-qty { flex: 1; text-align: center; color: var(--gray); font-weight: 700; }
+        .col-price { flex: 1; text-align: right; font-weight: 700; color: var(--text); }
+
+        /* Footer */
         .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1.5px solid #F2F2F7; }
-        .total-price { font-size: 16px; font-weight: 800; color: var(--text); }
-        
-        /* Action Button - Pearl Style */
-        .action-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .action-btn:active { transform: scale(0.96); opacity: 0.9; }
+        .total-price { font-size: 18px; font-weight: 800; color: var(--text); }
+        .action-btn { background: var(--primary); color: white; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
         .action-btn.ready { background: #34C759; }
         .action-btn.done { background: #1C1C1E; }
-
-        /* Empty State */
-        .empty-state { text-align: center; padding-top: 50px; color: var(--gray); font-size: 14px; }
+        .note-box { background: #FFF9DB; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 12px; border-left: 4px solid #FAB005; }
     </style>
 </head>
 <body>
@@ -52,8 +53,8 @@
     <div class="top-row">
         <a href="admin.html" class="back-link"><i class="fas fa-chevron-left"></i> Admin</a>
         <h3 style="margin:0; font-weight:800;">Orders</h3>
-        <div style="width: 40px;"></div> </div>
-    
+        <div style="width: 40px;"></div>
+    </div>
     <div class="tabs">
         <div class="tab active" onclick="switchTab('Pending', this)">New</div>
         <div class="tab" onclick="switchTab('Cooking', this)">Cooking</div>
@@ -61,13 +62,10 @@
     </div>
 </div>
 
-<div class="content" id="order-container">
-    </div>
+<div class="content" id="order-container"></div>
 
-<audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
 
 <script>
     const firebaseConfig = {
@@ -81,8 +79,20 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+
+    // VPN Connection Tweak
+    try {
+        const dbRef = firebase.database().ref(".info/connected");
+        dbRef.on("value", (snap) => {
+            if (snap.val() === false) {
+                if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
+                    firebase.database.INTERNAL.forceLongPolling(true);
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+
     const db = firebase.database();
-    
     let currentStatus = 'Pending';
     let allOrders = [];
 
@@ -90,7 +100,7 @@
         db.ref('orders').on('value', snap => {
             const data = snap.val();
             allOrders = [];
-            for(let id in data) allOrders.push({ id, ...data[id] });
+            for(let id in data) allOrders.push({ firebaseId: id, ...data[id] });
             render();
         });
     }
@@ -98,37 +108,49 @@
     function render() {
         const container = document.getElementById('order-container');
         container.innerHTML = '';
-        
         const filtered = allOrders.filter(o => o.status === currentStatus).reverse();
 
         if(filtered.length === 0) {
-            container.innerHTML = `<div class="empty-state">No orders in ${currentStatus}</div>`;
+            container.innerHTML = `<div style="text-align:center; padding-top:50px; color:gray;">No orders in ${currentStatus}</div>`;
             return;
         }
 
         filtered.forEach(o => {
-            const itemsHtml = (o.cartItems || []).map(i => `
+            // အတန်းလိုက် ပေါ်စေရန် ပြင်ဆင်ခြင်း
+            const itemsHtml = (o.items || []).map(i => `
                 <div class="item-row">
-                    <span><span class="item-qty">${i.qty}x</span> ${i.name}</span>
-                    <span>${i.price * i.qty} Ks</span>
+                    <div class="col-name">${i.name}</div>
+                    <div class="col-qty">x${i.qty}</div>
+                    <div class="col-price">${(i.price * i.qty).toLocaleString()} Ks</div>
                 </div>
             `).join('');
 
             container.innerHTML += `
                 <div class="order-card">
                     <div class="order-top">
-                        <span class="order-id">#${o.id.slice(-5).toUpperCase()}</span>
-                        <span class="order-time">${o.time || ''}</span>
+                        <span class="order-id">ID: ${o.orderId || o.firebaseId.slice(-5).toUpperCase()}</span>
+                        <span class="order-id">${o.date || ''} | ${o.time || ''}</span>
                     </div>
                     <div class="customer-info">
-                        <span class="customer-name">${o.customerName || 'Guest Customer'}</span>
+                        <span class="customer-name">${o.customerName || 'Guest'}</span>
+                        <a href="tel:${o.customerPhone}" class="customer-phone"><i class="fas fa-phone-alt"></i> ${o.customerPhone || '-'}</a>
                     </div>
+                    
+                    <div class="item-header">
+                        <span style="flex: 2;">Item Name</span>
+                        <span style="flex: 1; text-align: center;">Qty</span>
+                        <span style="flex: 1; text-align: right;">Total</span>
+                    </div>
+                    
                     <div class="items-area">
                         ${itemsHtml}
                     </div>
+
+                    ${o.note ? `<div class="note-box"><b>Special Note:</b><br>${o.note}</div>` : ''}
+
                     <div class="order-footer">
-                        <div class="total-price">${o.total} Ks</div>
-                        ${renderBtn(o.id, o.status)}
+                        <div class="total-price">Total: ${(o.total || 0).toLocaleString()} Ks</div>
+                        ${renderBtn(o.firebaseId, o.status)}
                     </div>
                 </div>
             `;
@@ -157,4 +179,3 @@
 </script>
 </body>
 </html>
-
