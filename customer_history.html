@@ -12,67 +12,66 @@
 
         /* Header */
         .header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .top-nav { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .top-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .nav-left { display: flex; align-items: center; gap: 15px; }
         .back-btn { width: 35px; height: 35px; border-radius: 10px; background: white; display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         
+        /* User Profile */
+        .user-info { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+        .user-info img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #eee; }
+        .login-mini-btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
         /* Filter Section */
         .filter-box { display: flex; gap: 10px; align-items: center; background: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
         .filter-box input { border: none; outline: none; font-family: inherit; font-size: 14px; width: 100%; color: var(--text); }
-        .filter-box i { color: var(--gray); }
 
         .container { padding: 20px; }
 
         /* History Card */
-        .history-card { background: var(--pearl); border-radius: 20px; padding: 18px; margin-bottom: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01); cursor: pointer; transition: 0.3s; }
-        .history-card:active { transform: scale(0.98); }
-        
+        .history-card { background: var(--pearl); border-radius: 20px; padding: 18px; margin-bottom: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01); cursor: pointer; }
         .card-main { display: flex; justify-content: space-between; align-items: flex-start; }
-        .info-left h4 { margin: 0 0 5px 0; font-size: 15px; font-weight: 800; }
+        .info-left h4 { margin: 0 0 5px 0; font-size: 14px; font-weight: 800; color: var(--primary); }
         .info-left span { font-size: 12px; color: var(--gray); font-weight: 600; }
 
         .status-badge { padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        .status-pending { background: #E5F1FF; color: var(--primary); }
-        .status-cooking { background: #FFF4E5; color: var(--warning); }
-        .status-ready { background: #EAF9EE; color: var(--success); }
-        .status-done { background: #F2F2F7; color: var(--gray); }
+        .status-pending { background: #FFF5CC; color: var(--warning); }
+        .status-complete, .status-done { background: #EAF9EE; color: var(--success); }
 
         /* Detail Accordion */
-        .order-detail { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
-        .order-detail.active { max-height: 500px; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #EEE; }
+        .order-detail { max-height: 0; overflow: hidden; transition: 0.3s; opacity: 0; }
+        .order-detail.active { max-height: 1000px; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #EEE; }
 
-        .item-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; color: #444; }
-        .item-name { flex: 2; font-weight: 600; }
-        .item-qty { flex: 1; text-align: center; color: var(--primary); font-weight: 800; }
-        .item-total { flex: 1; text-align: right; font-weight: 700; }
-
-        .grand-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F5F5F5; }
-        .grand-total b { color: var(--text); font-size: 16px; font-weight: 800; }
+        .item-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; }
+        .grand-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F5F5F5; font-weight: 800; }
 
         .empty-state { text-align: center; padding: 80px 20px; color: var(--gray); }
-        .empty-state i { font-size: 50px; margin-bottom: 15px; opacity: 0.3; }
+        .empty-state i { font-size: 40px; margin-bottom: 10px; opacity: 0.3; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="top-nav">
-            <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
-            <h2 style="margin:0; font-size:18px; font-weight:800;">Order History</h2>
+            <div class="nav-left">
+                <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+                <h2 style="margin:0; font-size:18px; font-weight:800;">Order History</h2>
+            </div>
+            <div id="user-profile" class="user-info">
+                </div>
         </div>
         <div class="filter-box">
-            <i class="fas fa-calendar-alt"></i>
+            <i class="fas fa-search" style="color:var(--gray)"></i>
             <input type="date" id="dateFilter" onchange="filterHistory()">
         </div>
     </div>
 
     <div class="container" id="history-list">
-        <div style="text-align:center; padding:40px; color:var(--gray);">
-            <i class="fas fa-spinner fa-spin"></i> Loading...
-        </div>
+        <div class="empty-state">Login ဝင်ပြီး History ကြည့်ပါ</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-auth-compat.min.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -86,23 +85,33 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        
-        try {
-            if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
-                firebase.database.INTERNAL.forceLongPolling(true);
-            }
-        } catch(e) {}
-
         const db = firebase.database();
-        const myUID = localStorage.getItem('myDeviceUID');
+        const auth = firebase.auth();
         let allMyOrders = [];
 
-        function loadHistory() {
-            if (!myUID) { renderOrders([]); return; }
+        // Google Login Function
+        function login() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
+        }
 
-            db.ref('orders').orderByChild('deviceUID').equalTo(myUID).on('value', snap => {
+        // Auth State Listener
+        auth.onAuthStateChanged(user => {
+            const profileDiv = document.getElementById('user-profile');
+            if (user) {
+                profileDiv.innerHTML = `<img src="${user.photoURL}"> <span>${user.displayName.split(' ')[0]}</span>`;
+                loadHistory(user.uid);
+            } else {
+                profileDiv.innerHTML = `<button class="login-mini-btn" onclick="login()">Login</button>`;
+                document.getElementById('history-list').innerHTML = `<div class="empty-state"><i class="fas fa-lock"></i><p>Login ဝင်ပြီး မှတ်တမ်းကြည့်ပါ</p></div>`;
+            }
+        });
+
+        function loadHistory(uid) {
+            // deviceUID နဲ့ ကိုက်ညီတဲ့ Order အကုန်လုံးကို ဆွဲထုတ်မယ်
+            db.ref('orders').orderByChild('deviceUID').equalTo(uid).on('value', snap => {
                 const data = snap.val();
-                allMyOrders = data ? Object.values(data).reverse() : []; // အသစ်ဆုံးကို ထိပ်မှာထား
+                allMyOrders = data ? Object.values(data).reverse() : [];
                 renderOrders(allMyOrders);
             });
         }
@@ -110,16 +119,16 @@
         function renderOrders(orders) {
             const list = document.getElementById('history-list');
             if (orders.length === 0) {
-                list.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i><p>ယနေ့အထိ အော်ဒါမှတ်တမ်းမရှိသေးပါ။</p></div>`;
+                list.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i><p>အော်ဒါမှတ်တမ်း မရှိသေးပါ။</p></div>`;
                 return;
             }
 
-            list.innerHTML = orders.map((order, index) => `
+            list.innerHTML = orders.map((order) => `
                 <div class="history-card" onclick="toggleDetail(this)">
                     <div class="card-main">
                         <div class="info-left">
                             <h4>ID: #${order.orderId || 'N/A'}</h4>
-                            <span><i class="far fa-clock"></i> ${order.date || ''} | ${order.time || ''}</span>
+                            <span><i class="far fa-calendar-alt"></i> ${order.date || ''}</span>
                         </div>
                         <span class="status-badge status-${(order.status || 'pending').toLowerCase()}">${order.status}</span>
                     </div>
@@ -127,14 +136,14 @@
                     <div class="order-detail">
                         ${(order.items || []).map(i => `
                             <div class="item-row">
-                                <span class="item-name">${i.name}</span>
-                                <span class="item-qty">x${i.qty}</span>
-                                <span class="item-total">${(i.price * i.qty).toLocaleString()} Ks</span>
+                                <span style="flex:2">${i.name}</span>
+                                <span style="flex:1; text-align:center">x${i.qty}</span>
+                                <span style="flex:1; text-align:right">${(i.price * i.qty).toLocaleString()} Ks</span>
                             </div>
                         `).join('')}
                         <div class="grand-total">
                             <span>Total Amount</span>
-                            <b>${(order.total || 0).toLocaleString()} Ks</b>
+                            <span style="color:var(--primary)">${(order.total || 0).toLocaleString()} Ks</span>
                         </div>
                     </div>
                 </div>
@@ -155,8 +164,6 @@
             const filtered = allMyOrders.filter(o => o.date === selectedDate);
             renderOrders(filtered);
         }
-
-        window.onload = loadHistory;
     </script>
 </body>
 </html>
