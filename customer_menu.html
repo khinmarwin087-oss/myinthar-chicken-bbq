@@ -37,7 +37,6 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end; }
         .modal-content { background: white; width: 100%; border-radius: 30px 30px 0 0; padding: 25px; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
         
-        /* Cart Item Row */
         .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F2F2F7; }
         .cart-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; }
         .cart-info { flex: 1; }
@@ -83,9 +82,7 @@
                 <h2 style="margin:0;">Your Cart</h2>
                 <i class="fas fa-times" onclick="toggleModal(false)" style="font-size:22px; color:var(--gray);"></i>
             </div>
-
             <div id="cart-items-list"></div>
-
             <div class="form-group">
                 <div class="input-box"><label>Name</label><input type="text" id="o-name" placeholder="သင့်နာမည်"></div>
                 <div class="input-box"><label>Phone</label><input type="tel" id="o-phone" placeholder="09xxxxxxx"></div>
@@ -99,23 +96,37 @@
         </div>
     </div>
 
-<script src="https://www.jsdelivr.com/package/npm/firebase@9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.jsdelivr.com/package/npm/firebase@9.22.0/firebase-database-compat.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
 
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
             authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
-            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.firebaseio.com",
+            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "myrestaurantapp-a14d4",
             storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
             messagingSenderId: "123788707874",
             appId: "1:123788707874:web:6593b827b284cc7cb9a27b"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
 
+        // Firebase Initialize လုပ်ခြင်း
+        firebase.initializeApp(firebaseConfig);
+
+        // VPN မလိုဘဲ အလုပ်လုပ်ရန် Force Long Polling နည်းလမ်း (အရေးကြီးဆုံးအပိုင်း)
+        try {
+            const dbRef = firebase.database().ref(".info/connected");
+            dbRef.on("value", (snap) => {
+                if (snap.val() === false) {
+                    // Websocket ပိတ်ထားလျှင် Long Polling အတင်းသုံးခိုင်းခြင်း
+                    if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
+                        firebase.database.INTERNAL.forceLongPolling(true);
+                    }
+                }
+            });
+        } catch (e) { console.error(e); }
+
+        const db = firebase.database();
         let menuData = [];
         let cart = {};
 
@@ -124,9 +135,11 @@
                 const data = snap.val();
                 menuData = [];
                 const cats = new Set(['All']);
-                for(let id in data) {
-                    menuData.push({...data[id], id});
-                    if(data[id].category) cats.add(data[id].category);
+                if(data) {
+                    for(let id in data) {
+                        menuData.push({...data[id], id});
+                        if(data[id].category) cats.add(data[id].category);
+                    }
                 }
                 renderCats(cats);
                 renderMenu(menuData);
@@ -140,6 +153,10 @@
 
         function renderMenu(items) {
             const display = document.getElementById('menu-display');
+            if(items.length === 0) {
+                display.innerHTML = "<div style='grid-column: 1/-1; text-align:center; padding:50px; color:#8E8E93;'>Loading or No Menu...</div>";
+                return;
+            }
             display.innerHTML = items.map(i => `
                 <div class="food-card">
                     <img src="${i.image || 'https://via.placeholder.com/150'}" class="food-img">
@@ -227,48 +244,34 @@
         }
 
         function sendOrder() {
-    const n = document.getElementById('o-name').value;
-    const p = document.getElementById('o-phone').value;
-    
-    // ပစ္စည်းမရှိလျှင် သို့မဟုတ် အမည်/ဖုန်း လိုအပ်လျှင် Alert ပြရန်
-    if(!n || !p || Object.keys(cart).length === 0) {
-        return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်စွက်ပါ");
-    }
-
-    const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000); // ဥပမာ - ORD5241
-    
-    // Privacy အတွက် Device UID ကို browser agent နှင့် random number ပေါင်းပြီး ထုတ်ယူခြင်း
-    const deviceUID = navigator.userAgent + Math.random(); 
-
-    const order = {
-        orderId: orderId,
-        deviceUID: deviceUID, // Device Privacy အတွက် ထည့်သွင်းခြင်း
-        customerName: n,
-        customerPhone: p,
-        date: document.getElementById('o-date').value,
-        time: document.getElementById('o-time').value,
-        note: document.getElementById('o-note').value,
-        items: Object.values(cart), // Cart ထဲရှိ ပစ္စည်းများ
-        total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
-        status: "Pending"
-    };
-
-    // Firebase Database ဆီသို့ 'orders' path ဖြင့် ပို့ဆောင်ခြင်း
-    db.ref('orders').push(order).then(() => {
-        // နောက်မှ ပြန်ရှာရန် Device ID နှင့် Order ID ကို သိမ်းဆည်းခြင်း
-        localStorage.setItem('myDeviceUID', deviceUID);
-        localStorage.setItem('lastOrderId', orderId); 
-        
-        alert("Order တင်ခြင်း အောင်မြင်ပါသည်။ ID: " + orderId);
-        window.location.href = "track.html"; // track.html သို့ တန်းပို့ခြင်း
-    }).catch(err => {
-        alert("Error: " + err.message);
-    });
+            const n = document.getElementById('o-name').value;
+            const p = document.getElementById('o-phone').value;
+            if(!n || !p || Object.keys(cart).length === 0) return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်စွက်ပါ");
+            const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+            const deviceUID = navigator.userAgent + Math.random(); 
+            const order = {
+                orderId: orderId,
+                deviceUID: deviceUID,
+                customerName: n,
+                customerPhone: p,
+                date: document.getElementById('o-date').value,
+                time: document.getElementById('o-time').value,
+                note: document.getElementById('o-note').value,
+                items: Object.values(cart),
+                total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
+                status: "Pending"
+            };
+            db.ref('orders').push(order).then(() => {
+                localStorage.setItem('myDeviceUID', deviceUID);
+                localStorage.setItem('lastOrderId', orderId); 
+                alert("Order တင်ခြင်း အောင်မြင်ပါသည်။ ID: " + orderId);
+                window.location.href = "track.html";
+            }).catch(err => alert("Error: " + err.message));
         }
-        
 
         window.onload = init;
     </script>
 </body>
 </html>
+
 
