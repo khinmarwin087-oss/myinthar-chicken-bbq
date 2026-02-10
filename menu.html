@@ -63,14 +63,14 @@
     <p style="text-align:center; color:gray;">Loading Menus...</p>
 </div>
 
-    <script src="https://www.jsdelivr.com/package/npm/firebase@9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.jsdelivr.com/package/npm/firebase@9.22.0/firebase-database-compat.js"></script>
-    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
         authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
-        databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.firebaseio.com",
+        databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "myrestaurantapp-a14d4",
         storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
         messagingSenderId: "123788707874",
@@ -78,7 +78,25 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+
+    // --- VPN ကျော်ရန် အဓိကထည့်ရမည့်အပိုင်း ---
+    try {
+        const dbRef = firebase.database().ref(".info/connected");
+        dbRef.on("value", (snap) => {
+            if (snap.val() === false) {
+                if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
+                    firebase.database.INTERNAL.forceLongPolling(true);
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+    // ------------------------------------
+
     const db = firebase.database();
+    
+    // ကျန်တဲ့ function တွေ (Order ရှာတာ၊ Status ပြတာ) ကို ဒီအောက်မှာ ဆက်ထားပါ
+
+
 
     function loadData() {
         db.ref('menu').on('value', snap => {
