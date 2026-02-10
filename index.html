@@ -100,6 +100,28 @@
     </div>
 
     <script>
+        // Login အခြေအနေကို စစ်ဆေးတာပါ
+firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        // Login ဝင်ထားရင် သူ့နာမည်နဲ့ ပုံကို ပြမယ်
+        document.getElementById('user-profile').innerHTML = `
+            <img src="${user.photoURL}" style="width:30px; border-radius:50%;">
+            <span>${user.displayName}</span>
+            <button onclick="firebase.auth().signOut()">Logout</button>
+        `;
+        // နောက်စာမျက်နှာတွေ သုံးဖို့ UID ကို သိမ်းထားမယ်
+        localStorage.setItem('myDeviceUID', user.uid);
+    } else {
+        // Login မဝင်ရသေးရင် Guest လို့ ပြမယ်
+        document.getElementById('user-profile').innerHTML = `<button onclick="login()">Login with Google</button>`;
+    }
+});
+
+function login() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider);
+}
+        
         // ရက်စွဲကို ပိုလှပအောင်ပြသရန်
         const options = { weekday: 'long', month: 'long', day: 'numeric' };
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options);
