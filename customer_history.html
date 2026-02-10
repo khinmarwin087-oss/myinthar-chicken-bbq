@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Order History - YNS Kitchen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --success: #34C759; --warning: #FF9500; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; overflow-x: hidden; }
+
+        /* Premium Header */
+        .header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); padding: 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+        .back-btn { width: 40px; height: 40px; border-radius: 12px; background: var(--pearl); display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s; }
+        .back-btn:active { transform: scale(0.9); }
+        .header h2 { margin: 0; font-size: 20px; font-weight: 800; }
+
+        /* Content Area */
+        .container { padding: 20px; animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Order Card */
+        .history-card { background: var(--pearl); border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01); position: relative; overflow: hidden; }
+        .status-badge { position: absolute; top: 20px; right: 20px; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .status-pending { background: #E5F1FF; color: var(--primary); }
+        .status-cooking { background: #FFF4E5; color: var(--warning); }
+        .status-ready { background: #EAF9EE; color: var(--success); }
+        .status-done { background: #F2F2F7; color: var(--gray); }
+
+        .order-id { font-size: 12px; color: var(--gray); font-weight: 700; margin-bottom: 5px; display: block; }
+        .order-date { font-size: 13px; color: var(--text); opacity: 0.7; margin-bottom: 15px; display: block; }
+
+        /* Items List */
+        .items-box { background: #F8F9FC; border-radius: 16px; padding: 15px; margin: 15px 0; }
+        .item-row { display: flex; justify-content: space-between; font-size: 14px; padding: 5px 0; border-bottom: 1px dashed #E5E5EA; }
+        .item-row:last-child { border-bottom: none; }
+        .item-name { font-weight: 600; flex: 2; }
+        .item-qty { color: var(--primary); font-weight: 800; flex: 1; text-align: center; }
+        .item-price { font-weight: 700; flex: 1; text-align: right; }
+
+        .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+        .total-label { font-size: 14px; font-weight: 600; color: var(--gray); }
+        .total-amt { font-size: 18px; font-weight: 800; color: var(--text); }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 100px 40px; }
+        .empty-state i { font-size: 60px; color: #E5E5EA; margin-bottom: 20px; }
+        .empty-state p { color: var(--gray); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="customer_menu.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>My Orders</h2>
+    </div>
+
+    <div class="container" id="history-list">
+        <div style="text-align: center; padding: 50px;">
+            <i class="fas fa-circle-notch fa-spin" style="font-size: 30px; color: var(--primary);"></i>
+            <p style="margin-top: 10px; color: var(--gray);">Loading history...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
+            authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
+            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "myrestaurantapp-a14d4",
+            storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
+            messagingSenderId: "123788707874",
+            appId: "1:123788707874:web:6593b827b284cc7cb9a27b"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        
+        // Connection tweak for Myanmar networks
+        try {
+            if (firebase.database.INTERNAL && firebase.database.INTERNAL.forceLongPolling) {
+                firebase.database.INTERNAL.forceLongPolling(true);
+            }
+        } catch(e) {}
+
+        const db = firebase.database();
+        const myUID = localStorage.getItem('myDeviceUID'); // Get current device ID
+
+        function loadHistory() {
+            if (!myUID) {
+                showEmpty();
+                return;
+            }
+
+            // Fetch only orders belonging to this device
+            db.ref('orders').orderByChild('deviceUID').equalTo(myUID).on('value', snap => {
+                const data = snap.val();
+                if (!data) {
+                    showEmpty();
+                    return;
+                }
+
+                let historyHtml = '';
+                const orders = Object.values(data).reverse(); // Newest first
+
+                orders.forEach(order => {
+                    const statusClass = order.status ? order.status.toLowerCase() : 'pending';
+                    const itemsList = (order.items || []).map(i => `
+                        <div class="item-row">
+                            <span class="item-name">${i.name}</span>
+                            <span class="item-qty">x${i.qty}</span>
+                            <span class="item-price">${(i.price * i.qty).toLocaleString()} Ks</span>
+                        </div>
+                    `).join('');
+
+                    historyHtml += `
+                        <div class="history-card">
+                            <span class="status-badge status-${statusClass}">${order.status}</span>
+                            <span class="order-id">#${order.orderId || 'N/A'}</span>
+                            <span class="order-date"><i class="far fa-calendar-alt"></i> ${order.date || ''} • ${order.time || ''}</span>
+                            
+                            <div class="items-box">
+                                ${itemsList}
+                            </div>
+
+                            <div class="total-row">
+                                <span class="total-label">Total Payment</span>
+                                <span class="total-amt">${(order.total || 0).toLocaleString()} Ks</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('history-list').innerHTML = historyHtml;
+            });
+        }
+
+        function showEmpty() {
+            document.getElementById('history-list').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-receipt"></i>
+                    <p>No order history found yet.</p>
+                    <a href="customer_menu.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">Order Now</a>
+                </div>
+            `;
+        }
+
+        window.onload = loadHistory;
+    </script>
+</body>
+</html>
