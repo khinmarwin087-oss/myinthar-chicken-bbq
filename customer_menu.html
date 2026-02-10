@@ -6,6 +6,7 @@
     <title>YNS Kitchen - Menu</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 120px; }
@@ -60,9 +61,64 @@
         .input-box label { font-size: 11px; font-weight: 800; color: var(--gray); display: block; margin-bottom: 5px; }
         .input-box input, .input-box textarea { width: 100%; padding: 12px; border: 1px solid #E5E5EA; border-radius: 12px; font-family: inherit; box-sizing: border-box; outline: none; }
         .submit-btn { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 15px; font-weight: 800; font-size: 16px; margin-top: 20px; cursor: pointer; }
+
+        /* Full Screen Voucher View */
+        #voucher-overlay { 
+            position: fixed; inset: 0; background: #f0f2f5; z-index: 3000; 
+            display: none; flex-direction: column; align-items: center; 
+            padding: 20px; overflow-y: auto;
+        }
+        #voucher-card { 
+            background: white; width: 100%; max-width: 400px; 
+            border-radius: 28px; padding: 35px 25px; box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .v-header { text-align: center; margin-bottom: 25px; }
+        .v-check { width: 50px; height: 50px; background: #E8F2FF; color: var(--primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
+        .v-info-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; border-top: 1px solid #f2f2f2; margin-bottom: 20px; }
+        .v-item { font-size: 12px; }
+        .v-item label { color: var(--gray); font-weight: 700; font-size: 10px; display: block; margin-bottom: 3px; }
+        .v-item span { font-weight: 600; color: var(--text); }
+        .v-table { background: #fafafa; border-radius: 18px; padding: 15px; margin-bottom: 20px; }
+        .v-row { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .v-row:last-child { border-bottom: none; }
+        .v-total-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-weight: 800; }
+        .v-btns { width: 100%; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; padding-bottom: 30px; }
+        .v-btn { padding: 16px; border-radius: 18px; border: none; font-weight: 700; cursor: pointer; text-align: center; }
     </style>
 </head>
 <body>
+
+    <div id="voucher-overlay">
+        <div id="voucher-card">
+            <div class="v-header">
+                <div class="v-check"><i class="fas fa-check"></i></div>
+                <h2 style="margin:0;">Order Placed!</h2>
+                <div id="v-id" style="color:var(--gray); font-size:12px; margin-top:5px;">ID: #----</div>
+            </div>
+            <div class="v-info-box">
+                <div class="v-item"><label>CUSTOMER</label><span id="v-name">-</span></div>
+                <div class="v-item" style="text-align:right;"><label>PHONE</label><span id="v-phone">-</span></div>
+                <div class="v-item"><label>DATE</label><span id="v-date">-</span></div>
+                <div class="v-item" style="text-align:right;"><label>TIME</label><span id="v-time">-</span></div>
+            </div>
+            <div class="v-table">
+                <div class="v-row" style="color:var(--gray); font-weight:800; font-size:10px;">
+                    <span>ITEM</span><span style="text-align:center;">QTY</span><span style="text-align:right;">PRICE</span>
+                </div>
+                <div id="v-list"></div>
+                <div class="v-total-row">
+                    <span>Total Amount</span>
+                    <span id="v-total" style="color:var(--primary); font-size:20px;">0 Ks</span>
+                </div>
+            </div>
+            <div style="text-align:center; color:#ccc; font-size:11px;">Thank you for your order!</div>
+        </div>
+        <div class="v-btns">
+            <button class="v-btn" style="background:white; border:1px solid #eee;" onclick="location.reload()">Back Home</button>
+            <button class="v-btn" style="background:var(--text); color:white;" onclick="saveVoucher()">Save PNG</button>
+        </div>
+    </div>
 
     <div id="login-modal" class="login-modal">
         <div class="login-card">
@@ -139,7 +195,6 @@
         let cart = {};
         let pendingItemId = null;
 
-        // Auth State Listener
         auth.onAuthStateChanged(user => {
             const profileDiv = document.getElementById('user-profile');
             if (user) {
@@ -280,6 +335,7 @@
             renderMenu(c === 'All' ? menuData : menuData.filter(m => m.category === c));
         }
 
+        // New Full Screen Voucher Logic
         function sendOrder() {
             const user = auth.currentUser;
             if (!user) { document.getElementById('login-modal').style.display = 'flex'; return; }
@@ -292,6 +348,8 @@
             btn.innerText = "လုပ်ဆောင်နေပါသည်..."; btn.disabled = true;
 
             const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+            const totalAmt = Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0);
+            
             const orderData = {
                 orderId: orderId,
                 deviceUID: user.uid,
@@ -301,17 +359,45 @@
                 time: document.getElementById('o-time').value,
                 note: document.getElementById('o-note').value,
                 items: Object.values(cart),
-                total: Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0),
+                total: totalAmt,
                 status: "Pending"
             };
 
             db.ref('orders').push(orderData).then(() => {
-                localStorage.setItem('myDeviceUID', user.uid);
-                localStorage.setItem('lastPlacedOrder', JSON.stringify(orderData)); 
-                window.location.href = "order_success.html";
+                showVoucher(orderData);
             }).catch(err => {
                 alert("Error: " + err.message);
                 btn.innerText = "Confirm Order"; btn.disabled = false;
+            });
+        }
+
+        function showVoucher(data) {
+            document.getElementById('cart-modal').style.display = 'none';
+            document.getElementById('v-id').innerText = "ID: #" + data.orderId;
+            document.getElementById('v-name').innerText = data.customerName;
+            document.getElementById('v-phone').innerText = data.customerPhone;
+            document.getElementById('v-date').innerText = data.date;
+            document.getElementById('v-time').innerText = data.time;
+            document.getElementById('v-total').innerText = data.total.toLocaleString() + " Ks";
+            
+            document.getElementById('v-list').innerHTML = data.items.map(i => `
+                <div class="v-row">
+                    <span>${i.name}</span>
+                    <span style="text-align:center; font-weight:700; color:var(--primary);">${i.qty}</span>
+                    <span style="text-align:right; font-weight:700;">${(i.price * i.qty).toLocaleString()}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('voucher-overlay').style.display = 'flex';
+        }
+
+        function saveVoucher() {
+            const card = document.getElementById('voucher-card');
+            html2canvas(card, { scale: 3, backgroundColor: "#f0f2f5" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'YNS-Kitchen-Voucher-' + Date.now() + '.png';
+                link.href = canvas.toDataURL();
+                link.click();
             });
         }
 
