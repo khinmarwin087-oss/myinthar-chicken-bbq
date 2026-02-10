@@ -82,7 +82,7 @@
         .v-table { background: #fafafa; border-radius: 18px; padding: 15px; margin-bottom: 20px; }
         .v-row { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #eee; }
         .v-row:last-child { border-bottom: none; }
-        .v-total-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-weight: 800; }
+        .v-total-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px; font-weight: 800; border-top: 1px dashed #ddd; margin-top: 10px; }
         .v-btns { width: 100%; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; padding-bottom: 30px; }
         .v-btn { padding: 16px; border-radius: 18px; border: none; font-weight: 700; cursor: pointer; text-align: center; }
     </style>
@@ -109,7 +109,7 @@
                 <div id="v-list"></div>
                 <div class="v-total-row">
                     <span>Total Amount</span>
-                    <span id="v-total" style="color:var(--primary); font-size:20px;">0 Ks</span>
+                    <span id="v-total" style="color:var(--primary); font-size:22px;">0 Ks</span>
                 </div>
             </div>
             <div style="text-align:center; color:#ccc; font-size:11px;">Thank you for your order!</div>
@@ -159,6 +159,12 @@
                 <i class="fas fa-times" onclick="toggleModal(false)" style="font-size:22px; color:var(--gray); cursor:pointer;"></i>
             </div>
             <div id="cart-items-list"></div>
+            
+            <div id="cart-total-display" style="display:flex; justify-content:space-between; padding: 15px 0; border-top: 1px solid #eee; margin-top:10px; font-weight:800;">
+                <span>Total Amount:</span>
+                <span id="modal-total-amt" style="color:var(--primary);">0 Ks</span>
+            </div>
+
             <div class="form-group">
                 <div class="input-box"><label>Name</label><input type="text" id="o-name" placeholder="သင့်နာမည်"></div>
                 <div class="input-box"><label>Phone</label><input type="tel" id="o-phone" placeholder="09xxxxxxx"></div>
@@ -261,7 +267,10 @@
 
         function addToCart(id) {
             const item = menuData.find(m => m.id === id);
-            if(!cart[id]) cart[id] = { name: item.name, price: item.price, image: item.image, qty: 1 };
+            // ဈေးနှုန်းကို String ဖြစ်နေရင် ကိန်းဂဏန်းအဖြစ်ပြောင်းမယ်
+            const cleanPrice = typeof item.price === 'string' ? parseInt(item.price.replace(/,/g, '')) : item.price;
+            
+            if(!cart[id]) cart[id] = { name: item.name, price: cleanPrice, image: item.image, qty: 1 };
             else cart[id].qty += 1;
             updateCartBar();
         }
@@ -285,10 +294,14 @@
             const bar = document.getElementById('cart-bar');
             const qty = Object.values(cart).reduce((s, i) => s + i.qty, 0);
             const amt = Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0);
+            
             if(qty > 0) {
                 bar.style.display = 'flex';
                 document.getElementById('total-ks').innerText = amt.toLocaleString() + " Ks";
                 document.getElementById('total-items').innerText = qty + " items";
+                // Modal ထဲက Total ကိုပါ update လုပ်မယ်
+                const modalTotal = document.getElementById('modal-total-amt');
+                if(modalTotal) modalTotal.innerText = amt.toLocaleString() + " Ks";
             } else {
                 bar.style.display = 'none';
                 toggleModal(false);
@@ -320,7 +333,7 @@
             if(show) {
                 renderCartList();
                 document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
-                document.getElementById('o-time').value = new Date().toLocaleTimeString('en-GB',{hour:'2-digit', minute:'2-digit'});
+                document.getElementById('o-time').value = new Date().toLocaleTimeString('en-GB',{hour:'2-digit', minute:'2-digit', hour12: true});
             }
         }
 
@@ -335,7 +348,6 @@
             renderMenu(c === 'All' ? menuData : menuData.filter(m => m.category === c));
         }
 
-        // New Full Screen Voucher Logic
         function sendOrder() {
             const user = auth.currentUser;
             if (!user) { document.getElementById('login-modal').style.display = 'flex'; return; }
@@ -348,7 +360,12 @@
             btn.innerText = "လုပ်ဆောင်နေပါသည်..."; btn.disabled = true;
 
             const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
-            const totalAmt = Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0);
+            
+            // Total ကို ဂဏန်းစစ်စစ် ဖြစ်အောင် နောက်တစ်ခါ ထပ်တွက်မယ်
+            const totalAmt = Object.values(cart).reduce((s, i) => {
+                const p = typeof i.price === 'string' ? parseInt(i.price.replace(/,/g, '')) : i.price;
+                return s + (i.qty * p);
+            }, 0);
             
             const orderData = {
                 orderId: orderId,
@@ -378,22 +395,26 @@
             document.getElementById('v-phone').innerText = data.customerPhone;
             document.getElementById('v-date').innerText = data.date;
             document.getElementById('v-time').innerText = data.time;
-            document.getElementById('v-total').innerText = data.total.toLocaleString() + " Ks";
             
-            document.getElementById('v-list').innerHTML = data.items.map(i => `
+            // Total ပေါ်လာဖို့ သေချာအောင် လုပ်ထားပါတယ်
+            document.getElementById('v-total').innerText = (data.total || 0).toLocaleString() + " Ks";
+            
+            document.getElementById('v-list').innerHTML = data.items.map(i => {
+                const itemTotal = i.qty * (typeof i.price === 'string' ? parseInt(i.price.replace(/,/g, '')) : i.price);
+                return `
                 <div class="v-row">
                     <span>${i.name}</span>
                     <span style="text-align:center; font-weight:700; color:var(--primary);">${i.qty}</span>
-                    <span style="text-align:right; font-weight:700;">${(i.price * i.qty).toLocaleString()}</span>
+                    <span style="text-align:right; font-weight:700;">${itemTotal.toLocaleString()}</span>
                 </div>
-            `).join('');
+            `}).join('');
 
             document.getElementById('voucher-overlay').style.display = 'flex';
         }
 
         function saveVoucher() {
             const card = document.getElementById('voucher-card');
-            html2canvas(card, { scale: 3, backgroundColor: "#f0f2f5" }).then(canvas => {
+            html2canvas(card, { scale: 3, backgroundColor: "#ffffff" }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = 'YNS-Kitchen-Voucher-' + Date.now() + '.png';
                 link.href = canvas.toDataURL();
