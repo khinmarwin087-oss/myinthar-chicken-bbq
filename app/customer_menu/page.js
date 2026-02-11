@@ -9,146 +9,93 @@ export default function CustomerMenu() {
     const [activeCat, setActiveCat] = useState('All');
     const [cart, setCart] = useState({});
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [orderSuccess, setOrderSuccess] = useState(null);
 
-    // ၁။ VPN မလိုဘဲ Data ယူခြင်း
     useEffect(() => {
+        // VPN မလိုဘဲ Data ယူမည့်နေရာ (api/data ကို posts အစား menu ဖတ်ခိုင်းရမယ်)
         fetch('/api/data')
             .then(res => res.json())
             .then(json => {
-                if (json.success) {
+                if (json.success && json.data) {
                     setMenuData(json.data);
                     setFilteredMenu(json.data);
                     const cats = new Set(['All']);
                     json.data.forEach(item => { if (item.category) cats.add(item.category); });
                     setCategories(Array.from(cats));
                 }
-            });
+            })
+            .catch(err => console.log("Error fetching data:", err));
     }, []);
 
-    // ၂။ Cart Logic များ
     const addToCart = (item) => {
         const id = item.id;
         const newCart = { ...cart };
-        const price = typeof item.price === 'string' ? parseInt(item.price.replace(/,/g, '')) : item.price;
-        
-        if (!newCart[id]) {
-            newCart[id] = { name: item.name, price: price, image: item.image, qty: 1 };
-        } else {
-            newCart[id].qty += 1;
-        }
-        setCart(newCart);
-    };
-
-    const updateQty = (id, delta) => {
-        const newCart = { ...cart };
-        newCart[id].qty += delta;
-        if (newCart[id].qty <= 0) delete newCart[id];
+        const price = typeof item.price === 'string' ? parseInt(item.price.replace(/,/g, '')) : (item.price || 0);
+        if (!newCart[id]) newCart[id] = { name: item.name, price: price, image: item.image, qty: 1 };
+        else newCart[id].qty += 1;
         setCart(newCart);
     };
 
     const cartQty = Object.values(cart).reduce((s, i) => s + i.qty, 0);
     const cartTotal = Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0);
 
-    // ၃။ Filter Logic
-    const filterCat = (cat) => {
-        setActiveCat(cat);
-        if (cat === 'All') setFilteredMenu(menuData);
-        else setFilteredMenu(menuData.filter(m => m.category === cat));
-    };
-
     return (
-        <div className="menu-page">
-            <style jsx global>{`
-                :root { --pearl: #ffffff; --bg: #F8F9FC; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; }
-                body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; }
-                .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-                .categories { padding: 15px; display: flex; gap: 10px; overflow-x: auto; }
-                .cat-item { background: white; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; }
-                .cat-item.active { background: var(--primary); color: white; }
-                .menu-container { padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-                .food-card { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
-                .food-img { width: 100%; height: 110px; border-radius: 15px; object-fit: cover; }
-                .food-name { font-weight: 700; font-size: 14px; margin: 8px 0 4px; display: block; height: 35px; overflow: hidden; }
-                .food-price { color: var(--primary); font-weight: 800; font-size: 13px; }
-                .add-btn { background: var(--primary); color: white; border: none; width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; margin-top: 10px; }
-                .cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: var(--text); color: white; padding: 15px 20px; border-radius: 22px; display: flex; justify-content: space-between; align-items: center; z-index: 500; }
-                .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; }
-                .modal-content { background: white; width: 100%; border-radius: 30px 30px 0 0; padding: 25px; max-height: 80vh; overflow-y: auto; }
-            `}</style>
-
-            <div className="header">
-                <Link href="/" style={{textDecoration:'none', color:'black', fontSize:'14px'}}>
-                    <i className="fas fa-arrow-left"></i> Dashboard
+        <div style={{ background: '#F8F9FC', minHeight: '100vh', paddingBottom: '100px' }}>
+            {/* Font Awesome Link ကို ဒီမှာ ထည့်ထားပေးတယ် */}
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+            
+            <div style={{ background: 'white', padding: '20px', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                <Link href="/" style={{ textDecoration: 'none', color: '#007AFF', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="fas fa-chevron-left"></i> <span>Dashboard သို့ ပြန်ရန်</span>
                 </Link>
-                <h2 style={{margin:'10px 0 0'}}>Our Menu</h2>
+                <h1 style={{ margin: '15px 0 0', fontSize: '24px', fontWeight: '800' }}>Our Menu</h1>
             </div>
 
-            <div className="categories">
+            <div style={{ padding: '15px', display: 'flex', gap: '10px', overflowX: 'auto' }}>
                 {categories.map(cat => (
-                    <div 
+                    <button 
                         key={cat} 
-                        className={`cat-item ${activeCat === cat ? 'active' : ''}`}
-                        onClick={() => filterCat(cat)}
+                        onClick={() => {
+                            setActiveCat(cat);
+                            setFilteredMenu(cat === 'All' ? menuData : menuData.filter(m => m.category === cat));
+                        }}
+                        style={{
+                            background: activeCat === cat ? '#007AFF' : 'white',
+                            color: activeCat === cat ? 'white' : '#1C1C1E',
+                            border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+                        }}
                     >
                         {cat}
-                    </div>
+                    </button>
                 ))}
             </div>
 
-            <div className="menu-container">
-                {filteredMenu.map(item => (
-                    <div className="food-card" key={item.id}>
-                        <img src={item.image || 'https://via.placeholder.com/150'} className="food-img" />
-                        <b className="food-name">{item.name}</b>
-                        <span className="food-price">{parseInt(item.price).toLocaleString()} Ks</span>
-                        <button className="add-btn" onClick={() => addToCart(item)}>Add to Cart</button>
+            <div style={{ padding: '10px 15px', display: 'grid', gridTemplate-columns: '1fr 1fr', gap: '12px' }}>
+                {filteredMenu.length > 0 ? filteredMenu.map(item => (
+                    <div key={item.id} style={{ background: 'white', borderRadius: '20px', padding: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                        <img src={item.image || 'https://via.placeholder.com/150'} style={{ width: '100%', height: '110px', borderRadius: '15px', object-fit: 'cover' }} />
+                        <b style={{ display: 'block', margin: '8px 0', fontSize: '14px' }}>{item.name || item.title}</b>
+                        <span style={{ color: '#007AFF', fontWeight: '800' }}>{parseInt(item.price || 0).toLocaleString()} Ks</span>
+                        <button 
+                            onClick={() => addToCart(item)}
+                            style={{ width: '100%', background: '#007AFF', color: 'white', border: 'none', padding: '10px', borderRadius: '12px', fontWeight: '700', marginTop: '10px' }}
+                        >
+                            Add to Cart
+                        </button>
                     </div>
-                ))}
+                )) : (
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px', color: '#8E8E93' }}>
+                        <i className="fas fa-hamburger" style={{ fontSize: '40px', marginBottom: '10px', opacity: 0.5 }}></i>
+                        <p>Menu များ ထည့်သွင်းနေပါသည်...</p>
+                    </div>
+                )}
             </div>
 
             {cartQty > 0 && (
-                <div className="cart-bar">
-                    <div>
-                        <b>{cartTotal.toLocaleString()} Ks</b><br/>
-                        <small>{cartQty} Items</small>
-                    </div>
-                    <button 
-                        onClick={() => setIsModalOpen(true)}
-                        style={{background:'var(--primary)', color:'white', border:'none', padding:'10px 20px', borderRadius:'12px', fontWeight:'700'}}
-                    >
-                        View Cart
-                    </button>
-                </div>
-            )}
-
-            {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>Your Cart</h3>
-                        {Object.keys(cart).map(id => (
-                            <div key={id} style={{display:'flex', justifyContent:'space-between', marginBottom:'15px', alignItems:'center'}}>
-                                <div>
-                                    <div style={{fontWeight:'700'}}>{cart[id].name}</div>
-                                    <div style={{color:'var(--primary)', fontSize:'12px'}}>{(cart[id].qty * cart[id].price).toLocaleString()} Ks</div>
-                                </div>
-                                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                                    <button onClick={() => updateQty(id, -1)} style={{width:'30px', height:'30px', borderRadius:'50%', border:'1px solid #ddd'}}>-</button>
-                                    <span>{cart[id].qty}</span>
-                                    <button onClick={() => updateQty(id, 1)} style={{width:'30px', height:'30px', borderRadius:'50%', border:'1px solid #ddd'}}>+</button>
-                                </div>
-                            </div>
-                        ))}
-                        <button 
-                            style={{width:'100%', background:'var(--primary)', color:'white', padding:'15px', borderRadius:'15px', border:'none', fontWeight:'800', marginTop:'20px'}}
-                            onClick={() => alert('Order တင်ခြင်း Feature ကို Backend ချိတ်ဆက်နေဆဲဖြစ်ပါသည်။')}
-                        >
-                            Confirm Order ({cartTotal.toLocaleString()} Ks)
-                        </button>
-                    </div>
+                <div style={{ position: 'fixed', bottom: '20px', left: '15px', right: '15px', background: '#1C1C1E', color: 'white', padding: '15px 20px', borderRadius: '22px', display: 'flex', justify-content: 'space-between', align-items: 'center', zIndex: 500 }}>
+                    <div><b>{cartTotal.toLocaleString()} Ks</b><br/><small>{cartQty} Items</small></div>
+                    <button style={{ background: '#007AFF', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '700' }}>View Cart</button>
                 </div>
             )}
         </div>
     );
 }
-
