@@ -1,31 +1,50 @@
-import admin from 'firebase-admin';
-import { NextResponse } from 'next/server';
+import { db } from "@/lib/firebase";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { NextResponse } from "next/server";
 
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // \n ကို real line break အဖြစ် ပြောင်းပေးဖို့ လိုပါတယ်
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
+// Menu အားလုံးကို ပြန်ဖတ်ရန်
+export async function GET() {
+    try {
+        const querySnapshot = await getDocs(collection(db, "menu"));
+        const data = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        return NextResponse.json({ success: true, data });
+    } catch (e) {
+        return NextResponse.json({ success: false, error: e.message });
+    }
 }
 
-export async function GET() {
-  try {
-    const db = admin.firestore();
-    // မင်းရဲ့ collection နာမည်က 'posts' ဖြစ်ရပါမယ်။ 
-    // Firebase ထဲမှာ ဘာနာမည်ပေးထားလဲ ပြန်စစ်ပြီး ဒီမှာ လာပြင်ပါ။
-    const snapshot = await db.collection('posts').get(); 
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+// Menu အသစ်သိမ်းရန်
+export async function POST(req) {
+    try {
+        const body = await req.json();
+        // Firebase Collection နာမည် "menu" ထဲကို ထည့်မယ်
+        const docRef = await addDoc(collection(db, "menu"), body);
+        return NextResponse.json({ success: true, id: docRef.id });
+    } catch (e) {
+        return NextResponse.json({ success: false, error: e.message });
+    }
+}
+
+// Menu ပြန်ပြင်ရန်
+export async function PUT(req) {
+    try {
+        const { id, ...data } = await req.json();
+        const docRef = doc(db, "menu", id);
+        await updateDoc(docRef, data);
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ success: false, error: e.message });
+    }
+}
+
+// Menu ဖျက်ရန်
+export async function DELETE(req) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+        await deleteDoc(doc(db, "menu", id));
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ success: false, error: e.message });
+    }
 }
