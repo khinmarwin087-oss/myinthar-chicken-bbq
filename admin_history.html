@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History - YNS Kitchen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #007AFF;
+            --bg: #F2F5F9;
+            --card: #ffffff;
+            --text-main: #1C1C1E;
+            --text-sub: #8E8E93;
+            --success: #34C759;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- Header --- */
+        .header {
+            background: var(--card);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+        }
+
+        .back-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: #F2F2F7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        /* --- Compact Filter Icon --- */
+        .filter-box {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            background: #F2F2F7;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .filter-box i { color: var(--primary); font-size: 16px; }
+        .filter-box input[type="date"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* --- Summary --- */
+        .summary-card {
+            margin: 20px;
+            background: var(--primary);
+            padding: 22px;
+            border-radius: 24px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,122,255,0.2);
+        }
+
+        /* --- History List --- */
+        .history-container { padding: 0 20px 100px; }
+        .date-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-sub);
+            margin: 25px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .date-label::after { content: ''; flex: 1; height: 1px; background: #E5E5EA; }
+
+        .order-card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            cursor: pointer;
+        }
+
+        .order-icon {
+            width: 48px; height: 48px;
+            background: #F0F7FF;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary); font-size: 18px;
+        }
+
+        .order-info { flex: 1; }
+        .order-info b { display: block; font-size: 15px; margin-bottom: 2px; }
+        .order-info span { font-size: 11px; color: var(--text-sub); }
+
+        /* --- Copy ID Badge --- */
+        .copy-id {
+            background: #F2F2F7;
+            color: var(--text-sub);
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        .copy-id:active { background: #E5E5EA; color: var(--primary); }
+
+        .order-amt { text-align: right; }
+        .amt-val { display: block; color: var(--success); font-weight: 800; font-size: 15px; }
+
+        /* --- Toast --- */
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            border-radius: 25px; font-size: 12px; z-index: 5000; display: none;
+        }
+
+        /* --- Loading --- */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .spinner {
+            width: 30px; height: 30px; border: 3px solid #E5E5EA;
+            border-top: 3px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; align-items: flex-end; }
+        .modal-content {
+            background: white; width: 100%; border-radius: 30px 30px 0 0;
+            padding: 30px 25px; box-sizing: border-box; animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div></div>
+    <div id="toast">ID Copied!</div>
+
+    <div class="header">
+        <a href="admin_dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <h2 style="margin:0; font-size:16px; font-weight:800;">Order History</h2>
+        <div class="filter-box">
+            <i class="fas fa-calendar-alt"></i>
+            <input type="date" id="filter-date" onchange="loadHistory()">
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <div style="font-size:12px; opacity:0.8; margin-bottom:5px;">Total Revenue</div>
+        <div id="total-income" style="font-size:28px; font-weight:800;">0 Ks</div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:15px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600;">
+            <span>Orders Completed</span>
+            <span id="total-count">0</span>
+        </div>
+    </div>
+
+    <div class="history-container" id="history-display"></div>
+
+    <div class="modal" id="detail-modal">
+        <div class="modal-content">
+            <div id="order-details"></div>
+            <button onclick="closeModal()" style="width:100%; padding:16px; border-radius:16px; border:none; background:var(--text-main); color:white; font-weight:700; margin-top:25px;">Back to List</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-database-compat.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3SaXUOzDh9_DVbuupon7BsCgZfw5UzZ4",
+            authDomain: "myrestaurantapp-a14d4.firebaseapp.com",
+            databaseURL: "https://myrestaurantapp-a14d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "myrestaurantapp-a14d4",
+            storageBucket: "myrestaurantapp-a14d4.firebasestorage.app",
+            messagingSenderId: "123788707874",
+            appId: "1:123788707874:web:6593b827b284cc7cb9a27b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function copyToClipboard(text, e) {
+            e.stopPropagation(); 
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.display = 'block';
+                setTimeout(() => toast.style.display = 'none', 1500);
+            });
+        }
+
+        function loadHistory() {
+            document.getElementById('loader').style.display = 'flex';
+            const selDate = document.getElementById('filter-date').value;
+
+            db.ref('orders').on('value', snap => {
+                const data = snap.val();
+                const container = document.getElementById('history-display');
+                container.innerHTML = "";
+                let income = 0; let count = 0; let groups = {};
+
+                if (data) {
+                    Object.values(data).reverse().forEach(order => {
+                        if (selDate && order.date !== selDate) return;
+                        income += order.total; count++;
+                        if (!groups[order.date]) groups[order.date] = [];
+                        groups[order.date].push(order);
+                    });
+
+                    for (let date in groups) {
+                        const label = document.createElement('div');
+                        label.className = 'date-label';
+                        label.innerText = getFriendlyDate(date);
+                        container.appendChild(label);
+
+                        groups[date].forEach(order => {
+                            const card = document.createElement('div');
+                            card.className = 'order-card';
+                            card.onclick = () => showDetail(order);
+                            card.innerHTML = `
+                                <div class="order-icon"><i class="fas fa-shopping-bag"></i></div>
+                                <div class="order-info">
+                                    <b>${order.customerName}</b>
+                                    <span><i class="far fa-clock"></i> ${order.time}</span><br>
+                                    <div class="copy-id" onclick="copyToClipboard('${order.orderId}', event)">
+                                        <i class="far fa-copy"></i> #${order.orderId}
+                                    </div>
+                                </div>
+                                <div class="order-amt">
+                                    <span class="amt-val">+${order.total.toLocaleString()}</span>
+                                </div>
+                            `;
+                            container.appendChild(card);
+                        });
+                    }
+                }
+                document.getElementById('total-income').innerText = income.toLocaleString() + " Ks";
+                document.getElementById('total-count').innerText = count;
+                document.getElementById('loader').style.display = 'none';
+            });
+        }
+
+        function getFriendlyDate(d) {
+            const today = new Date().toISOString().split('T')[0];
+            const yest = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            return d === today ? "TODAY" : d === yest ? "YESTERDAY" : d;
+        }
+
+        function showDetail(order) {
+            const detailDiv = document.getElementById('order-details');
+            detailDiv.innerHTML = `
+                <div style="text-align:center; margin-bottom:25px;">
+                    <div style="font-size:12px; color:var(--text-sub); margin-bottom:5px;">Customer Name</div>
+                    <div style="font-size:20px; font-weight:800;">${order.customerName}</div>
+                    <div class="copy-id" style="font-size:12px; padding:5px 12px; margin-top:10px;">ID: #${order.orderId}</div>
+                </div>
+                <div style="background:#F8F9FC; border-radius:20px; padding:20px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px;">
+                        <span style="color:var(--text-sub);">Phone</span>
+                        <span style="font-weight:700;">${order.customerPhone}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px;">
+                        <span style="color:var(--text-sub);">Time</span>
+                        <span style="font-weight:700;">${order.date} | ${order.time}</span>
+                    </div>
+                </div>
+                <div style="margin-bottom:10px; font-size:12px; font-weight:800; color:var(--text-sub);">ORDER ITEMS</div>
+                ${order.items.map(i => `
+                    <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F2F2F7; font-size:14px;">
+                        <span>${i.name} x ${i.qty}</span>
+                        <span style="font-weight:600;">${(i.price * i.qty).toLocaleString()} Ks</span>
+                    </div>
+                `).join('')}
+                <div style="display:flex; justify-content:space-between; margin-top:20px; padding-top:15px; border-top:2px solid #F2F2F7;">
+                    <span style="font-weight:800;">Total Amount</span>
+                    <span style="font-weight:800; color:var(--primary); font-size:18px;">${order.total.toLocaleString()} Ks</span>
+                </div>
+            `;
+            document.getElementById('detail-modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
+        window.onload = loadHistory;
+    </script>
+</body>
+</html>
