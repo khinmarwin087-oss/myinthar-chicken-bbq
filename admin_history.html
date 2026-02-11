@@ -222,55 +222,76 @@
         }
 
         function loadHistory() {
-            document.getElementById('loader').style.display = 'flex';
-            const selDate = document.getElementById('filter-date').value;
+    document.getElementById('loader').style.display = 'flex';
+    const selDate = document.getElementById('filter-date').value;
 
-            db.ref('orders').on('value', snap => {
-                const data = snap.val();
-                const container = document.getElementById('history-display');
-                container.innerHTML = "";
-                let income = 0; let count = 0; let groups = {};
+    db.ref('orders').on('value', snap => {
+        const data = snap.val();
+        const container = document.getElementById('history-display');
+        container.innerHTML = "";
+        let income = 0; 
+        let count = 0; 
+        let groups = {};
 
-                if (data) {
-                    Object.values(data).reverse().forEach(order => {
-                        if (selDate && order.date !== selDate) return;
-                        income += order.total; count++;
-                        if (!groups[order.date]) groups[order.date] = [];
-                        groups[order.date].push(order);
-                    });
+        if (data) {
+            // အော်ဒါတွေကို တစ်ခုချင်းစီ စစ်ဆေးမယ်
+            Object.values(data).reverse().forEach(order => {
+                
+                // --- ဤနေရာတွင် logic အသစ်ထည့်ထားသည် ---
+                // Admin လက်ခံထားသည့် status များမှသာ ရှေ့ဆက်သွားမည်
+                // Pending (အသစ်) နှင့် Cancelled (ပယ်ဖျက်စာရင်း) ကို ကျော်သွားမည်
+                const allowedStatus = ['Cooking', 'Ready', 'Done', 'Success'];
+                if (!order.status || !allowedStatus.includes(order.status)) return;
+                // ------------------------------------
 
-                    for (let date in groups) {
-                        const label = document.createElement('div');
-                        label.className = 'date-label';
-                        label.innerText = getFriendlyDate(date);
-                        container.appendChild(label);
+                // ရက်စွဲ Filter စစ်ဆေးခြင်း
+                if (selDate && order.date !== selDate) return;
 
-                        groups[date].forEach(order => {
-                            const card = document.createElement('div');
-                            card.className = 'order-card';
-                            card.onclick = () => showDetail(order);
-                            card.innerHTML = `
-                                <div class="order-icon"><i class="fas fa-shopping-bag"></i></div>
-                                <div class="order-info">
-                                    <b>${order.customerName}</b>
-                                    <span><i class="far fa-clock"></i> ${order.time}</span><br>
-                                    <div class="copy-id" onclick="copyToClipboard('${order.orderId}', event)">
-                                        <i class="far fa-copy"></i> #${order.orderId}
-                                    </div>
-                                </div>
-                                <div class="order-amt">
-                                    <span class="amt-val">+${order.total.toLocaleString()}</span>
-                                </div>
-                            `;
-                            container.appendChild(card);
-                        });
-                    }
-                }
-                document.getElementById('total-income').innerText = income.toLocaleString() + " Ks";
-                document.getElementById('total-count').innerText = count;
-                document.getElementById('loader').style.display = 'none';
+                // ဝင်ငွေနှင့် အရေအတွက် ပေါင်းခြင်း
+                income += order.total; 
+                count++;
+
+                // ရက်စွဲအလိုက် အုပ်စုဖွဲ့ခြင်း
+                if (!groups[order.date]) groups[order.date] = [];
+                groups[order.date].push(order);
             });
+
+            // စာရင်းများကို Screen ပေါ်တွင် ပြသခြင်း
+            for (let date in groups) {
+                const label = document.createElement('div');
+                label.className = 'date-label';
+                label.innerText = getFriendlyDate(date);
+                container.appendChild(label);
+
+                groups[date].forEach(order => {
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.onclick = () => showDetail(order);
+                    card.innerHTML = `
+                        <div class="order-icon"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="order-info">
+                            <b>${order.customerName}</b>
+                            <span><i class="far fa-clock"></i> ${order.time}</span><br>
+                            <div class="copy-id" onclick="copyToClipboard('${order.orderId}', event)">
+                                <i class="far fa-copy"></i> #${order.orderId}
+                            </div>
+                        </div>
+                        <div class="order-amt">
+                            <span class="amt-val">+${order.total.toLocaleString()}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
         }
+        
+        // စုစုပေါင်း ဝင်ငွေနှင့် အရေအတွက်ကို Update လုပ်ခြင်း
+        document.getElementById('total-income').innerText = income.toLocaleString() + " Ks";
+        document.getElementById('total-count').innerText = count;
+        document.getElementById('loader').style.display = 'none';
+    });
+        }
+        
 
         function getFriendlyDate(d) {
             const today = new Date().toISOString().split('T')[0];
