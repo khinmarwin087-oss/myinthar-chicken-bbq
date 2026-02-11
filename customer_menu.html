@@ -359,61 +359,66 @@ function sendOrder() {
     if(!n || !p || Object.keys(cart).length === 0) return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်စွက်ပါ");
 
     const btn = document.getElementById('submit-btn');
-    btn.innerText = "လုပ်ဆောင်နေပါသည်..."; btn.disabled = true;
+    btn.innerText = "စစ်ဆေးနေပါသည်..."; btn.disabled = true;
 
-    const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
-    
-    // Total တွက်ချက်ခြင်း
-    const totalAmt = Object.values(cart).reduce((s, i) => {
-        const price = typeof i.price === 'string' ? parseInt(i.price.replace(/,/g, '')) : i.price;
-        return s + (i.qty * price);
-    }, 0);
+    // --- အဆင့် (၁) STOCK ရှိမရှိ အရင်စစ်ဆေးမည့်အပိုင်း ---
+    const checkStockPromises = Object.keys(cart).map(id => {
+        return db.ref(`menu/${id}`).once('value').then(snap => {
+            const itemData = snap.val();
+            const currentStock = itemData.stock || 0;
+            const orderQty = cart[id].qty;
 
-    const orderData = {
-        orderId: orderId,
-        deviceUID: user.uid,
-        customerName: n,
-        customerPhone: p,
-        date: document.getElementById('o-date').value,
-        time: document.getElementById('o-time').value,
-        note: document.getElementById('o-note').value,
-        items: Object.values(cart),
-        total: totalAmt,
-        status: "Pending",
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    };
-
-    // --- STOCK နှုတ်မည့်အပိုင်း ---
-    const promises = [];
-    for (const id in cart) {
-        const itemQty = cart[id].qty;
-        // menu/{id}/stock နေရာကိုသွားပြီး လက်ရှိရှိတဲ့အရေအတွက်ထဲက ဝယ်တဲ့အရေအတွက်ကို နှုတ်မယ်
-        const stockRef = db.ref(`menu/${id}/stock`);
-        
-        const promise = stockRef.transaction((currentStock) => {
-            if (currentStock === null) return 0; // stock မရှိရင် 0 ထား
-            if (currentStock < itemQty) {
-                alert(cart[id].name + " သည် stock မလုံလောက်တော့ပါ။");
-                return; // Stock မလောက်ရင် မနှုတ်ဘူး
+            if (currentStock < orderQty) {
+                // Stock မလုံလောက်ရင် Error ပေးမယ်
+                throw new Error(`${itemData.name} သည် Stock မလုံလောက်ပါ။ (လက်ရှိ: ${currentStock})`);
             }
-            return currentStock - itemQty;
+            return { id, newStock: currentStock - orderQty };
         });
-        promises.push(promise);
-    }
+    });
 
-    // Stock နှုတ်တာ အောင်မြင်မှ Order တင်မယ်
-    Promise.all(promises).then(() => {
-        return db.ref('orders').push(orderData);
+    // Stock အားလုံး စစ်ဆေးပြီးမှ အောက်က အဆင့်တွေကို ဆက်သွားမယ်
+    Promise.all(checkStockPromises).then(results => {
+        
+        // --- အဆင့် (၂) Stock လုံလောက်မှသာ Stock များကို နှုတ်မယ် ---
+        const updateStockPromises = results.map(res => {
+            return db.ref(`menu/${res.id}/stock`).set(res.newStock);
+        });
+
+        return Promise.all(updateStockPromises);
+        
     }).then(() => {
-        showVoucher(orderData);
-        cart = {}; // Cart ရှင်းမယ်
-        updateCartBar();
-        btn.innerText = "Confirm Order"; btn.disabled = false;
+        // --- အဆင့် (၃) Stock နှုတ်ပြီးမှသာ အော်ဒါအမှန်တကယ် တင်မည် ---
+        const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+        const totalAmt = Object.values(cart).reduce((s, i) => s + (i.qty * i.price), 0);
+
+        const orderData = {
+            orderId: orderId,
+            deviceUID: user.uid,
+            customerName: n,
+            customerPhone: p,
+            date: document.getElementById('o-date').value,
+            time: document.getElementById('o-time').value,
+            note: document.getElementById('o-note').value,
+            items: Object.values(cart),
+            total: totalAmt,
+            status: "Pending",
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        return db.ref('orders').push(orderData).then(() => {
+            showVoucher(orderData);
+            cart = {};
+            updateCartBar();
+            btn.innerText = "Confirm Order"; btn.disabled = false;
+        });
+
     }).catch(err => {
-        alert("Error: " + err.message);
+        // Stock မလုံလောက်တာဖြစ်ဖြစ်၊ တခြား Error ဖြစ်ရင် ဒီကိုရောက်မယ်
+        alert("⚠️ သတိပေးချက်: " + err.message);
         btn.innerText = "Confirm Order"; btn.disabled = false;
     });
 }
+        
 
 // ... (ကျန်တဲ့ function တွေ အကုန်အတိုင်းပဲ ထားပါ) ...
         
