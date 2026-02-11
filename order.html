@@ -171,9 +171,36 @@
         render();
     }
 
-    function updateStatus(id, newS) {
-        db.ref('orders/' + id).update({ status: newS });
+    /* --- အောက်ပါ updateStatus function ကို အရင်ရှိပြီးသားနေရာမှာ အစားထိုးလိုက်ပါ --- */
+
+function updateStatus(id, newS) {
+    let msg = "";
+    if(newS === 'Cooking') msg = "ဒီအော်ဒါကို လက်ခံပြီး ချက်ပြုတ်တော့မှာလား?";
+    if(newS === 'Cancelled') msg = "ဒီအော်ဒါကို ပယ်ဖျက်မှာ သေချာပါသလား?";
+    if(newS === 'Ready') msg = "ချက်ပြုတ်ပြီးစီးကြောင်း အကြောင်းကြားမှာလား?";
+    if(newS === 'Done') msg = "ဒီအော်ဒါ ရောင်းချမှု ပြီးဆုံးပြီလား?";
+
+    if(confirm(msg)) {
+        firebase.database().ref('orders/' + id).update({ status: newS });
     }
+}
+
+/* --- renderBtn function ကိုလည်း Cancel ခလုတ်ပါအောင် အစားထိုးပါ --- */
+
+function renderBtn(id, status) {
+    if(status === 'Pending') {
+        return `
+            <div style="display:flex; gap:8px;">
+                <button class="action-btn" style="background:#FF3B30;" onclick="updateStatus('${id}', 'Cancelled')">Cancel</button>
+                <button class="action-btn" onclick="updateStatus('${id}', 'Cooking')">Accept</button>
+            </div>
+        `;
+    }
+    if(status === 'Cooking') return `<button class="action-btn ready" onclick="updateStatus('${id}', 'Ready')">Ready</button>`;
+    if(status === 'Ready') return `<button class="action-btn done" onclick="updateStatus('${id}', 'Done')">Complete</button>`;
+    return '';
+}
+    
 
     window.onload = init;
 </script>
