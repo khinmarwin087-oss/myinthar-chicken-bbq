@@ -11,10 +11,11 @@ export default function CustomerMenu() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        // VPN မလိုဘဲ Data ယူမည့်နေရာ (api/data ကို posts အစား menu ဖတ်ခိုင်းရမယ်)
+        // API ဆီကနေ data ယူတဲ့အပိုင်း
         fetch('/api/data')
             .then(res => res.json())
             .then(json => {
+                // ဒီနေရာမှာ json.data လို့ ဖြစ်ရပါမယ်
                 if (json.success && json.data) {
                     setMenuData(json.data);
                     setFilteredMenu(json.data);
@@ -40,7 +41,6 @@ export default function CustomerMenu() {
 
     return (
         <div style={{ background: '#F8F9FC', minHeight: '100vh', paddingBottom: '100px' }}>
-            {/* Font Awesome Link ကို ဒီမှာ ထည့်ထားပေးတယ် */}
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             
             <div style={{ background: 'white', padding: '20px', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
@@ -69,10 +69,10 @@ export default function CustomerMenu() {
                 ))}
             </div>
 
-            <div style={{ padding: '10px 15px', display: 'grid', gridTemplate-columns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ padding: '10px 15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {filteredMenu.length > 0 ? filteredMenu.map(item => (
                     <div key={item.id} style={{ background: 'white', borderRadius: '20px', padding: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
-                        <img src={item.image || 'https://via.placeholder.com/150'} style={{ width: '100%', height: '110px', borderRadius: '15px', object-fit: 'cover' }} />
+                        <img src={item.image || 'https://via.placeholder.com/150'} style={{ width: '100%', height: '110px', borderRadius: '15px', objectFit: 'cover' }} />
                         <b style={{ display: 'block', margin: '8px 0', fontSize: '14px' }}>{item.name || item.title}</b>
                         <span style={{ color: '#007AFF', fontWeight: '800' }}>{parseInt(item.price || 0).toLocaleString()} Ks</span>
                         <button 
@@ -85,17 +85,18 @@ export default function CustomerMenu() {
                 )) : (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px', color: '#8E8E93' }}>
                         <i className="fas fa-hamburger" style={{ fontSize: '40px', marginBottom: '10px', opacity: 0.5 }}></i>
-                        <p>Menu များ ထည့်သွင်းနေပါသည်...</p>
+                        <p>Menu ပြသရန် Data မရှိသေးပါ။ Firebase မှာ Data ထည့်ပေးပါ။</p>
                     </div>
                 )}
             </div>
 
             {cartQty > 0 && (
-                <div style={{ position: 'fixed', bottom: '20px', left: '15px', right: '15px', background: '#1C1C1E', color: 'white', padding: '15px 20px', borderRadius: '22px', display: 'flex', justify-content: 'space-between', align-items: 'center', zIndex: 500 }}>
+                <div style={{ position: 'fixed', bottom: '20px', left: '15px', right: '15px', background: '#1C1C1E', color: 'white', padding: '15px 20px', borderRadius: '22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 500 }}>
                     <div><b>{cartTotal.toLocaleString()} Ks</b><br/><small>{cartQty} Items</small></div>
                     <button style={{ background: '#007AFF', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '700' }}>View Cart</button>
                 </div>
             )}
         </div>
     );
-}
+                                }
+                                   
