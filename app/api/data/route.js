@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 export async function GET() {
     try {
         const querySnapshot = await getDocs(collection(db, "menu"));
-        // docs လို့ အမှန်ပြင်ထားပါတယ်
         const data = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         return NextResponse.json({ success: true, data });
     } catch (e) {
