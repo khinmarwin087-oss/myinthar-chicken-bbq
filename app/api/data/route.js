@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
     try {
         const querySnapshot = await getDocs(collection(db, "menu"));
+        // ဤနေရာတွင် docs ဖြစ်ရပါမည် (Screenshot ထဲမှာ dacs လို့ မှားနေတာ တွေ့ပါတယ်)
         const data = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         return NextResponse.json({ success: true, data });
     } catch (e) {
@@ -13,11 +14,10 @@ export async function GET() {
     }
 }
 
-// 2. POST - Menu အသစ်ထည့်ရန်
+// 2. POST - Menu အသစ်ထည့်ရန် (SAVE ခလုတ် နှိပ်လျှင် ဤနေရာသို့ ရောက်လာမည်)
 export async function POST(req) {
     try {
         const body = await req.json();
-        // Firebase ထဲမှာ 'menu' ဆိုတဲ့ collection နာမည်နဲ့ သိမ်းမယ်
         const docRef = await addDoc(collection(db, "menu"), body);
         return NextResponse.json({ success: true, id: docRef.id });
     } catch (e) {
@@ -49,3 +49,4 @@ export async function DELETE(req) {
         return NextResponse.json({ success: false, error: e.message });
     }
 }
+
