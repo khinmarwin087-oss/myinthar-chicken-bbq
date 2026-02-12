@@ -1,110 +1,178 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { db, auth } from "../../lib/firebase"; // လမ်းကြောင်းမှန်ပါတယ်
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db, auth } from "../lib/firebase";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 import Link from 'next/link';
 
 export default function OrderHistory() {
     const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // loading state ထည့်လိုက်တယ်
+    const [selectedOrder, setSelectedOrder] = useState(null);
 
     useEffect(() => {
         const unsubscribeAuth = auth.onAuthStateChanged((u) => {
             setUser(u);
             if (u) {
-                // User ရဲ့ Email နဲ့ တိုက်စစ်ပြီး Query လုပ်ခြင်း
-                const q = query(collection(db, "orders"), where("email", "==", u.email));
+                // Real-time listen လုပ်ဖို့ onSnapshot ကို သုံးထားပါတယ်
+                const q = query(
+                    collection(db, "orders"),
+                    where("email", "==", u.email),
+                    orderBy("orderDate", "desc")
+                );
+
                 const unsubscribeOrders = onSnapshot(q, (snapshot) => {
-                    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setOrders(data);
                     
-                    // Sorting Logic ကို Error မတက်အောင် ပိုစိပ်စိပ်စစ်ထားတယ်
-                    list.sort((a, b) => {
-                        const dateA = a.orderDate ? new Date(a.orderDate) : 0;
-                        const dateB = b.orderDate ? new Date(b.orderDate) : 0;
-                        return dateB - dateA;
-                    });
+                    // အကယ်၍ Detail View ဖွင့်ထားရင် status ပြောင်းတာနဲ့ ချက်ချင်းသိအောင် update လုပ်ပေးပါတယ်
+                    if (selectedOrder) {
+                        const updatedSelected = data.find(o => o.id === selectedOrder.id);
+                        if (updatedSelected) setSelectedOrder(updatedSelected);
+                    }
                     
-                    setOrders(list);
                     setLoading(false);
                 }, (error) => {
                     console.error("Firestore Error:", error);
                     setLoading(false);
                 });
+
                 return () => unsubscribeOrders();
             } else {
                 setLoading(false);
             }
         });
         return () => unsubscribeAuth();
-    }, []);
+    }, [selectedOrder?.id]); // selectedOrder id ပြောင်းရင် re-check လုပ်ဖို့
 
-    if (loading) return <div style={{textAlign:'center', padding:'100px', color:'#007AFF'}}>Loading...</div>;
+    // Status အလိုက် အရောင်သတ်မှတ်ချက်
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'Pending': return { bg: '#FFF9E6', color: '#FFB800', progress: 1 };
+            case 'Cooking': return { bg: '#E6F7FF', color: '#1890FF', progress: 2 };
+            case 'Ready': return { bg: '#F6FFED', color: '#52C41A', progress: 3 };
+            default: return { bg: '#F5F5F5', color: '#8C8C8C', progress: 1 };
+        }
+    };
+
+    if (loading) return <div style={{ textAlign: 'center', padding: '100px', color: '#007AFF' }}>ခဏစောင့်ပေးပါ...</div>;
+
+    if (!user) return (
+        <div style={{ textAlign: 'center', padding: '100px' }}>
+            <p>အော်ဒါမှတ်တမ်းကြည့်ရန် Login အရင်ဝင်ပေးပါ</p>
+            <Link href="/customer_menu" style={{ color: '#007AFF', fontWeight: 'bold' }}>Menu သို့သွားရန်</Link>
+        </div>
+    );
 
     return (
-        <div style={{ background: '#F8FAFF', minHeight: '100vh', padding: '20px' }}>
+        <div style={{ background: '#F8F9FA', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <Link href="/" style={{ textDecoration: 'none', color: '#007AFF', fontWeight: 'bold', fontSize: '14px' }}>
-                    <i className="fas fa-arrow-left"></i> Back
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '25px' }}>
+                <Link href="/customer_menu" style={{ color: '#007AFF', textDecoration: 'none', fontSize: '20px', marginRight: '15px' }}>
+                    <i className="fas fa-chevron-left"></i>
                 </Link>
-                <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0 }}>My Orders</h2>
-                {user ? (
-                    <img src={user.photoURL} style={{ width: '35px', height: '35px', borderRadius: '50%', border: '2px solid #007AFF' }} alt="profile" />
-                ) : (
-                    <div style={{ width: '35px' }}></div>
-                )}
+                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold' }}>My Orders</h2>
             </div>
 
-            {/* Orders List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {!user ? (
-                    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-                        <p style={{color:'#666'}}>မှတ်တမ်းကြည့်ရန် Login အရင်ဝင်ပေးပါ</p>
-                        <Link href="/customer_menu" style={{color:'#007AFF', fontWeight:'bold'}}>Menu သို့သွားရန်</Link>
-                    </div>
-                ) : orders.length === 0 ? (
-                    <div style={{ textAlign: 'center', marginTop: '50px', color: '#999' }}>မှာယူထားသော မှတ်တမ်းမရှိသေးပါ</div>
-                ) : (
-                    orders.map(order => (
-                        <div key={order.id} style={{ 
-                            background: '#fff', borderRadius: '18px', padding: '18px', 
-                            boxShadow: '0 8px 20px rgba(0,0,0,0.04)', border: '1px solid #EBF2FF' 
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#bbb', fontWeight: 'bold' }}>{order.orderId || order.id.substring(0,8).toUpperCase()}</span>
-                                <span style={{ 
-                                    fontSize: '10px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold',
-                                    background: order.status === 'Ready' ? '#E8F9EE' : '#EBF2FF',
-                                    color: order.status === 'Ready' ? '#34C759' : '#007AFF'
-                                }}>
-                                    {order.status || 'New'}
-                                </span>
-                            </div>
-
-                            <div style={{ marginBottom: '12px' }}>
-                                {order.items?.map((item, idx) => (
-                                    <div key={idx} style={{ fontSize: '14px', color: '#444', marginBottom: '4px' }}>
-                                        • {item.name} <span style={{color:'#999', fontSize:'12px'}}>x{item.qty}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F8F9FA', paddingTop: '12px' }}>
-                                <div style={{ color: '#007AFF', fontWeight: '800', fontSize: '18px' }}>
-                                    {(order.totalPrice || 0).toLocaleString()} <span style={{fontSize:'12px'}}>Ks</span>
+            {/* Order List View */}
+            {!selectedOrder ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {orders.length === 0 ? (
+                        <p style={{ textAlign: 'center', color: '#999', marginTop: '50px' }}>မှာယူထားသော မှတ်တမ်းမရှိသေးပါ</p>
+                    ) : (
+                        orders.map(order => (
+                            <div 
+                                key={order.id} 
+                                onClick={() => setSelectedOrder(order)}
+                                style={{ background: '#fff', borderRadius: '15px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', cursor: 'pointer', border: '1px solid #EBF2FF' }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <span style={{ color: '#bbb', fontSize: '13px', fontWeight: 'bold' }}>ID: {order.orderId || order.id.slice(0, 8).toUpperCase()}</span>
+                                    <span style={{ color: '#bbb', fontSize: '13px' }}>{order.orderDate ? new Date(order.orderDate).toLocaleDateString() : ''}</span>
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#bbb' }}>
-                                    {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : ''}
+                                <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#333' }}>
+                                    {order.items?.[0]?.name} {order.items?.length > 1 ? `(+${order.items.length - 1} more)` : ''}
                                 </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#1A1A1A' }}>{(order.totalPrice || 0).toLocaleString()} Ks</span>
+                                    <span style={{ 
+                                        padding: '6px 15px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold',
+                                        backgroundColor: getStatusStyle(order.status).bg,
+                                        color: getStatusStyle(order.status).color
+                                    }}>
+                                        {order.status || 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            ) : (
+                /* Detail View (Tracking UI) */
+                <div style={{ background: '#fff', borderRadius: '20px', padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                        <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Order Status</h3>
+                        
+                        {/* Status Progress Bar */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0', marginBottom: '10px' }}>
+                            <div style={{ width: '25px', height: '25px', borderRadius: '50%', background: '#007AFF', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 2 }}>
+                                {getStatusStyle(selectedOrder.status).progress >= 1 ? '✓' : '1'}
+                            </div>
+                            <div style={{ width: '70px', height: '3px', background: getStatusStyle(selectedOrder.status).progress >= 2 ? '#007AFF' : '#eee', margin: '0 -2px' }}></div>
+                            <div style={{ width: '25px', height: '25px', borderRadius: '50%', background: getStatusStyle(selectedOrder.status).progress >= 2 ? '#007AFF' : '#fff', color: getStatusStyle(selectedOrder.status).progress >= 2 ? '#fff' : '#ccc', border: '2px solid', borderColor: getStatusStyle(selectedOrder.status).progress >= 2 ? '#007AFF' : '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 2 }}>
+                                {getStatusStyle(selectedOrder.status).progress >= 2 ? '✓' : '2'}
+                            </div>
+                            <div style={{ width: '70px', height: '3px', background: getStatusStyle(selectedOrder.status).progress >= 3 ? '#007AFF' : '#eee', margin: '0 -2px' }}></div>
+                            <div style={{ width: '25px', height: '25px', borderRadius: '50%', background: getStatusStyle(selectedOrder.status).progress >= 3 ? '#007AFF' : '#fff', color: getStatusStyle(selectedOrder.status).progress >= 3 ? '#fff' : '#ccc', border: '2px solid', borderColor: getStatusStyle(selectedOrder.status).progress >= 3 ? '#007AFF' : '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 2 }}>
+                                {getStatusStyle(selectedOrder.status).progress >= 3 ? '✓' : '3'}
                             </div>
                         </div>
-                    ))
-                )}
-            </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '230px', margin: '0 auto', fontSize: '10px', color: '#8E8E93', fontWeight: 'bold' }}>
+                            <span>PLACED</span>
+                            <span>COOKING</span>
+                            <span>READY</span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #f5f5f5', paddingBottom: '15px' }}>
+                        <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>ID: {selectedOrder.orderId}</div>
+                            <div style={{ color: '#8E8E93', fontSize: '12px' }}>{new Date(selectedOrder.orderDate).toLocaleString()}</div>
+                        </div>
+                        <div style={{ color: getStatusStyle(selectedOrder.status).color, fontWeight: 'bold' }}>{selectedOrder.status}</div>
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <h4 style={{ margin: '0 0 15px 0', fontSize: '15px' }}>Ordered Items</h4>
+                        {selectedOrder.items?.map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#444' }}>
+                                <span>{item.name} x {item.qty}</span>
+                                <span style={{ fontWeight: 'bold' }}>{(item.price * item.qty).toLocaleString()} Ks</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div style={{ borderTop: '2px dashed #eee', paddingTop: '15px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Total Amount</span>
+                            <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007AFF' }}>{(selectedOrder.totalPrice || 0).toLocaleString()} Ks</span>
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#666', background: '#F9FAFF', padding: '15px', borderRadius: '12px', border: '1px solid #EBF2FF' }}>
+                            <div style={{ marginBottom: '5px' }}><i className="fas fa-user" style={{ width: '20px' }}></i> {selectedOrder.name}</div>
+                            <div style={{ marginBottom: '5px' }}><i className="fas fa-phone" style={{ width: '20px' }}></i> {selectedOrder.phone}</div>
+                            {selectedOrder.note && <div><i className="fas fa-sticky-note" style={{ width: '20px' }}></i> {selectedOrder.note}</div>}
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+                        <button onClick={() => setSelectedOrder(null)} style={{ flex: 1, padding: '15px', borderRadius: '12px', border: '1px solid #ddd', background: '#fff', fontWeight: 'bold', color: '#666' }}>Back to List</button>
+                        <a href={`tel:${selectedOrder.phone}`} style={{ flex: 1, padding: '15px', borderRadius: '12px', border: 'none', background: '#007AFF', color: '#fff', fontWeight: 'bold', textAlign: 'center', textDecoration: 'none' }}>Call Shop</a>
+                    </div>
+                </div>
+            )}
         </div>
     );
-                                    }
-                    
+                                }
+                                        
