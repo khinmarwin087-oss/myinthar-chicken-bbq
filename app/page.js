@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 // --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
 // line 5 မှာ အောက်ပါအတိုင်း ပြင်ပါ
-import { auth } from "../lib/firebase"; 
+import { auth } from "../../lib/firebase"; 
 
 // ----------------------------------
 
@@ -11,7 +11,64 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState("Loading date...");
   // --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
   const [user, setUser] = useState(null);
+   
+  export default function AdminDashboard() {
+    const [newOrderCount, setNewOrderCount] = useState(0);
+    const audioRef = useRef(null);
+  useEffect(() => {
+        // အသံဖိုင်အဖြစ် အသုံးပြုရန် (Public folder ထဲတွင် notification.mp3 ရှိရမည်)
+        audioRef.current = new Audio('/notification.mp3');
 
+        const q = query(collection(db, "orders"), where("status", "==", "pending"));
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                // အော်ဒါအသစ်ရှိပါက အသံမြည်စေရန်
+                audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+                
+                // အနီစက်ပြရန်အတွက် Count သတ်မှတ်ခြင်း
+                setNewOrderCount(snapshot.size);
+
+                // Browser Notification ပြရန် (Dashboard ဖွင့်ထားလျှင်)
+                if (Notification.permission === "granted") {
+                    new Notification("အော်ဒါအသစ် တက်လာပါပြီ!", {
+                        body: `ယခု အော်ဒါအသစ် ${snapshot.size} ခု ရှိနေပါသည်၊`,
+                        icon: "/logo.png"
+                    });
+                }
+            } else {
+                setNewOrderCount(0);
+            }
+        });
+
+        // Notification Permission တောင်းရန်
+        if (Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+
+        return () => unsubscribe();
+    }, []);
+
+    return (
+        <div>
+            {/* Orders Icon တွင် အနီစက်ပြရန် */}
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+                <i className="fas fa-shopping-basket" style={{ fontSize: '24px' }}></i>
+                {newOrderCount > 0 && (
+                    <span style={{
+                        position: 'absolute', top: '-5px', right: '-5px',
+                        background: 'red', color: 'white', borderRadius: '50%',
+                        padding: '2px 6px', fontSize: '10px', fontWeight: 'bold'
+                    }}>
+                        {newOrderCount}
+                    </span>
+                )}
+            </div>
+            <p>Orders Live</p>
+        </div>
+    );
+}
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
