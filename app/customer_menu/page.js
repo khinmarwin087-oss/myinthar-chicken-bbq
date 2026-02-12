@@ -56,55 +56,56 @@ export default function CustomerMenu() {
         });
     };
 
-    const deleteFromCart = (id) => {
+    const deleteItem = (id) => {
         setCart(prev => prev.filter(c => c.id !== id));
     };
 
     const handleQtyInput = (id, val) => {
-        const newQty = parseInt(val) || 1;
-        setCart(prev => prev.map(c => c.id === id ? { ...c, qty: newQty } : c));
+        const q = parseInt(val);
+        setCart(prev => prev.map(c => c.id === id ? { ...c, qty: isNaN(q) || q < 1 ? 1 : q } : c));
     };
 
     const cartQty = cart.reduce((s, i) => s + i.qty, 0);
     const cartTotal = cart.reduce((s, i) => s + (i.qty * i.price), 0);
 
     const handleOrder = async () => {
-        if (!customerInfo.name || !customerInfo.phone) return alert("ကျေးဇူးပြု၍ နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
-        const orderDetails = { ...customerInfo, items: cart, totalPrice: cartTotal, orderDate: new Date().toISOString() };
+        if (!customerInfo.name || !customerInfo.phone) return alert("နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
         try {
-            const res = await fetch('/api/orders', { method: 'POST', body: JSON.stringify(orderDetails) });
+            const res = await fetch('/api/orders', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...customerInfo, items: cart, totalPrice: cartTotal }) 
+            });
             if (res.ok) {
-                alert("Order တင်ခြင်း အောင်မြင်ပါသည်။");
+                alert("Order တင်ခြင်း အောင်မြင်ပါသည်");
                 setCart([]); setShowCart(false);
             }
         } catch (e) { alert("Error placing order"); }
     };
 
-    if (loading) return <div style={{textAlign:'center', padding:'50px'}}>ခဏစောင့်ပေးပါ...</div>;
+    if (loading) return <div style={{textAlign:'center', padding:'100px'}}>Loading...</div>;
 
     return (
-        <div style={{ background: '#F2F2F7', minHeight: '100vh', paddingBottom: '100px', fontFamily: 'sans-serif' }}>
+        <div style={{ background: '#F8F9FA', minHeight: '100vh', paddingBottom: '100px', position: 'relative' }}>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-            
+
             {/* Header Area */}
-            <div style={{ background: 'white', padding: '15px', position: 'sticky', top: 0, zIndex: 100 }}>
-                <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'15px'}}>
-                   <Link href="/" style={{color:'#007AFF', textDecoration:'none', fontWeight:'bold'}}><i className="fas fa-arrow-left"></i> Dashboard</Link>
-                </div>
-                
-                <div style={{position:'relative', marginBottom:'15px'}}>
-                    <i className="fas fa-search" style={{position:'absolute', left:'15px', top:'50%', transform:'translateY(-50%)', color:'#8E8E93'}}></i>
+            <div style={{ background: '#fff', padding: '15px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #eee' }}>
+                <Link href="/" style={{color:'#007AFF', textDecoration:'none', fontWeight:'bold', fontSize:'14px'}}>
+                   <i className="fas fa-arrow-left"></i> Dashboard
+                </Link>
+                <div style={{position:'relative', marginTop:'15px'}}>
+                    <i className="fas fa-search" style={{position:'absolute', left:'15px', top:'50%', transform:'translateY(-50%)', color:'#999'}}></i>
                     <input 
                         type="text" placeholder="ဟင်းပွဲရှာရန်..." 
                         value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{width:'100%', padding:'12px 12px 12px 40px', borderRadius:'12px', border:'none', background:'#F2F2F7', fontSize:'16px'}}
+                        style={{width:'100%', padding:'12px 12px 12px 42px', borderRadius:'12px', border:'1px solid #eee', background:'#F8F9FA', outline:'none'}}
                     />
                 </div>
-
-                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom:'5px' }}>
+                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '15px', paddingBottom: '5px' }}>
                     {categories.map(cat => (
                         <button key={cat} onClick={() => setActiveCat(cat)}
-                            style={{ background: activeCat === cat ? '#007AFF' : 'white', color: activeCat === cat ? 'white' : '#1C1C1E', border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: '600', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', whiteSpace:'nowrap' }}>
+                            style={{ background: activeCat === cat ? '#007AFF' : '#fff', color: activeCat === cat ? '#fff' : '#333', border: '1px solid #eee', padding: '8px 18px', borderRadius: '20px', fontWeight: '600', whiteSpace:'nowrap' }}>
                             {cat}
                         </button>
                     ))}
@@ -114,93 +115,82 @@ export default function CustomerMenu() {
             {/* Menu Grid */}
             <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 {filteredMenu.map(item => (
-                    <div key={item.id} style={{ background: 'white', borderRadius: '20px', padding: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
-                        <div style={{position:'relative', width:'100%', height:'120px'}}>
-                            <Image src={item.image || 'https://via.placeholder.com/150'} fill style={{borderRadius:'15px', objectFit:'cover'}} alt={item.name} />
+                    <div key={item.id} style={{ background: '#fff', borderRadius: '18px', padding: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                        <div style={{position:'relative', width:'100%', height:'110px', borderRadius:'12px', overflow:'hidden'}}>
+                            <Image src={item.image || 'https://via.placeholder.com/150'} fill style={{objectFit:'cover'}} alt={item.name} />
                         </div>
-                        <b style={{ display: 'block', margin: '10px 0 5px', fontSize: '15px' }}>{item.name}</b>
-                        <div style={{color:'#007AFF', fontWeight:'800', marginBottom:'10px'}}>{(Number(item.price) || 0).toLocaleString()} Ks</div>
-                        <button onClick={() => addToCart(item)} style={{ width: '100%', background: '#007AFF', color: 'white', border: 'none', padding: '10px', borderRadius: '12px', fontWeight: '700' }}>Add to Cart</button>
+                        <div style={{fontWeight: 'bold', fontSize: '14px', margin: '10px 0 5px', height:'40px', overflow:'hidden'}}>{item.name}</div>
+                        <div style={{color:'#007AFF', fontWeight:'800', fontSize:'15px', marginBottom:'10px'}}>{(Number(item.price) || 0).toLocaleString()} Ks</div>
+                        <button onClick={() => addToCart(item)} style={{ width: '100%', background: '#007AFF', color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold' }}>Add to Cart</button>
                     </div>
                 ))}
             </div>
 
-            {/* Floating Bottom Bar */}
+            {/* Floating Bottom Cart Bar */}
             {cartQty > 0 && !showCart && (
-                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1C1C1E', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -5px 20px rgba(0,0,0,0.2)', zIndex: 200 }}>
-                    <div style={{color:'white'}}>
+                <div style={{ position: 'fixed', bottom: '0', left: '0', right: '0', background: '#1A1A1A', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -4px 15px rgba(0,0,0,0.2)', zIndex: 1000 }}>
+                    <div style={{color:'#fff'}}>
                         <div style={{fontWeight:'bold', fontSize:'18px'}}>{cartTotal.toLocaleString()} Ks</div>
-                        <div style={{fontSize:'12px', opacity:0.8}}>{cartQty} items</div>
+                        <div style={{fontSize:'12px', color:'#aaa'}}>{cartQty} items</div>
                     </div>
-                    <button onClick={() => setShowCart(true)} style={{ background: '#007AFF', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold' }}>View Cart</button>
+                    <button onClick={() => setShowCart(true)} style={{ background: '#007AFF', color: '#fff', border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold' }}>View Cart</button>
                 </div>
             )}
 
-            {/* Cart Overlay Modal */}
+            {/* Cart Modal Overlay */}
             {showCart && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'flex-end' }}>
-                    <div style={{ background: 'white', width: '100%', borderTopLeftRadius: '30px', borderTopRightRadius: '30px', padding: '25px', maxHeight: '92vh', overflowY: 'auto' }}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 2000, display: 'flex', alignItems: 'flex-end' }}>
+                    <div style={{ background: '#fff', width: '100%', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
-                            <h2 style={{margin:0}}>Your Cart</h2>
-                            <i className="fas fa-times" onClick={() => setShowCart(false)} style={{fontSize:'22px', cursor:'pointer', padding:'5px'}}></i>
+                            <h2 style={{margin:0, fontSize:'20px'}}>Your Order</h2>
+                            <i className="fas fa-times" onClick={() => setShowCart(false)} style={{fontSize:'24px', cursor:'pointer', color:'#666'}}></i>
                         </div>
 
                         {cart.map(item => (
-                            <div key={item.id} style={{ display: 'flex', gap: '12px', marginBottom: '15px', alignItems: 'center', borderBottom:'1px solid #F2F2F7', paddingBottom:'15px' }}>
-                                <div style={{position:'relative', width:'60px', height:'60px'}}>
-                                    <Image src={item.image || 'https://via.placeholder.com/150'} fill style={{borderRadius:'10px', objectFit:'cover'}} alt={item.name} />
+                            <div key={item.id} style={{ display: 'flex', gap: '12px', paddingBottom: '15px', marginBottom: '15px', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
+                                <div style={{position:'relative', width:'55px', height:'55px', flexShrink:0}}>
+                                    <Image src={item.image || 'https://via.placeholder.com/150'} fill style={{borderRadius:'8px', objectFit:'cover'}} alt={item.name} />
                                 </div>
                                 <div style={{flex:1}}>
-                                    <div style={{fontWeight:'600', fontSize:'15px'}}>{item.name}</div>
-                                    <div style={{color:'#007AFF', fontSize:'14px', fontWeight:'700'}}>{item.price.toLocaleString()} Ks</div>
+                                    <div style={{fontWeight:'600', fontSize:'14px'}}>{item.name}</div>
+                                    <div style={{color:'#007AFF', fontSize:'13px', fontWeight:'bold'}}>{item.price.toLocaleString()} Ks</div>
                                 </div>
-                                <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#F2F2F7', borderRadius:'10px', padding:'4px 8px'}}>
-                                    <button onClick={() => removeFromCart(item.id)} style={{border:'none', background:'none', fontSize:'18px', padding:'0 5px'}}>-</button>
-                                    <input 
-                                        type="number" 
-                                        value={item.qty} 
-                                        onChange={(e) => handleQtyInput(item.id, e.target.value)}
-                                        style={{width:'35px', textAlign:'center', border:'none', background:'transparent', fontWeight:'bold', fontSize:'15px'}} 
-                                    />
-                                    <button onClick={() => addToCart(item)} style={{border:'none', background:'none', fontSize:'18px', padding:'0 5px'}}>+</button>
+                                <div style={{display:'flex', alignItems:'center', background:'#f5f5f5', borderRadius:'8px', padding:'3px'}}>
+                                    <button onClick={() => removeFromCart(item.id)} style={{border:'none', background:'none', padding:'5px 10px'}}>-</button>
+                                    <input type="number" value={item.qty} onChange={(e)=>handleQtyInput(item.id, e.target.value)} style={{width:'30px', textAlign:'center', border:'none', background:'none', fontWeight:'bold', fontSize:'14px'}} />
+                                    <button onClick={() => addToCart(item)} style={{border:'none', background:'none', padding:'5px 10px'}}>+</button>
                                 </div>
-                                <i className="fas fa-trash-alt" onClick={() => deleteFromCart(item.id)} style={{color:'#FF3B30', marginLeft:'5px', cursor:'pointer'}}></i>
+                                <i className="fas fa-trash-alt" onClick={() => deleteItem(item.id)} style={{color:'#ff4d4d', fontSize:'18px', padding:'5px'}}></i>
                             </div>
                         ))}
 
-                        <div style={{ paddingTop: '10px' }}>
+                        <div style={{ marginTop: '20px' }}>
                             <div style={{display:'flex', justifyContent:'space-between', fontWeight:'bold', fontSize:'18px', marginBottom:'20px'}}>
-                                <span>Total Amount:</span>
+                                <span>Total:</span>
                                 <span style={{color:'#007AFF'}}>{cartTotal.toLocaleString()} Ks</span>
                             </div>
 
-                            <div style={{marginBottom:'12px'}}>
-                                <label style={labelStyle}>Name</label>
-                                <input placeholder="နာမည်ရိုက်ထည့်ပါ" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} style={inputStyle} />
-                            </div>
+                            <label style={labelStyle}>နာမည်</label>
+                            <input placeholder="နာမည်ရိုက်ထည့်ပါ" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} style={inputStyle} />
+                            
+                            <label style={labelStyle}>ဖုန်းနံပါတ်</label>
+                            <input type="tel" placeholder="ဖုန်းနံပါတ်ရိုက်ထည့်ပါ" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} style={inputStyle} />
 
-                            <div style={{marginBottom:'12px'}}>
-                                <label style={labelStyle}>Phone</label>
-                                <input placeholder="ဖုန်းနံပါတ်ရိုက်ထည့်ပါ" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} style={inputStyle} />
-                            </div>
-
-                            <div style={{display:'flex', gap:'15px', marginBottom:'12px'}}>
+                            <div style={{display:'flex', gap:'15px'}}>
                                 <div style={{flex:1}}>
-                                    <label style={labelStyle}>Date</label>
+                                    <label style={labelStyle}>ရက်စွဲ</label>
                                     <input type="date" value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} style={inputStyle} />
                                 </div>
                                 <div style={{flex:1}}>
-                                    <label style={labelStyle}>Time</label>
+                                    <label style={labelStyle}>အချိန်</label>
                                     <input type="time" value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} style={inputStyle} />
                                 </div>
                             </div>
 
-                            <div style={{marginBottom:'20px'}}>
-                                <label style={labelStyle}>Special Note</label>
-                                <textarea placeholder="မှတ်ချက်ရှိပါက ရေးပေးပါ" value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} style={{...inputStyle, height:'80px'}} />
-                            </div>
+                            <label style={labelStyle}>မှတ်ချက် (Special Note)</label>
+                            <textarea placeholder="မှတ်ချက်ရှိပါက ရေးပေးပါ..." value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} style={{...inputStyle, height:'70px'}} />
                             
-                            <button onClick={handleOrder} style={{ width: '100%', background: '#007AFF', color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '17px', marginBottom: '10px' }}>Confirm Order</button>
+                            <button onClick={handleOrder} style={{ width: '100%', background: '#007AFF', color: '#fff', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }}>Confirm Order</button>
                         </div>
                     </div>
                 </div>
@@ -209,6 +199,6 @@ export default function CustomerMenu() {
     );
 }
 
-const labelStyle = { display: 'block', fontSize: '14px', fontWeight: '600', color: '#8E8E93', marginBottom: '5px' };
-const inputStyle = { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E5E5EA', fontSize: '15px', background: '#F9F9F9', outline:'none' };
-                                   
+const labelStyle = { display: 'block', fontSize: '13px', fontWeight: '700', color: '#666', marginBottom: '6px', marginTop: '12px' };
+const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '14px', background: '#F9F9F9', outline:'none' };
+                    
