@@ -9,12 +9,10 @@ import { auth } from "../../lib/firebase";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState("Loading date...");
-  // --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
   const [user, setUser] = useState(null);
-   
-  export default function AdminDashboard() {
-    const [newOrderCount, setNewOrderCount] = useState(0);
-    const audioRef = useRef(null);
+  const [newOrderCount, setNewOrderCount] = useState(0);
+  const audioRef = useRef(null);
+  
   useEffect(() => {
         // အသံဖိုင်အဖြစ် အသုံးပြုရန် (Public folder ထဲတွင် notification.mp3 ရှိရမည်)
         audioRef.current = new Audio('/notification.mp3');
