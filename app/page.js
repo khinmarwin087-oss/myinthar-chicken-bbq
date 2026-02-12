@@ -67,7 +67,7 @@ export default function Home() {
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
 
-      <Link href="/customer_history" className="action-item">
+      <Link href="/history" className="action-item">
         <i className="fas fa-history" style={{ color: 'var(--orange)', width: '25px', textAlign: 'center' }}></i>
         <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Order History</div>
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
