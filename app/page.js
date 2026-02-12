@@ -46,7 +46,7 @@ export default function Home() {
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         // totalPrice field မှ ဒေတာများကို ပေါင်းခြင်း
-        revenue += Number(data.totalAmount || 0);
+        revenue += Number(data.TotalAmount || 0);
         if (data.phone) phoneSet.add(data.phone);
       });
 
