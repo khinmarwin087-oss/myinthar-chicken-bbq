@@ -186,7 +186,7 @@ export default function OrderHistory() {
                             <button onClick={handleDownloadVoucher} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #007AFF', background: '#fff', color: '#007AFF', fontWeight: 'bold' }}>
                                 <i className="fas fa-download"></i> Voucher
                             </button>
-                            <Link href="/app" style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #eee', background: '#f5f5f5', color: '#333', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold' }}>
+                            <Link href="/" style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #eee', background: '#f5f5f5', color: '#333', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold' }}>
                                 <i className="fas fa-home"></i> Home
                             </Link>
                         </div>
