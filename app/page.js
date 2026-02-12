@@ -1,14 +1,22 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+// --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
+import { auth } from "./lib/firebase"; 
+// ----------------------------------
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState("Loading date...");
+  // --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     setCurrentDate(new Date().toLocaleDateString('en-US', options));
+    return () => unsubscribe();
   }, []);
+  // ----------------------------------
 
   return (
     <>
@@ -67,16 +75,19 @@ export default function Home() {
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
 
+      {/* --- ပြင်ဆင်ထားသော History Link (Folder နာမည်အတိုင်း href ပြောင်းထားသည်) --- */}
       <Link href="/history" className="action-item">
         <i className="fas fa-history" style={{ color: 'var(--orange)', width: '25px', textAlign: 'center' }}></i>
-        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Order History</div>
+        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>
+          {user ? "Order History" : "Login to see History"}
+        </div>
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
+      {/* ------------------------------------------------------------------- */}
 
       <div className="footer-note" style={{ textAlign: 'center', marginTop: '40px', color: 'var(--gray)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
           YNS KITCHEN • VERSION 2.0.1
       </div>
     </>
   );
-  }
-  
+          }
