@@ -1,16 +1,14 @@
-import { db } from "@/lib/firebase";
+import { db } from "../../../lib/firebase"; // လမ်းကြောင်းကို ဤသို့ပြောင်းပါ
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
     try {
         const body = await req.json();
-        
-        // Order data တွေကို firebase ထဲက "orders" collection ထဲသိမ်းမယ်
         const orderData = {
             ...body,
-            status: "pending", // အော်ဒါအသစ်ဆိုတော့ စောင့်ဆိုင်းဆဲလို့ သတ်မှတ်မယ်
-            createdAt: serverTimestamp() // တင်တဲ့အချိန်ကို မှတ်မယ်
+            status: "pending",
+            createdAt: serverTimestamp()
         };
 
         const docRef = await addDoc(collection(db, "orders"), orderData);
@@ -19,4 +17,3 @@ export async function POST(req) {
         return NextResponse.json({ success: false, error: e.message });
     }
 }
-
