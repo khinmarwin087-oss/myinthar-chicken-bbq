@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { db } from "../../lib/firebase";
+import { db, auth } from "../../lib/firebase"; // auth ကိုပါ import ယူပါ
 import { collection, getDocs } from "firebase/firestore";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth"; // ဒါလေးထည့်ပါ
+
 
 export default function CustomerMenu() {
     const [menuData, setMenuData] = useState([]);
@@ -18,6 +20,24 @@ export default function CustomerMenu() {
     const [orderSuccess, setOrderSuccess] = useState(null); 
     const [isProcessing, setIsProcessing] = useState(false);
 
+
+        const [user, setUser] = useState(null); // User state
+
+    // Login ဝင်ထားရင် User ကိုမှတ်ထားမယ်
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((u) => {
+            setUser(u);
+            if (u) setCustomerInfo(prev => ({ ...prev, name: u.displayName }));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        try { await signInWithPopup(auth, provider); } 
+        catch (e) { console.error(e); }
+    };
+    
     // Custom Alert States
     const [alertMessage, setAlertMessage] = useState(""); 
     const [showAlert, setShowAlert] = useState(false);
@@ -123,19 +143,48 @@ export default function CustomerMenu() {
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
             {/* Header */}
-            <div style={{ background: '#fff', padding: '15px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #eee' }}>
-                <Link href="/" style={{color:'#007AFF', textDecoration:'none', fontWeight:'bold', fontSize:'14px'}}>
-                   <i className="fas fa-arrow-left"></i> Dashboard
-                </Link>
-                <div style={{position:'relative', marginTop:'15px'}}>
-                    <i className="fas fa-search" style={{position:'absolute', left:'15px', top:'50%', transform:'translateY(-50%)', color:'#999' }}></i>
-                    <input 
-                        type="text" placeholder="ဟင်းပွဲရှာရန်..." 
-                        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{width:'100%', padding:'12px 12px 12px 42px', borderRadius:'12px', border:'1px solid #eee', background:'#F8F9FA', boxSizing:'border-box', outline: 'none' }}
+<div style={{ background: '#fff', padding: '15px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #eee' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link href="/" style={{color:'#007AFF', textDecoration:'none', fontWeight:'bold', fontSize:'14px'}}>
+           <i className="fas fa-arrow-left"></i> Dashboard
+        </Link>
+
+        {/* --- Google Login / Profile Section --- */}
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            {user ? (
+                <>
+                    <Link href="/history" style={{ color: '#007AFF', fontSize: '18px' }}>
+                        <i className="fas fa-history"></i>
+                    </Link>
+                    <img 
+                        src={user.photoURL} 
+                        onClick={() => auth.signOut()}
+                        style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #007AFF', cursor: 'pointer' }} 
                     />
-                </div>
-            </div>
+                </>
+            ) : (
+                <button onClick={handleLogin} style={{ 
+                    background: '#fff', border: '1px solid #ddd', padding: '5px 10px', 
+                    borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' 
+                }}>
+                    <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={14} height={14} alt="g" />
+                    Login
+                </button>
+            )}
+        </div>
+        {/* -------------------------------------- */}
+    </div>
+
+    <div style={{position:'relative', marginTop:'15px'}}>
+        <i className="fas fa-search" style={{position:'absolute', left:'15px', top:'50%', transform:'translateY(-50%)', color:'#999' }}></i>
+        <input 
+            type="text" placeholder="ဟင်းပွဲရှာရန်..." 
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            style={{width:'100%', padding:'12px 12px 12px 42px', borderRadius:'12px', border:'1px solid #eee', background:'#F8F9FA', boxSizing:'border-box', outline: 'none' }}
+        />
+    </div>
+</div>
+            
 
             {/* Menu Grid */}
             <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', boxSizing: 'border-box' }}>
