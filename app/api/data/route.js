@@ -1,5 +1,4 @@
-// အရေးအကြီးဆုံး လိုင်းပါ - { db } လို့ ပါကို ပါရပါမယ်
-import { db } from "@/lib/firebase"; 
+import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { NextResponse } from "next/server";
 
@@ -19,7 +18,7 @@ export async function POST(req) {
         const docRef = await addDoc(collection(db, "menu"), body);
         return NextResponse.json({ success: true, id: docRef.id });
     } catch (e) {
-        return NextResponse.json({ success: false, error: e.message }); // Error တက်ရင် ဘာကြောင့်လဲ ပြန်ပြောမယ်
+        return NextResponse.json({ success: false, error: e.message });
     }
 }
 
