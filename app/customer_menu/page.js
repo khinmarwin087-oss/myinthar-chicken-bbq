@@ -95,17 +95,23 @@ export default function CustomerMenu() {
     const cartQty = cart.reduce((s, i) => s + i.qty, 0);
     const cartTotal = cart.reduce((s, i) => s + (i.qty * i.price), 0);
 
-    const handleOrder = async () => {
-        if (!customerInfo.name || !customerInfo.phone) {
-            setAlertMessage("ကျေးဇူးပြု၍ နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
-            setShowAlert(true);
-            return;
-        }
-        if (cart.length === 0) {
-            setAlertMessage("Cart ထဲမှာ ပစ္စည်းမရှိသေးပါ");
-            setShowAlert(true);
-            return;
-        }
+        const handleOrder = async () => {
+        // ... validation အပိုင်းများ ...
+
+        setIsProcessing(true);
+        const orderDetails = { 
+            ...customerInfo, 
+            email: user ? user.email : "guest", // ဒီစာကြောင်းကို ထည့်ပေးပါ (User ရှိရင် email သိမ်းမယ်)
+            items: cart, 
+            totalPrice: cartTotal, 
+            status: "New",
+            orderDate: new Date().toISOString(),
+            orderId: "ORD-" + Math.floor(1000 + Math.random() * 9000)
+        };
+
+        // ... ကျန်တဲ့ try-catch code များ ...
+    };
+    
 
         setIsProcessing(true);
         const orderDetails = { 
