@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Image Warning Fix
 import { db } from "../../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -23,38 +24,45 @@ export default function CustomerMenu() {
                 const cats = new Set(['All']);
                 data.forEach(item => { if (item.category) cats.add(item.category); });
                 setCategories(Array.from(cats));
-            } catch (error) { console.error("Error:", error); }
+            } catch (error) { console.error("Error fetching menu:", error); }
             setLoading(false);
         };
         fetchMenus();
     }, []);
 
+    // ✅ addToCart with functional update & price handling
     const addToCart = (item) => {
-        const existing = cart.find(c => c.id === item.id);
-        if (existing) {
-            setCart(cart.map(c => c.id === item.id ? { ...c, qty: c.qty + 1 } : c));
-        } else {
-            const price = typeof item.price === 'string' ? parseInt(item.price.replace(/,/g, '')) : (Number(item.price) || 0);
-            setCart([...cart, { ...item, price: price, qty: 1 }]);
-        }
+        setCart(prevCart => {
+            const existing = prevCart.find(c => c.id === item.id);
+            if (existing) {
+                return prevCart.map(c => c.id === item.id ? { ...c, qty: c.qty + 1 } : c);
+            } else {
+                const price = typeof item.price === "string" 
+                    ? parseInt(item.price.replace(/,/g, "")) 
+                    : item.price || 0;
+                return [...prevCart, { ...item, price, qty: 1 }];
+            }
+        });
     };
 
+    // ✅ removeFromCart safe version
     const removeFromCart = (id) => {
-        const existing = cart.find(c => c.id === id);
-        if (existing.qty > 1) {
-            setCart(cart.map(c => c.id === id ? { ...c, qty: c.qty - 1 } : c));
-        } else {
-            setCart(cart.filter(c => c.id !== id));
-        }
+        setCart(prevCart => {
+            const existing = prevCart.find(c => c.id === id);
+            if (!existing) return prevCart;
+            if (existing.qty > 1) {
+                return prevCart.map(c => c.id === id ? { ...c, qty: c.qty - 1 } : c);
+            } else {
+                return prevCart.filter(c => c.id !== id);
+            }
+        });
     };
 
     const handleQtyChange = (id, value) => {
         const newQty = parseInt(value);
-        if (isNaN(newQty) || newQty < 1) {
-            setCart(cart.map(c => c.id === id ? { ...c, qty: 1 } : c));
-        } else {
-            setCart(cart.map(c => c.id === id ? { ...c, qty: newQty } : c));
-        }
+        setCart(prevCart => 
+            prevCart.map(c => c.id === id ? { ...c, qty: isNaN(newQty) || newQty < 1 ? 1 : newQty } : c)
+        );
     };
 
     const cartQty = cart.reduce((s, i) => s + i.qty, 0);
@@ -88,10 +96,11 @@ export default function CustomerMenu() {
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             <div style={{ background: 'white', padding: '20px', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                 <Link href="/" style={{ textDecoration: 'none', color: '#007AFF', fontWeight: 'bold' }}>
-                    <i className="fas fa-chevron-left"></i> Back
+                    <i className="fas fa-chevron-left"></i> Dashboard
                 </Link>
                 <h1 style={{ margin: '10px 0 0', fontSize: '22px' }}>Customer Menu</h1>
             </div>
+
             <div style={{ padding: '15px', display: 'flex', gap: '10px', overflowX: 'auto' }}>
                 {categories.map(cat => (
                     <button key={cat} onClick={() => { setActiveCat(cat); setFilteredMenu(cat === 'All' ? menuData : menuData.filter(m => m.category === cat)); }}
@@ -100,38 +109,50 @@ export default function CustomerMenu() {
                     </button>
                 ))}
             </div>
+
             <div style={{ padding: '10px 15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {filteredMenu.map(item => (
-                    <div key={item.id} style={{ background: 'white', borderRadius: '20px', padding: '10px' }}>
-                        <img src={item.image || 'https://via.placeholder.com/150'} style={{ width: '100%', height: '110px', borderRadius: '15px', objectFit: 'cover' }} />
-                        <b style={{ display: 'block', margin: '8px 0', fontSize: '14px' }}>{item.name}</b>
-                        <span style={{ color: '#007AFF', fontWeight: '800' }}>{Number(item.price).toLocaleString()} Ks</span>
-                        <button onClick={() => addToCart(item)} style={{ width: '100%', background: '#007AFF', color: 'white', border: 'none', padding: '10px', borderRadius: '12px', marginTop: '10px' }}>Add +</button>
-                    </div>
-                ))}
+                {filteredMenu.map(item => {
+                    // ✅ Price formatting fix
+                    const displayPrice = typeof item.price === "string" ? parseInt(item.price.replace(/,/g, "")) : item.price || 0;
+                    return (
+                        <div key={item.id} style={{ background: 'white', borderRadius: '20px', padding: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                            <Image 
+                                src={item.image || 'https://via.placeholder.com/150'} 
+                                width={300} height={110} 
+                                style={{ width: '100%', height: '110px', borderRadius: '15px', objectFit: 'cover' }}
+                                alt={item.name}
+                            />
+                            <b style={{ display: 'block', margin: '8px 0', fontSize: '14px' }}>{item.name}</b>
+                            <span style={{ color: '#007AFF', fontWeight: '800' }}>{displayPrice.toLocaleString()} Ks</span>
+                            <button onClick={() => addToCart(item)} style={{ width: '100%', background: '#007AFF', color: 'white', border: 'none', padding: '10px', borderRadius: '12px', marginTop: '10px', fontWeight: 'bold' }}>Add +</button>
+                        </div>
+                    );
+                })}
             </div>
+
             {cartQty > 0 && (
-                <div style={{ margin: '20px 15px', background: 'white', padding: '20px', borderRadius: '25px' }}>
-                    <h3>Cart ({cartQty})</h3>
+                <div style={{ margin: '20px 15px', background: 'white', padding: '20px', borderRadius: '25px', boxShadow: '0 -5px 20px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ marginTop: 0 }}>Shopping Cart ({cartQty})</h3>
                     {cart.map(item => (
-                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                            <span>{item.name}</span>
-                            <div style={{ display: 'flex', gap: '5px' }}>
-                                <button onClick={() => removeFromCart(item.id)}>-</button>
-                                <input type="number" value={item.qty} onChange={(e) => handleQtyChange(item.id, e.target.value)} style={{ width: '40px', textAlign: 'center' }} />
-                                <button onClick={() => addToCart(item)}>+</button>
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                            <span style={{ flex: 1, fontSize: '14px' }}>{item.name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <button onClick={() => removeFromCart(item.id)} style={{ width: '25px', height: '25px', borderRadius: '5px', border: '1px solid #ddd' }}>-</button>
+                                <input type="number" value={item.qty} onChange={(e) => handleQtyChange(item.id, e.target.value)} style={{ width: '40px', textAlign: 'center', border: '1px solid #ddd' }} />
+                                <button onClick={() => addToCart(item)} style={{ width: '25px', height: '25px', borderRadius: '5px', border: '1px solid #ddd' }}>+</button>
                             </div>
                         </div>
                     ))}
-                    <div style={{ textAlign: 'right', fontWeight: 'bold' }}>Total: {cartTotal.toLocaleString()} Ks</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+                    <div style={{ textAlign: 'right', fontWeight: '800', fontSize: '18px', margin: '15px 0' }}>Total: {cartTotal.toLocaleString()} Ks</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <input placeholder="Name" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} style={inputStyle} />
                         <input placeholder="Phone" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} style={inputStyle} />
-                        <button onClick={handleOrder} style={{ background: '#34C759', color: 'white', border: 'none', padding: '15px', borderRadius: '15px' }}>ORDER</button>
+                        <button onClick={handleOrder} style={{ background: '#34C759', color: 'white', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: '800' }}>CONFIRM ORDER</button>
                     </div>
                 </div>
             )}
         </div>
     );
-                    }
-                        
+                                                    }
+             
