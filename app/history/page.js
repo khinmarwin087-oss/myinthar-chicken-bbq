@@ -150,11 +150,35 @@ export default function OrderHistory() {
                         <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007AFF' }}>{(selectedOrder.totalPrice || 0).toLocaleString()} Ks</span>
                     </div>
 
-                    <div style={{ marginTop: '20px', background: '#F9FAFB', padding: '15px', borderRadius: '12px', fontSize: '12px' }}>
-                        <div><strong>Customer:</strong> {selectedOrder.name}</div>
-                        <div><strong>Phone:</strong> {selectedOrder.phone}</div>
-                        {selectedOrder.note && <div style={{marginTop: '5px'}}><strong>Note:</strong> {selectedOrder.note}</div>}
-                    </div>
+                    {/* Customer Info Box */}
+<div style={{ marginTop: '20px', background: '#F9FAFB', padding: '15px', borderRadius: '12px', fontSize: '12px' }}>
+    <div style={{ marginBottom: '5px' }}>
+        <strong>Customer:</strong> {selectedOrder.name}
+    </div>
+    <div style={{ marginBottom: '5px' }}>
+        <strong>Phone:</strong> {selectedOrder.phone}
+    </div>
+    
+    {/* Database ထဲက field နာမည်အတိုင်း date နဲ့ time ကို သုံးထားပါတယ် */}
+    {selectedOrder.date && (
+        <div style={{ marginTop: '5px' }}>
+            <strong>Pick-up Date:</strong> {selectedOrder.date}
+        </div>
+    )}
+    {selectedOrder.time && (
+        <div style={{ marginTop: '5px' }}>
+            <strong>Pick-up Time:</strong> {selectedOrder.time}
+        </div>
+    )}
+
+    {/* Note ရှိမှသာ ပြသမည် */}
+    {selectedOrder.note && (
+        <div style={{ marginTop: '5px' }}>
+            <strong>Note:</strong> {selectedOrder.note}
+        </div>
+    )}
+</div>
+                
 
                     {/* Action Buttons (Hide when printing) */}
                     <div className="no-print" style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
