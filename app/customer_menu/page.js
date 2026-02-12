@@ -18,6 +18,10 @@ export default function CustomerMenu() {
     const [orderSuccess, setOrderSuccess] = useState(null); 
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // Custom Alert States
+    const [alertMessage, setAlertMessage] = useState(""); 
+    const [showAlert, setShowAlert] = useState(false);
+
     useEffect(() => {
         const fetchMenus = async () => {
             try {
@@ -72,13 +76,24 @@ export default function CustomerMenu() {
     const cartTotal = cart.reduce((s, i) => s + (i.qty * i.price), 0);
 
     const handleOrder = async () => {
-        if (!customerInfo.name || !customerInfo.phone) return alert("နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
+        if (!customerInfo.name || !customerInfo.phone) {
+            setAlertMessage("ကျေးဇူးပြု၍ နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
+            setShowAlert(true);
+            return;
+        }
+        if (cart.length === 0) {
+            setAlertMessage("Cart ထဲမှာ ပစ္စည်းမရှိသေးပါ");
+            setShowAlert(true);
+            return;
+        }
+
         setIsProcessing(true);
         const orderDetails = { 
             ...customerInfo, 
             items: cart, 
             totalPrice: cartTotal, 
-            orderDate: new Date().toLocaleString(),
+            status: "New",
+            orderDate: new Date().toISOString(),
             orderId: "ORD-" + Math.floor(1000 + Math.random() * 9000)
         };
 
@@ -94,7 +109,10 @@ export default function CustomerMenu() {
                 setCart([]);
                 setShowCart(false);
             }
-        } catch (e) { alert("Error placing order"); }
+        } catch (e) { 
+            setAlertMessage("Order တင်ရတာ အဆင်မပြေဖြစ်သွားပါသည်");
+            setShowAlert(true);
+        }
         setIsProcessing(false);
     };
 
@@ -133,7 +151,7 @@ export default function CustomerMenu() {
                 ))}
             </div>
 
-            {/* Floating Cart Button */}
+            {/* Floating Cart Bar */}
             {cartQty > 0 && !showCart && (
                 <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1A1A1A', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1000, borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
                     <div style={{color:'#fff'}}>
@@ -159,35 +177,21 @@ export default function CustomerMenu() {
                                     <div style={{fontSize:'14px', fontWeight:'bold', marginBottom: '4px'}}>{item.name}</div>
                                     <div style={{fontSize:'13px', color: '#007AFF'}}>{(item.price).toLocaleString()} Ks</div>
                                 </div>
-                                
                                 <div style={{display:'flex', alignItems:'center', background:'#f5f5f5', borderRadius:'8px', padding:'2px 5px'}}>
                                     <button onClick={() => removeFromCart(item.id)} style={{border:'none', background:'none', padding:'5px 8px', fontSize: '16px'}}>-</button>
-                                    <input 
-                                        type="number" 
-                                        value={item.qty} 
-                                        onChange={(e) => updateQty(item.id, e.target.value)}
-                                        style={{width:'35px', textAlign:'center', border:'none', background:'none', fontWeight:'bold', fontSize:'14px'}} 
-                                    />
+                                    <input type="number" value={item.qty} onChange={(e) => updateQty(item.id, e.target.value)} style={{width:'35px', textAlign:'center', border:'none', background:'none', fontWeight:'bold'}} />
                                     <button onClick={() => addToCart(item)} style={{border:'none', background:'none', padding:'5px 8px', fontSize: '16px'}}>+</button>
                                 </div>
-
                                 <i className="fas fa-trash-alt" onClick={() => deleteItem(item.id)} style={{color:'#FF3B30', padding: '5px', fontSize: '18px'}}></i>
                             </div>
                         ))}
                         
                         <div style={{marginTop:'25px'}}>
-                            <div style={{display:'flex', justifyContent:'space-between', fontWeight:'bold', fontSize:'18px', marginBottom:'20px'}}>
-                                <span>Total Amount:</span>
-                                <span style={{color:'#007AFF'}}>{cartTotal.toLocaleString()} Ks</span>
-                            </div>
-
                             <label style={labelStyle}>နာမည်</label>
                             <input style={inputStyle} value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} placeholder="Customer Name" />
-                            
                             <label style={labelStyle}>ဖုန်းနံပါတ်</label>
                             <input style={inputStyle} value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} placeholder="09xxxxxxx" />
-
-                            <div style={{display:'flex', gap:'15px', marginBottom:'10px'}}>
+                            <div style={{display:'flex', gap:'15px'}}>
                                 <div style={{flex:1}}>
                                     <label style={labelStyle}>ရက်စွဲ</label>
                                     <input type="date" style={inputStyle} value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
@@ -197,10 +201,8 @@ export default function CustomerMenu() {
                                     <input type="time" style={inputStyle} value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
                                 </div>
                             </div>
-
-                            <label style={labelStyle}>မှတ်ချက် (Special Note)</label>
-                            <textarea style={{...inputStyle, height:'70px'}} value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} placeholder="Extra spicy, no onions, etc." />
-
+                            <label style={labelStyle}>မှတ်ချက်</label>
+                            <textarea style={{...inputStyle, height:'70px'}} value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} placeholder="မှတ်ချက်ရှိပါက ရေးပေးပါ" />
                             <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', background: '#34C759', color: '#fff', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }}>
                                 {isProcessing ? "Processing..." : "Confirm Order"}
                             </button>
@@ -209,37 +211,40 @@ export default function CustomerMenu() {
                 </div>
             )}
 
-            {/* Voucher Modal */}
+            {/* Success Voucher Modal */}
             {orderSuccess && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
-                    <div style={{ background: '#fff', width: '100%', maxWidth: '360px', borderRadius: '20px', padding: '25px', textAlign: 'center', boxSizing: 'border-box' }}>
+                    <div style={{ background: '#fff', width: '100%', maxWidth: '360px', borderRadius: '20px', padding: '25px', textAlign: 'center' }}>
                         <i className="fas fa-check-circle" style={{color:'#34C759', fontSize:'50px', marginBottom:'15px'}}></i>
-                        <h3 style={{margin:'0 0 10px 0'}}>Order Placed!</h3>
-                        
-                        <div style={{textAlign:'left', background:'#f9f9f9', padding:'15px', borderRadius:'12px', fontSize:'13px', lineHeight: '1.6'}}>
-                            <div style={{borderBottom: '1px dashed #ddd', paddingBottom: '10px', marginBottom: '10px'}}>
-                                <div><strong>ID:</strong> {orderSuccess.orderId}</div>
-                                <div><strong>Name:</strong> {orderSuccess.name}</div>
-                                <div><strong>Phone:</strong> {orderSuccess.phone}</div>
-                                <div><strong>Date/Time:</strong> {orderSuccess.date} | {orderSuccess.time}</div>
-                            </div>
-                            {orderSuccess.items.map(item => (
-                                <div key={item.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'5px'}}>
+                        <h3 style={{margin:0}}>Order Placed!</h3>
+                        <div style={{textAlign:'left', background:'#f9f9f9', padding:'15px', borderRadius:'12px', fontSize:'13px', marginTop: '15px'}}>
+                            <p><strong>ID:</strong> {orderSuccess.orderId}</p>
+                            <p><strong>Name:</strong> {orderSuccess.name}</p>
+                            {orderSuccess.items.map((item, i) => (
+                                <div key={i} style={{display:'flex', justifyContent:'space-between'}}>
                                     <span>{item.name} x {item.qty}</span>
                                     <span>{(item.price * item.qty).toLocaleString()} Ks</span>
                                 </div>
                             ))}
-                            <div style={{borderTop: '1px solid #eee', marginTop: '10px', paddingTop: '10px', display:'flex', justifyContent:'space-between', fontWeight:'bold', fontSize:'15px'}}>
-                                <span>Total:</span>
-                                <span>{orderSuccess.totalPrice.toLocaleString()} Ks</span>
+                            <div style={{borderTop: '1px solid #eee', marginTop: '10px', paddingTop: '10px', fontWeight: 'bold'}}>
+                                Total: {orderSuccess.totalPrice.toLocaleString()} Ks
                             </div>
-                            {orderSuccess.note && <div style={{marginTop: '10px', fontSize: '11px', color: '#666'}}>Note: {orderSuccess.note}</div>}
                         </div>
+                        <div style={{marginTop:'20px', display:'flex', gap:'10px'}}>
+                            <button onClick={() => setOrderSuccess(null)} style={{flex:1, padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}}>Home</button>
+                            <button onClick={() => window.print()} style={{flex:1, padding:'12px', borderRadius:'10px', background:'#007AFF', color:'#fff', border: 'none'}}>Download</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                        <div style={{marginTop:'25px', display:'flex', gap:'10px'}}>
-                            <button onClick={() => setOrderSuccess(null)} style={{flex:1, padding:'14px', borderRadius:'12px', border:'1px solid #ddd', background:'#fff', fontWeight:'bold'}}>Home</button>
-                            <button onClick={() => window.print()} style={{flex:1, padding:'14px', borderRadius:'12px', border:'none', background:'#007AFF', color:'#fff', fontWeight:'bold'}}>Voucher</button>
-                        </div>
+            {/* Custom Alert Box */}
+            {showAlert && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#fff', padding: '25px', borderRadius: '20px', textAlign: 'center', width: '100%', maxWidth: '300px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+                        <i className="fas fa-exclamation-circle" style={{ color: '#FF3B30', fontSize: '40px', marginBottom: '15px' }}></i>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#333', marginBottom: '20px' }}>{alertMessage}</p>
+                        <button onClick={() => setShowAlert(false)} style={{ width: '100%', padding: '12px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold' }}>OK</button>
                     </div>
                 </div>
             )}
@@ -248,5 +253,5 @@ export default function CustomerMenu() {
 }
 
 const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#8E8E93', marginBottom: '6px', marginTop: '12px' };
-const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA', fontSize: '15px', background: '#F9F9F9', boxSizing:'border-box', outline:'none' };
-                
+const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA', fontSize: '15px', background: '#F9F9F9', boxSizing:'border-box', outline:'none', marginBottom: '5px' };
+                    
