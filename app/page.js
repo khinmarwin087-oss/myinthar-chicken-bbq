@@ -15,7 +15,7 @@ export default function Home() {
   
   useEffect(() => {
         // အသံဖိုင်အဖြစ် အသုံးပြုရန် (Public folder ထဲတွင် notification.mp3 ရှိရမည်)
-        audioRef.current = new Audio('/notification.mp3');
+        audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
 
         const q = query(collection(db, "orders"), where("status", "==", "pending"));
         
