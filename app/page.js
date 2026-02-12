@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 // --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
-import { auth } from "./lib/firebase"; 
+// line 5 မှာ အောက်ပါအတိုင်း ပြင်ပါ
+import { auth } from "../lib/firebase"; 
+
 // ----------------------------------
 
 export default function Home() {
