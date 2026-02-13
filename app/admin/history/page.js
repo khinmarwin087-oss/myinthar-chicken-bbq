@@ -22,7 +22,7 @@ export default function AdminHistory() {
         ...doc.data() 
       }));
       
-      // Status စစ်ထုတ်ခြင်း
+      // Status စစ်ထုတ်ခြင်း (Database ထဲရှိ status နှင့် ကိုက်ညီရမည်)
       const validOrders = allOrders.filter(o => 
         ['Cooking', 'Ready', 'Done', 'Success', 'completed'].includes(o.status)
       );
@@ -36,13 +36,14 @@ export default function AdminHistory() {
     return () => unsubscribe();
   }, []);
 
-  // Filter လုပ်ထားသော အော်ဒါများကို useMemo ဖြင့် တွက်ချက်ခြင်း (Performance ပိုကောင်းစေသည်)
+  // Filter Logic - Database ထဲရှိ 'name' field ကို အသုံးပြုထားသည်
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
       const matchesDate = selDate ? o.date === selDate : true;
       const matchesSearch = searchId ? (
         (o.id || "").toLowerCase().includes(searchId.toLowerCase()) ||
-        (o.customerName || "").toLowerCase().includes(searchId.toLowerCase())
+        (o.name || "").toLowerCase().includes(searchId.toLowerCase()) ||
+        (o.orderId || "").toString().toLowerCase().includes(searchId.toLowerCase())
       ) : true;
       return matchesDate && matchesSearch;
     });
@@ -65,7 +66,7 @@ export default function AdminHistory() {
     return groups;
   }, {});
 
-  // အော်ဒါအသေးစိတ်ပြသသည့်အပိုင်း (Voucher View)
+  // အော်ဒါအသေးစိတ် Voucher View
   if (selectedOrder) {
     return (
       <div className="modern-voucher-page">
@@ -78,7 +79,7 @@ export default function AdminHistory() {
           .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
           .info-card { background: #161A22; padding: 12px; border-radius: 12px; border: 1px solid #1f2229; }
           .info-card label { display: block; font-size: 9px; color: #8e9196; margin-bottom: 4px; font-weight: 600; }
-          .info-card span { font-size: 13px; font-weight: 600; }
+          .info-card span { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 
           .items-section { background: #161A22; border-radius: 15px; padding: 15px; border: 1px solid #1f2229; margin-bottom: 20px; }
           .items-table { width: 100%; border-collapse: collapse; }
@@ -90,7 +91,7 @@ export default function AdminHistory() {
           .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; }
           .btn-back { background: #2D323D; color: #fff; }
           .btn-print { background: #00F2EA; color: #000; box-shadow: 0 4px 15px rgba(0,242,234,0.3); }
-          @media print { .v-actions { display: none; } }
+          @media print { .v-actions { display: none; } .modern-voucher-page { background: #fff; color: #000; } }
         `}</style>
 
         <div className="v-header">
@@ -99,9 +100,9 @@ export default function AdminHistory() {
         </div>
 
         <div className="info-grid">
-          <div className="info-card"><label>CUSTOMER</label><span>{selectedOrder.customerName || "Customer"}</span></div>
-          <div className="info-card"><label>PHONE</label><span>{selectedOrder.customerPhone || selectedOrder.phone || "-"}</span></div>
-          <div className="info-card"><label>ORDER ID</label><span>#{selectedOrder.id?.slice(-6).toUpperCase() || "N/A"}</span></div>
+          <div className="info-card"><label>CUSTOMER</label><span>{selectedOrder.name || "Customer"}</span></div>
+          <div className="info-card"><label>PHONE</label><span>{selectedOrder.phone || "-"}</span></div>
+          <div className="info-card"><label>ORDER ID</label><span>#{selectedOrder.orderId || selectedOrder.id?.slice(-6).toUpperCase()}</span></div>
           <div className="info-card"><label>DATE</label><span>{selectedOrder.date}</span></div>
         </div>
 
@@ -109,11 +110,11 @@ export default function AdminHistory() {
           <table className="items-table">
             <thead><tr><th>ITEM</th><th style={{textAlign:'center'}}>QTY</th><th style={{textAlign:'right'}}>PRICE</th></tr></thead>
             <tbody>
-              {(selectedOrder.cartItems || selectedOrder.items || []).map((item, i) => (
+              {(selectedOrder.items || selectedOrder.cartItems || []).map((item, i) => (
                 <tr key={i}>
                   <td style={{fontWeight: 500}}>{item.name}</td>
-                  <td style={{textAlign:'center'}}>{item.quantity || item.qty}</td>
-                  <td style={{textAlign:'right', fontWeight: 700}}>{(Number(item.price) * Number(item.quantity || item.qty)).toLocaleString()}</td>
+                  <td style={{textAlign:'center'}}>{item.qty || item.quantity}</td>
+                  <td style={{textAlign:'right', fontWeight: 700}}>{(Number(item.price) * Number(item.qty || item.quantity)).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -134,18 +135,15 @@ export default function AdminHistory() {
     );
   }
 
-  // အဓိက စာရင်းကြည့်သည့်အပိုင်း
   return (
     <div className="admin-root">
       <style jsx global>{`
         body { background: #0A0C10; color: #fff; font-family: 'Inter', sans-serif; margin: 0; }
         .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; position: sticky; top: 0; background: rgba(10, 12, 16, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid #1f2229; z-index: 100; }
         .btn-box { background: #161A22; border: 1px solid #2d323d; color: #fff; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; transition: 0.2s; }
-        .btn-box:active { transform: scale(0.9); background: #222; }
         .summary-card { background: linear-gradient(135deg, #161A22 0%, #0A0C10 100%); margin: 20px; padding: 20px; border-radius: 20px; border: 1px solid #2d323d; display: flex; justify-content: space-between; }
-        .order-card { background: #161A22; margin: 0 20px 12px; padding: 16px; border-radius: 18px; border: 1px solid #1f2229; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .order-card:active { transform: scale(0.98); background: #1c212b; }
-        .search-input { width: 100%; padding: 14px; border-radius: 12px; background: #161A22; border: 1px solid #2d323d; color: #fff; outline: none; font-size: 14px; }
+        .order-card { background: #161A22; margin: 0 20px 12px; padding: 16px; border-radius: 18px; border: 1px solid #1f2229; display: flex; justify-content: space-between; align-items: center; }
+        .search-input { width: 100%; padding: 14px; border-radius: 12px; background: #161A22; border: 1px solid #2d323d; color: #fff; outline: none; }
       `}</style>
 
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -160,14 +158,14 @@ export default function AdminHistory() {
       </div>
 
       {showMenu && (
-        <div style={{position:'absolute', right:20, top:70, background:'#1c1f26', border:'1px solid #2d323d', borderRadius:12, overflow:'hidden', zIndex:200, boxShadow: '0 10px 25px rgba(0,0,0,0.5)'}}>
-            <div style={{padding:'14px 20px', fontSize:14, borderBottom: '1px solid #2d323d'}} onClick={()=>{setShowTracker(!showTracker); setShowMenu(false)}}><i className="fas fa-search" style={{marginRight: 10}}></i> Tracker</div>
-            <div style={{padding:'14px 20px', fontSize:14, color:'#ff453a'}} onClick={()=>{setSelDate(""); setSearchId(""); setShowMenu(false)}}><i className="fas fa-undo" style={{marginRight: 10}}></i> Reset All</div>
+        <div style={{position:'absolute', right:20, top:70, background:'#1c1f26', border:'1px solid #2d323d', borderRadius:12, zIndex:200, boxShadow: '0 10px 25px rgba(0,0,0,0.5)'}}>
+            <div style={{padding:'14px 20px', fontSize:14, borderBottom: '1px solid #2d323d'}} onClick={()=>{setShowTracker(!showTracker); setShowMenu(false)}}>Tracker</div>
+            <div style={{padding:'14px 20px', fontSize:14, color:'#ff453a'}} onClick={()=>{setSelDate(""); setSearchId(""); setShowMenu(false)}}>Reset All</div>
         </div>
       )}
 
       <div className="summary-card">
-        <div><small style={{color:'#8e9196', fontWeight: 700}}>TOTAL REVENUE</small><div style={{fontSize:24, fontWeight:900}}>{totalIncome.toLocaleString()} <span style={{fontSize: 14}}>Ks</span></div></div>
+        <div><small style={{color:'#8e9196', fontWeight: 700}}>TOTAL REVENUE</small><div style={{fontSize:24, fontWeight:900}}>{totalIncome.toLocaleString()} Ks</div></div>
         <div style={{textAlign:'right'}}><small style={{color:'#8e9196', fontWeight: 700}}>ORDERS</small><div style={{fontSize:24, fontWeight:900}}>{filteredOrders.length}</div></div>
       </div>
 
@@ -183,18 +181,18 @@ export default function AdminHistory() {
       )}
 
       {loading ? (
-        <div style={{textAlign: 'center', marginTop: 50, color: '#8e9196'}}>Loading History...</div>
+        <div style={{textAlign: 'center', marginTop: 50, color: '#8e9196'}}>Loading...</div>
       ) : (
         <div style={{paddingBottom: 80}}>
-          {Object.keys(groupedOrders).length > 0 ? Object.keys(groupedOrders).map(date => (
+          {Object.keys(groupedOrders).map(date => (
             <div key={date}>
-              <div style={{padding:'10px 20px', color:'#00F2EA', fontSize:11, fontWeight:900, letterSpacing: 1}}>{getDateLabel(date)}</div>
+              <div style={{padding:'10px 20px', color:'#00F2EA', fontSize:11, fontWeight:900}}>{getDateLabel(date)}</div>
               {groupedOrders[date].map(order => (
                 <div key={order.id} className="order-card" onClick={() => setSelectedOrder(order)}>
                   <div>
-                    <div style={{fontSize:15, fontWeight:'800', marginBottom: 4}}>{order.customerName || "Customer"}</div>
+                    <div style={{fontSize:15, fontWeight:'800', marginBottom: 4}}>{order.name || "Customer"}</div>
                     <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-                      <span style={{fontSize:10, color:'#8e9196', background: '#222', padding: '2px 6px', borderRadius: 4}}>#{order.id?.slice(-5).toUpperCase()}</span>
+                      <span style={{fontSize:10, color:'#8e9196', background: '#222', padding: '2px 6px', borderRadius: 4}}>#{order.orderId || order.id?.slice(0, 5).toUpperCase()}</span>
                       <small style={{color:'#555'}}>• {order.time}</small>
                     </div>
                   </div>
@@ -204,11 +202,10 @@ export default function AdminHistory() {
                 </div>
               ))}
             </div>
-          )) : (
-            <div style={{textAlign: 'center', marginTop: 50, color: '#444'}}>No orders found.</div>
-          )}
+          ))}
         </div>
       )}
     </div>
   );
-}
+                             }
+            
