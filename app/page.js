@@ -1,24 +1,17 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db, auth } from "../lib/firebase"; 
-
 export default function Home() {
-  const [currentDate, setCurrentDate] = useState("");
-  const [user, setUser] = useState(null);
-
+  const [currentDate, setCurrentDate] = useState("Loading date...");
   useEffect(() => {
-    // ၁။ Auth စစ်ဆေးခြင်း
-    const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-
-    // ၂။ ယနေ့ရက်စွဲ သတ်မှတ်ခြင်း
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     setCurrentDate(new Date().toLocaleDateString('en-US', options));
-
-    return () => unsubscribeAuth();
   }, []);
-
   return (
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h1>Myinthar Chicken BBQ</h1>
+      <p>VPN မလိုဘဲ Firebase သုံးနိုင်ပါပြီ။</p>
+    </div>
     <>
       <style jsx global>{`
         :root { --pearl: #ffffff; --bg: #F2F2F7; --primary: #007AFF; --text: #1C1C1E; --gray: #8E8E93; --accent: #AF52DE; --orange: #FF9500; }
@@ -39,34 +32,29 @@ export default function Home() {
         .section-title { font-size: 16px; font-weight: 800; margin-bottom: 15px; padding-left: 5px; }
         .action-item { background: var(--pearl); display: flex; align-items: center; padding: 18px; border-radius: 20px; margin-bottom: 12px; text-decoration: none; color: inherit; gap: 15px; border: 1px solid rgba(0,0,0,0.01); }
       `}</style>
-
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
       <div className="welcome-header">
         <p>{currentDate}</p>
         <h1>YNS Kitchen 👋</h1>
       </div>
-
       <div className="banner-card">
         <h2>Special Offer!</h2>
         <p>ယနေ့ မှာယူတဲ့ ဟင်းပွဲတိုင်းအတွက် <br/>10% Discount ရရှိနိုင်ပါတယ်။</p>
         <i className="fas fa-utensils" style={{ position: 'absolute', right: '-20px', bottom: '-20px', fontSize: '120px', opacity: 0.2 }}></i>
       </div>
-
       <div className="section-title">Main Services</div>
       <div className="grid-menu">
         <Link href="/customer_menu" className="stat-card">
-          <div className="icon-circle bg-blue"><i className="fas fa-shopping-basket"></i></div>
-          <span>Menu</span>
-          <b>ဟင်းပွဲမှာယူရန်</b>
+            <div className="icon-circle bg-blue"><i className="fas fa-shopping-basket"></i></div>
+            <span>Menu</span>
+            <b>ဟင်းပွဲမှာယူရန်</b>
         </Link>
         <Link href="/track" className="stat-card">
-          <div className="icon-circle bg-purple"><i className="fas fa-truck-loading"></i></div>
-          <span>Tracking</span>
-          <b>အော်ဒါကြည့်ရန်</b>
+            <div className="icon-circle bg-purple"><i className="fas fa-truck-loading"></i></div>
+            <span>Tracking</span>
+            <b>အော်ဒါကြည့်ရန်</b>
         </Link>
       </div>
-
       <div className="section-title">Quick Links</div>
       
       <Link href="#" className="action-item">
@@ -74,18 +62,16 @@ export default function Home() {
         <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>My Favorites</div>
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
-
-      <Link href="/history" className="action-item">
+      <Link href="/customer_history" className="action-item">
         <i className="fas fa-history" style={{ color: 'var(--orange)', width: '25px', textAlign: 'center' }}></i>
-        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>
-          {user ? "Order History" : "Login to see History"}
-        </div>
+        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Order History</div>
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
-
-      <div style={{ textAlign: 'center', marginTop: '40px', color: 'var(--gray)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
+      <div className="footer-note" style={{ textAlign: 'center', marginTop: '40px', color: 'var(--gray)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
           YNS KITCHEN • VERSION 2.0.1
       </div>
     </>
   );
 }
+  }
+  
