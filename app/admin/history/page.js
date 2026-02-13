@@ -61,107 +61,132 @@ export default function AdminHistory() {
     window.print();
   };
 
+  
+
   if (selectedOrder) {
     return (
-      <div className="voucher-overlay">
+      <div className="modern-voucher-page">
         <style jsx>{`
-          .voucher-overlay {
-            background: #000;
+          .modern-voucher-page {
+            background: linear-gradient(135deg, #0F1115 0%, #1C1F26 100%);
             min-height: 100vh;
+            color: #fff;
             padding: 20px;
-            animation: fadeIn 0.4s ease;
-          }
-          @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-          .premium-voucher {
-            background: #fff;
-            color: #1a1a1a;
-            border-radius: 30px;
-            padding: 30px 20px;
-            max-width: 400px;
-            margin: 0 auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
           }
 
-          .v-header { text-align: center; margin-bottom: 25px; }
-          .v-header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; font-weight: 900; }
-          
-          .info-section { 
-            background: #f8f9fa; 
-            border-radius: 15px; 
-            padding: 15px; 
-            margin-bottom: 20px;
-            font-size: 13px;
-          }
-          .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-          .label { color: #6c757d; font-weight: 500; }
-          .value { font-weight: 700; text-align: right; }
+          /* Header Section */
+          .v-header { text-align: center; margin-bottom: 30px; padding-top: 10px; }
+          .v-header h1 { font-size: 26px; font-weight: 800; margin: 0; color: #fff; }
+          .v-header p { font-size: 11px; color: #00F2EA; letter-spacing: 3px; margin-top: 5px; opacity: 0.8; }
 
-          .items-table { width: 100%; margin: 20px 0; border-collapse: collapse; }
-          .items-table th { 
-            text-align: left; 
-            font-size: 11px; 
-            color: #adb5bd; 
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+          /* Info Grid Layout */
+          .info-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 25px; 
           }
-          .items-table td { padding: 12px 0; font-size: 14px; border-bottom: 1px solid #fafafa; }
-          
-          .note-box {
-            background: #fff9db;
-            border-left: 4px solid #fcc419;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 12px;
+          .info-card { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px; 
+            border-radius: 16px; 
+            backdrop-filter: blur(10px);
           }
+          .info-card label { display: block; font-size: 10px; color: #8E9196; margin-bottom: 4px; font-weight: 600; }
+          .info-card span { display: block; font-size: 13px; font-weight: 600; color: #E0E0E0; }
 
-          .total-section {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px dashed #eee;
+          /* Pick-up Card (Special Highlight) */
+          .pickup-highlight {
+            grid-column: span 2;
+            background: linear-gradient(90deg, rgba(0, 242, 234, 0.1) 0%, rgba(0, 184, 178, 0.05) 100%);
+            border: 1px solid rgba(0, 242, 234, 0.2);
+            padding: 15px;
+            border-radius: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
           }
 
-          .footer-btns {
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 12px; width: calc(100% - 40px);
-            max-width: 400px;
+          /* Items List Table */
+          .items-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+          }
+          .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          .items-table th { text-align: left; font-size: 10px; color: #8E9196; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+          .items-table td { padding: 12px 0; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+          .qty-badge { background: #2D323D; padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+
+          /* Note Section */
+          .note-section { margin-top: 15px; font-size: 12px; color: #FFD43B; background: rgba(255, 212, 59, 0.05); padding: 10px; border-radius: 10px; border-left: 3px solid #FFD43B; }
+
+          /* Total Box */
+          .total-box {
+            margin-top: 25px;
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          /* Fixed Action Buttons */
+          .v-actions {
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            display: flex; gap: 12px;
           }
           .btn {
-            flex: 1; padding: 18px; border-radius: 18px; border: none;
-            font-weight: 800; cursor: pointer; transition: 0.3s;
+            flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
           }
-          .btn-back { background: #2d2d2d; color: #fff; }
-          .btn-print { background: #00F2EA; color: #000; box-shadow: 0 10px 20px rgba(0, 242, 234, 0.3); }
-          .btn:active { transform: scale(0.95); }
+          .btn-back { background: #2D323D; color: #fff; }
+          .btn-print { background: #00F2EA; color: #000; }
+          .btn:active { transform: scale(0.96); }
 
-          @media print { .footer-btns { display: none; } .voucher-overlay { background: #fff; padding: 0; } }
+          @media print { .v-actions { display: none; } body { background: #fff; } }
         `}</style>
 
-        <div className="premium-voucher">
-          <div className="v-header">
-            <h1>YNS KITCHEN</h1>
-            <p style={{ fontSize: '10px', color: '#adb5bd', margin: '5px 0' }}>PREMIUM GUEST CHECK</p>
+        <div className="v-header">
+          <h1>YNS KITCHEN</h1>
+          <p>PREMIUM GUEST CHECK</p>
+        </div>
+
+        <div className="info-grid">
+          <div className="info-card">
+            <label>CUSTOMER</label>
+            <span>{selectedOrder.customerName}</span>
+          </div>
+          <div className="info-card">
+            <label>PHONE</label>
+            <span>{selectedOrder.customerPhone || selectedOrder.phone}</span>
+          </div>
+          <div className="info-card">
+            <label>ORDER ID</label>
+            <span>#{selectedOrder.id.slice(-6).toUpperCase()}</span>
+          </div>
+          <div className="info-card">
+            <label>ORDER DATE</label>
+            <span>{selectedOrder.date}</span>
           </div>
 
-          <div className="info-section">
-            <div className="info-row"><span className="label">Customer</span> <span className="value">{selectedOrder.customerName}</span></div>
-            <div className="info-row"><span className="label">Phone</span> <span className="value">{selectedOrder.customerPhone || selectedOrder.phone}</span></div>
-            <div className="info-row"><span className="label">Order ID</span> <span className="value">#{selectedOrder.id.slice(-6).toUpperCase()}</span></div>
-            <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: '10px 0' }} />
-            
-            {/* Pick-up Details */}
-            <div className="info-row" style={{ color: '#00F2EA' }}>
-              <span className="label" style={{ color: '#00B8B2' }}>Pick-up Time</span> 
-              <span className="value">{selectedOrder.pickupDate || selectedOrder.date} | {selectedOrder.pickupTime || 'ASAP'}</span>
+          <div className="pickup-highlight">
+            <div>
+              <label style={{ color: '#00F2EA' }}>PICK-UP TIME</label>
+              <span style={{ fontSize: '15px', color: '#fff' }}>
+                {selectedOrder.pickupDate || 'Today'} | {selectedOrder.pickupTime || 'ASAP'}
+              </span>
             </div>
+            <i className="fas fa-clock" style={{ color: '#00F2EA', fontSize: '20px' }}></i>
           </div>
+        </div>
 
+        <div className="items-section">
           <table className="items-table">
             <thead>
               <tr>
@@ -173,41 +198,48 @@ export default function AdminHistory() {
             <tbody>
               {(selectedOrder.cartItems || selectedOrder.items || []).map((item, i) => (
                 <tr key={i}>
-                  <td style={{ fontWeight: 600 }}>{item.name}</td>
-                  <td style={{ textAlign: 'center' }}>{item.quantity || item.qty}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 700 }}>{(Number(item.price) * Number(item.quantity || item.qty)).toLocaleString()}</td>
+                  <td style={{ fontWeight: 500 }}>{item.name}</td>
+                  <td style={{ textAlign: 'center' }}><span className="qty-badge">{item.quantity || item.qty}</span></td>
+                  <td style={{ textAlign: 'right', fontWeight: 700 }}>
+                    {(Number(item.price) * Number(item.quantity || item.qty)).toLocaleString()}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
+          
           {selectedOrder.note && (
-            <div className="note-box">
-              <strong>Note:</strong> {selectedOrder.note}
+            <div className="note-section">
+              <strong>NOTE:</strong> {selectedOrder.note}
             </div>
           )}
-
-          <div className="total-section">
-            <span style={{ fontWeight: 800, color: '#6c757d' }}>TOTAL AMOUNT</span>
-            <span style={{ fontSize: '24px', fontWeight: 900 }}>{Number(selectedOrder.totalPrice || selectedOrder.total).toLocaleString()} <small style={{ fontSize: '12px' }}>Ks</small></span>
-          </div>
-          
-          <p style={{ textAlign: 'center', fontSize: '10px', color: '#adb5bd', marginTop: '30px' }}>
-            THANK YOU FOR CHOOSING YNS KITCHEN!
-          </p>
         </div>
 
-        <div className="footer-btns">
+        <div className="total-box">
+          <span style={{ fontWeight: 700, opacity: 0.6 }}>TOTAL AMOUNT</span>
+          <span style={{ fontSize: '22px', fontWeight: 900 }}>
+            {Number(selectedOrder.totalPrice || selectedOrder.total).toLocaleString()} Ks
+          </span>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: '30px', color: '#8E9196', fontSize: '10px', paddingBottom: '100px' }}>
+          THANK YOU FOR CHOOSING YNS KITCHEN!
+        </div>
+
+        <div className="v-actions">
           <button className="btn btn-back" onClick={() => setSelectedOrder(null)}>
-            <i className="fas fa-arrow-left"></i> BACK
+            <i className="fas fa-chevron-left"></i> BACK
           </button>
           <button className="btn btn-print" onClick={() => window.print()}>
-            PRINT RECEIPT <i className="fas fa-print"></i>
+            <i className="fas fa-print"></i> PRINT
           </button>
         </div>
       </div>
     );
-}
+  }
+
+  // အောက်က return ကတော့ အရင် အော်ဒါစာရင်းပြတဲ့ နေရာပါ
+  
 
   return (
     <div className="admin-root">
