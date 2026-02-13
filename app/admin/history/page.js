@@ -63,51 +63,151 @@ export default function AdminHistory() {
 
   if (selectedOrder) {
     return (
-      <div className="voucher-view">
+      <div className="voucher-overlay">
         <style jsx>{`
-          .voucher-view { background: #fff; min-height: 100vh; color: #000; font-family: 'Courier New', monospace; padding: 40px 20px; }
-          .v-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 20px; margin-bottom: 20px; }
-          .v-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
-          .v-footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px dashed #000; }
-          .no-print { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: #fff; display: flex; gap: 10px; border-top: 1px solid #eee; }
-          .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; }
-          
-          @media print {
-            .no-print { display: none; }
-            body { background: #fff; }
-            .voucher-view { padding: 0; }
+          .voucher-overlay {
+            background: #000;
+            min-height: 100vh;
+            padding: 20px;
+            animation: fadeIn 0.4s ease;
           }
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+          .premium-voucher {
+            background: #fff;
+            color: #1a1a1a;
+            border-radius: 30px;
+            padding: 30px 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            font-family: 'Inter', sans-serif;
+          }
+
+          .v-header { text-align: center; margin-bottom: 25px; }
+          .v-header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; font-weight: 900; }
+          
+          .info-section { 
+            background: #f8f9fa; 
+            border-radius: 15px; 
+            padding: 15px; 
+            margin-bottom: 20px;
+            font-size: 13px;
+          }
+          .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+          .label { color: #6c757d; font-weight: 500; }
+          .value { font-weight: 700; text-align: right; }
+
+          .items-table { width: 100%; margin: 20px 0; border-collapse: collapse; }
+          .items-table th { 
+            text-align: left; 
+            font-size: 11px; 
+            color: #adb5bd; 
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+          }
+          .items-table td { padding: 12px 0; font-size: 14px; border-bottom: 1px solid #fafafa; }
+          
+          .note-box {
+            background: #fff9db;
+            border-left: 4px solid #fcc419;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 12px;
+          }
+
+          .total-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .footer-btns {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 12px; width: calc(100% - 40px);
+            max-width: 400px;
+          }
+          .btn {
+            flex: 1; padding: 18px; border-radius: 18px; border: none;
+            font-weight: 800; cursor: pointer; transition: 0.3s;
+          }
+          .btn-back { background: #2d2d2d; color: #fff; }
+          .btn-print { background: #00F2EA; color: #000; box-shadow: 0 10px 20px rgba(0, 242, 234, 0.3); }
+          .btn:active { transform: scale(0.95); }
+
+          @media print { .footer-btns { display: none; } .voucher-overlay { background: #fff; padding: 0; } }
         `}</style>
 
-        <div className="v-header">
-          <h1 style={{ margin: 0 }}>YNS KITCHEN</h1>
-          <p style={{ margin: 0, fontSize: '12px' }}>OFFICIAL RECEIPT</p>
-        </div>
-
-        <div className="v-row"><span>Customer:</span> <strong>{selectedOrder.customerName}</strong></div>
-        <div className="v-row"><span>Phone:</span> <strong>{selectedOrder.customerPhone || selectedOrder.phone}</strong></div>
-        <div className="v-row"><span>Date:</span> <strong>{selectedOrder.date} | {selectedOrder.time}</strong></div>
-        
-        <div style={{ margin: '20px 0', borderBottom: '1px solid #000', paddingBottom: '5px', fontSize: '12px' }}>ITEMS</div>
-        {(selectedOrder.cartItems || selectedOrder.items || []).map((item, i) => (
-          <div key={i} className="v-row">
-            <span>{item.name} x {item.quantity || item.qty}</span>
-            <span>{(Number(item.price) * Number(item.quantity || item.qty)).toLocaleString()}</span>
+        <div className="premium-voucher">
+          <div className="v-header">
+            <h1>YNS KITCHEN</h1>
+            <p style={{ fontSize: '10px', color: '#adb5bd', margin: '5px 0' }}>PREMIUM GUEST CHECK</p>
           </div>
-        ))}
 
-        <div className="v-footer">
-          <h2 style={{ margin: 0 }}>TOTAL: {Number(selectedOrder.totalPrice || selectedOrder.total).toLocaleString()} Ks</h2>
-          <p style={{ fontSize: '10px', marginTop: '10px' }}>Thank You! Come Again.</p>
+          <div className="info-section">
+            <div className="info-row"><span className="label">Customer</span> <span className="value">{selectedOrder.customerName}</span></div>
+            <div className="info-row"><span className="label">Phone</span> <span className="value">{selectedOrder.customerPhone || selectedOrder.phone}</span></div>
+            <div className="info-row"><span className="label">Order ID</span> <span className="value">#{selectedOrder.id.slice(-6).toUpperCase()}</span></div>
+            <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: '10px 0' }} />
+            
+            {/* Pick-up Details */}
+            <div className="info-row" style={{ color: '#00F2EA' }}>
+              <span className="label" style={{ color: '#00B8B2' }}>Pick-up Time</span> 
+              <span className="value">{selectedOrder.pickupDate || selectedOrder.date} | {selectedOrder.pickupTime || 'ASAP'}</span>
+            </div>
+          </div>
+
+          <table className="items-table">
+            <thead>
+              <tr>
+                <th>ITEM NAME</th>
+                <th style={{ textAlign: 'center' }}>QTY</th>
+                <th style={{ textAlign: 'right' }}>PRICE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(selectedOrder.cartItems || selectedOrder.items || []).map((item, i) => (
+                <tr key={i}>
+                  <td style={{ fontWeight: 600 }}>{item.name}</td>
+                  <td style={{ textAlign: 'center' }}>{item.quantity || item.qty}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700 }}>{(Number(item.price) * Number(item.quantity || item.qty)).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {selectedOrder.note && (
+            <div className="note-box">
+              <strong>Note:</strong> {selectedOrder.note}
+            </div>
+          )}
+
+          <div className="total-section">
+            <span style={{ fontWeight: 800, color: '#6c757d' }}>TOTAL AMOUNT</span>
+            <span style={{ fontSize: '24px', fontWeight: 900 }}>{Number(selectedOrder.totalPrice || selectedOrder.total).toLocaleString()} <small style={{ fontSize: '12px' }}>Ks</small></span>
+          </div>
+          
+          <p style={{ textAlign: 'center', fontSize: '10px', color: '#adb5bd', marginTop: '30px' }}>
+            THANK YOU FOR CHOOSING YNS KITCHEN!
+          </p>
         </div>
 
-        <div className="no-print">
-          <button className="btn" style={{ background: '#f2f2f2' }} onClick={() => setSelectedOrder(null)}>BACK</button>
-          <button className="btn" style={{ background: '#000', color: '#fff' }} onClick={handlePrint}>PRINT / PDF</button>
+        <div className="footer-btns">
+          <button className="btn btn-back" onClick={() => setSelectedOrder(null)}>
+            <i className="fas fa-arrow-left"></i> BACK
+          </button>
+          <button className="btn btn-print" onClick={() => window.print()}>
+            PRINT RECEIPT <i className="fas fa-print"></i>
+          </button>
         </div>
       </div>
     );
-  }
+}
 
   return (
     <div className="admin-root">
