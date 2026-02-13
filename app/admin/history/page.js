@@ -23,6 +23,9 @@ export default function AdminHistory() {
       const validOrders = allOrders.filter(o => ['Cooking', 'Ready', 'Done', 'Success', 'completed'].includes(o.status));
       setOrders(validOrders);
       setLoading(false);
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -40,7 +43,6 @@ export default function AdminHistory() {
 
   const totalIncome = filteredOrders.reduce((acc, curr) => acc + Number(curr.totalPrice || curr.total || 0), 0);
 
-  // Date Label Helper
   const getDateLabel = (dateStr) => {
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
@@ -49,7 +51,6 @@ export default function AdminHistory() {
     return dateStr;
   };
 
-  // Grouping Logic
   const groupedOrders = filteredOrders.reduce((groups, order) => {
     const date = order.date || "Unknown";
     if (!groups[date]) groups[date] = [];
@@ -57,146 +58,165 @@ export default function AdminHistory() {
     return groups;
   }, {});
 
-  // Download Voucher as Image
   const downloadVoucher = async () => {
     if (voucherRef.current) {
-      const canvas = await html2canvas(voucherRef.current, { backgroundColor: "#ffffff" });
-      const link = document.createElement('a');
-      link.download = `Voucher-${selectedOrder.orderId || selectedOrder.id}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
+      try {
+        const canvas = await html2canvas(voucherRef.current, { 
+          backgroundColor: "#ffffff",
+          scale: 2 // ပုံထွက်ပိုကြည်အောင်
+        });
+        const link = document.createElement('a');
+        link.download = `Voucher-${selectedOrder.orderId || selectedOrder.id}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } catch (err) {
+        alert("Download failed!");
+      }
     }
   };
 
+  // Full Page Voucher View
   if (selectedOrder) {
     return (
-      <div className="full-page-voucher">
+      <div className="voucher-page">
         <style jsx>{`
-          .full-page-voucher { background: #fff; min-height: 100vh; color: #000; padding: 20px; font-family: 'Courier New', monospace; }
+          .voucher-page { background: #fff; min-height: 100vh; color: #000; font-family: 'Courier New', monospace; position: relative; padding-bottom: 80px; }
+          .v-container { padding: 40px 25px; max-width: 500px; margin: 0 auto; }
           .v-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 20px; margin-bottom: 20px; }
-          .v-body { font-size: 14px; line-height: 1.8; }
-          .v-item { display: flex; justify-content: space-between; margin: 5px 0; }
-          .v-footer { border-top: 2px dashed #000; margin-top: 20px; padding-top: 15px; text-align: center; }
-          .v-btns { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: #fff; display: flex; gap: 10px; border-top: 1px solid #eee; }
-          .btn { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-          .btn-save { background: #000; color: #fff; }
-          .btn-back { background: #f0f0f0; color: #000; }
+          .v-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
+          .items-list { margin: 20px 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+          .v-footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px dashed #000; }
+          .v-action-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 15px; display: flex; gap: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); }
+          .v-btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 14px; }
+          .btn-dl { background: #000; color: #fff; }
+          .btn-bk { background: #f2f2f2; color: #000; }
         `}</style>
-        
-        <div ref={voucherRef} style={{ padding: '20px' }}>
+
+        <div className="v-container" ref={voucherRef}>
           <div className="v-header">
-            <h2 style={{ margin: 0 }}>YNS KITCHEN</h2>
-            <p style={{ margin: 0, fontSize: '12px' }}>OFFICIAL RECEIPT</p>
+            <h1 style={{ margin: 0, fontSize: '24px' }}>YNS KITCHEN</h1>
+            <p style={{ margin: '5px 0 0', fontSize: '12px', letterSpacing: '2px' }}>OFFICIAL RECEIPT</p>
           </div>
-          <div className="v-body">
-            <div className="v-item"><span>Customer:</span> <span>{selectedOrder.customerName}</span></div>
-            <div className="v-item"><span>Phone:</span> <span>{selectedOrder.customerPhone || selectedOrder.phone}</span></div>
-            <div className="v-item"><span>Date:</span> <span>{selectedOrder.date} | {selectedOrder.time}</span></div>
-            <div style={{ margin: '15px 0', borderTop: '1px solid #eee' }}></div>
+          
+          <div className="v-row"><span>Customer:</span> <strong>{selectedOrder.customerName}</strong></div>
+          <div className="v-row"><span>Phone:</span> <strong>{selectedOrder.customerPhone || selectedOrder.phone}</strong></div>
+          <div className="v-row"><span>Date:</span> <strong>{selectedOrder.date} | {selectedOrder.time}</strong></div>
+          
+          <div className="items-list">
+            <div style={{ borderBottom: '1px solid #000', paddingBottom: '5px', marginBottom: '10px', fontSize: '12px' }}>ITEMS</div>
             {(selectedOrder.cartItems || selectedOrder.items || []).map((item, i) => (
-              <div key={i} className="v-item">
-                <span>{item.name} x{item.quantity || item.qty}</span>
+              <div key={i} className="v-row">
+                <span>{item.name} x {item.quantity || item.qty}</span>
                 <span>{(Number(item.price) * Number(item.quantity || item.qty)).toLocaleString()}</span>
               </div>
             ))}
-            <div className="v-footer">
-              <h2 style={{ margin: 0 }}>TOTAL: {Number(selectedOrder.totalPrice || selectedOrder.total).toLocaleString()} Ks</h2>
-            </div>
+          </div>
+
+          <div className="v-footer">
+            <p style={{ margin: 0, fontSize: '12px' }}>TOTAL AMOUNT</p>
+            <h2 style={{ margin: '5px 0 0', fontSize: '28px' }}>{Number(selectedOrder.totalPrice || selectedOrder.total).toLocaleString()} Ks</h2>
           </div>
         </div>
 
-        <div className="v-btns">
-          <button className="btn btn-back" onClick={() => setSelectedOrder(null)}>BACK</button>
-          <button className="btn btn-save" onClick={downloadVoucher}>SAVE VOUCHER</button>
+        <div className="v-action-bar">
+          <button className="v-btn btn-bk" onClick={() => setSelectedOrder(null)}>BACK</button>
+          <button className="v-btn btn-dl" onClick={downloadVoucher}>SAVE VOUCHER</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="premium-admin">
+    <div className="history-root">
       <style jsx global>{`
-        :root { --p-bg: #0A0C10; --p-card: #161A22; --p-accent: #00F2EA; --p-text: #FFFFFF; }
-        body { background: var(--p-bg); color: var(--p-text); font-family: sans-serif; margin: 0; }
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: sticky; top: 0; background: rgba(10, 12, 16, 0.9); backdrop-filter: blur(10px); z-index: 100; border-bottom: 1px solid #222; }
-        .icon-btn { background: var(--p-card); border: 1px solid #2D323D; color: white; width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        :root { --p-bg: #0A0C10; --p-card: #161A22; --p-accent: #00F2EA; }
+        body { background: var(--p-bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; }
         
-        .summary-section { padding: 15px; }
-        .main-card { background: linear-gradient(145deg, #1C1F26, #0A0C10); border-radius: 20px; padding: 15px; border: 1px solid #2D323D; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(10,12,16,0.95); backdrop-filter: blur(10px); z-index: 100; border-bottom: 1px solid #1f2229; }
+        .icon-btn { background: var(--p-card); border: 1px solid #2d323d; color: #fff; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; position: relative; }
         
-        .date-group-label { font-size: 10px; color: var(--p-accent); font-weight: 800; margin: 20px 15px 10px; letter-spacing: 1px; }
-        .list-container { padding: 0 15px 100px; }
-        .order-item { background: var(--p-card); border-radius: 15px; padding: 10px 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid #222; }
+        .summary-box { padding: 16px; }
+        .summary-card { background: linear-gradient(145deg, #1c1f26, #0a0c10); border-radius: 20px; padding: 18px; border: 1px solid #2d323d; display: flex; justify-content: space-between; }
+        .stat-label { color: #8e9196; font-size: 10px; font-weight: 700; margin: 0; letter-spacing: 0.5px; }
+        .stat-value { margin: 4px 0 0; fontSize: 20px; font-weight: 800; }
         
-        .more-menu { position: absolute; top: 50px; right: 15px; background: #1C1F26; border-radius: 12px; padding: 5px; width: 170px; border: 1px solid #333; z-index: 500; }
-        .menu-item { padding: 10px; font-size: 13px; display: flex; align-items: center; gap: 10px; color: #ccc; }
+        .date-header { padding: 15px 16px 8px; color: var(--p-accent); font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+        .order-card { background: var(--p-card); margin: 0 16px 8px; padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1f2229; }
+        
+        .dropdown { position: absolute; top: 45px; right: 0; background: #1c1f26; border: 1px solid #2d323d; border-radius: 12px; width: 160px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .drop-item { padding: 12px 16px; font-size: 13px; display: flex; align-items: center; gap: 10px; color: #eee; }
       `}</style>
 
-      {/* Header */}
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+      {/* Top Header */}
       <div className="header">
         <Link href="/admin" className="icon-btn"><i className="fas fa-chevron-left"></i></Link>
-        <span style={{ fontWeight: 700, fontSize: '15px' }}>Order History</span>
+        <span style={{ fontWeight: 800, fontSize: '16px' }}>Order History</span>
         <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
           <div className="icon-btn">
             <i className="fas fa-calendar-alt"></i>
-            <input type="date" style={{ position: 'absolute', opacity: 0, width: '35px' }} onChange={(e) => setSelDate(e.target.value)} />
+            <input type="date" style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }} onChange={(e) => setSelDate(e.target.value)} />
           </div>
           <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}><i className="fas fa-ellipsis-v"></i></button>
           {showMenu && (
-            <div className="more-menu">
-              <div className="menu-item" onClick={() => {setShowTracker(!showTracker); setShowMenu(false);}}><i className="fas fa-search"></i> Tracker</div>
-              <div className="menu-item" style={{ color: '#FF453A' }} onClick={() => setSelDate("")}>Reset</div>
+            <div className="dropdown">
+              <div className="drop-item" onClick={() => {setShowTracker(!showTracker); setShowMenu(false);}}><i className="fas fa-search"></i> Tracker</div>
+              <div className="drop-item" style={{ color: '#ff453a' }} onClick={() => {setSelDate(""); setShowMenu(false);}}>Reset</div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Summary - Compact size */}
-      <div className="summary-section">
-        <div className="main-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ color: '#8E9196', fontSize: '10px', margin: 0 }}>REVENUE</p>
-              <h2 style={{ margin: 0, fontSize: '22px' }}>{totalIncome.toLocaleString()} <small style={{ fontSize: '12px' }}>Ks</small></h2>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ color: '#8E9196', fontSize: '10px', margin: 0 }}>ORDERS</p>
-              <h2 style={{ margin: 0, fontSize: '22px' }}>{filteredOrders.length}</h2>
-            </div>
+      {/* Summary Section */}
+      <div className="summary-box">
+        <div className="summary-card">
+          <div>
+            <p className="stat-label">REVENUE</p>
+            <h2 className="stat-value">{totalIncome.toLocaleString()} <small style={{ fontSize: '12px' }}>Ks</small></h2>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p className="stat-label">TOTAL ORDERS</p>
+            <h2 className="stat-value">{filteredOrders.length}</h2>
           </div>
         </div>
       </div>
 
+      {/* Tracker Bar */}
       {showTracker && (
-        <div style={{ padding: '0 15px 15px' }}>
-          <input 
-            placeholder="Search Order ID..." 
-            style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#161A22', border: '1px solid #333', color: '#fff', outline: 'none' }}
-            onChange={(e) => setSearchId(e.target.value)}
-          />
+        <div style={{ padding: '0 16px 16px' }}>
+          <div style={{ background: '#161a22', border: '1px solid #2d323d', borderRadius: '12px', display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+            <i className="fas fa-search" style={{ color: '#444' }}></i>
+            <input 
+              placeholder="Track Order ID..." 
+              style={{ background: 'none', border: 'none', padding: '12px', color: '#fff', outline: 'none', flex: 1, fontSize: '14px' }}
+              onChange={(e) => setSearchId(e.target.value)}
+            />
+          </div>
         </div>
       )}
 
-      {/* Grouped Order List */}
-      <div className="list-container">
+      {/* List */}
+      <div style={{ paddingBottom: '40px' }}>
         {Object.keys(groupedOrders).length > 0 ? Object.keys(groupedOrders).map(date => (
           <div key={date}>
-            <div className="date-group-label">{getDateLabel(date)}</div>
+            <div className="date-header">{getDateLabel(date)}</div>
             {groupedOrders[date].map(order => (
-              <div key={order.id} className="order-item" onClick={() => setSelectedOrder(order)}>
-                <div style={{ flex: 1 }}>
-                  <b style={{ display: 'block', fontSize: '13px' }}>{order.customerName}</b>
-                  <span style={{ fontSize: '10px', color: '#8E9196' }}>#{ (order.orderId || order.id).toString().slice(0,8) } • {order.time}</span>
+              <div key={order.id} className="order-card" onClick={() => setSelectedOrder(order)}>
+                <div>
+                  <b style={{ display: 'block', fontSize: '14px' }}>{order.customerName}</b>
+                  <span style={{ fontSize: '10px', color: '#8e9196' }}>#{ (order.orderId || order.id).toString().slice(0,8) } • {order.time}</span>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, color: var(--p-accent), fontSize: '13px' }}>+{Number(order.totalPrice || order.total).toLocaleString()}</div>
+                <div style={{ fontWeight: 800, color: '#00F2EA', fontSize: '14px' }}>
+                  +{Number(order.totalPrice || order.total).toLocaleString()}
                 </div>
               </div>
             ))}
           </div>
-        )) : <div style={{ textAlign: 'center', opacity: 0.5, marginTop: '50px' }}>No orders found.</div>}
+        )) : (
+          <div style={{ textAlign: 'center', padding: '50px', color: '#444' }}>No orders found</div>
+        )}
       </div>
     </div>
   );
-        }
-        
+}
