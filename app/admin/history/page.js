@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
+import { db } from "../../../lib/firebase";
 
 export default function OrderHistory() {
     const [orders, setOrders] = useState([]);
