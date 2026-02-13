@@ -128,7 +128,7 @@ export default function AdminDashboard() {
             </div>
         </Link>
 
-        <Link href="/admin/customer_menu" className="nav-card">
+        <Link href="/admin/manage_menu" className="nav-card">
             <div style={{ color: '#5856D6', background: '#F5F5FF', width: '35px', height: '35px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <i className="fas fa-utensils"></i>
             </div>
