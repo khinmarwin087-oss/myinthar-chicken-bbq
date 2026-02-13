@@ -1,102 +1,155 @@
 "use client";
-import { useEffect, useState, useRef } from 'react'; // useRef ကို သေချာထည့်ထားသည်
+import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+// --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
+// line 5 မှာ အောက်ပါအတိုင်း ပြင်ပါ
+import { auth } from "../../lib/firebase"; 
+// ----------------------------------
 import { db, auth } from "../lib/firebase"; 
-import { collection, query, where, onSnapshot } from "firebase/firestore"; // လိုအပ်တာတွေ အကုန်ပါသည်
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 export default function Home() {
-  const [currentDate, setCurrentDate] = useState("");
+  const [currentDate, setCurrentDate] = useState("Loading date...");
   const [user, setUser] = useState(null);
   const [newOrderCount, setNewOrderCount] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalOrders, setTotalOrders] = useState(0);
-  const [totalCustomers, setTotalCustomers] = useState(0);
   const audioRef = useRef(null);
-
+  
   useEffect(() => {
-    // အသံဖိုင် Setup
+        // အသံဖိုင်အဖြစ် အသုံးပြုရန် (Public folder ထဲတွင် notification.mp3 ရှိရမည်)
+        audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
+
+        const q = query(collection(db, "orders"), where("status", "==", "pending"));
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                // အော်ဒါအသစ်ရှိပါက အသံမြည်စေရန်
+                audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+                
+                // အနီစက်ပြရန်အတွက် Count သတ်မှတ်ခြင်း
+                setNewOrderCount(snapshot.size);
+  useEffect(() => {
+    // ၁။ အသံဖိုင် Setup
     audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
 
-    // Stats အားလုံးကို တွက်ချက်ခြင်း
-    const qAll = query(collection(db, "orders"));
-    const unsubscribeStats = onSnapshot(qAll, (snapshot) => {
-      let revenue = 0;
-      let customers = new Set();
-      
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        // Firebase ထဲက totalPrice ကို Number အဖြစ်ပြောင်းပေါင်းခြင်း
-        const price = Number(data.totalPrice || 0);
-        revenue += price;
-        if (data.phone) customers.add(data.phone);
-      });
-
-      setTotalRevenue(revenue);
-      setTotalOrders(snapshot.size);
-      setTotalCustomers(customers.size);
-    });
-
-    // အော်ဒါသစ်စောင့်ကြည့်ခြင်း (အသံနှင့် အနီစက်အတွက်)
-    const qPending = query(collection(db, "orders"), where("status", "==", "pending"));
-    const unsubscribePending = onSnapshot(qPending, (snapshot) => {
+                // Browser Notification ပြရန် (Dashboard ဖွင့်ထားလျှင်)
+                if (Notification.permission === "granted") {
+                    new Notification("အော်ဒါအသစ် တက်လာပါပြီ!", {
+                        body: `ယခု အော်ဒါအသစ် ${snapshot.size} ခု ရှိနေပါသည်၊`,
+                        icon: "/logo.png"
+                    });
+                }
+            } else {
+                setNewOrderCount(0);
+            }
+        });
+    // ၂။ Pending Orders ကို စောင့်ကြည့်ခြင်း (Real-time)
+    const q = query(collection(db, "orders"), where("status", "==", "pending"));
+    const unsubscribeOrders = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
-        // အသံမြည်ရန်
-        audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+        // အော်ဒါအသစ်ရှိရင် အသံမြည်စေရန်
+        audioRef.current.play().catch(e => console.log("Audio play blocked:", e));
         setNewOrderCount(snapshot.size);
-        
+
+        // Notification Permission တောင်းရန်
+        if (Notification.permission !== "denied") {
+            Notification.requestPermission();
+        // Browser Notification ပြရန်
         if (Notification.permission === "granted") {
-          new Notification("🔔 အော်ဒါအသစ် ရောက်ရှိလာပါပြီ!");
+          new Notification("အော်ဒါအသစ် တက်လာပါပြီ!", {
+            body: `ယခု အော်ဒါအသစ် ${snapshot.size} ခု ရှိနေပါသည်၊`,
+            icon: "/logo.png"
+          });
         }
       } else {
         setNewOrderCount(0);
       }
     });
 
+        return () => unsubscribe();
+    }, []);
+    return (
+        <div>
+            {/* Orders Icon တွင် အနီစက်ပြရန် */}
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+                <i className="fas fa-shopping-basket" style={{ fontSize: '24px' }}></i>
+                {newOrderCount > 0 && (
+                    <span style={{
+                        position: 'absolute', top: '-5px', right: '-5px',
+                        background: 'red', color: 'white', borderRadius: '50%',
+                        padding: '2px 6px', fontSize: '10px', fontWeight: 'bold'
+                    }}>
+                        {newOrderCount}
+                    </span>
+                )}
+            </div>
+            <p>Orders Live</p>
+        </div>
+    );
+}
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
+    // ၃။ User Authentication & Date
     const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-    setCurrentDate(new Date().toLocaleDateString('en-GB'));
-    if (Notification.permission !== "granted") Notification.requestPermission();
-
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    setCurrentDate(new Date().toLocaleDateString('en-US', options));
+    return () => unsubscribe();
+    // ၄။ Notification ခွင့်ပြုချက်တောင်းရန်
+    if (Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
     return () => {
-      unsubscribeStats();
-      unsubscribePending();
+      unsubscribeOrders();
       unsubscribeAuth();
     };
   }, []);
+  // ----------------------------------
 
   return (
-    <div style={{ background: '#F8FAFF', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      
-      {/* Revenue Card */}
-      <div style={{ background: 'linear-gradient(135deg, #007AFF, #00C7BE)', padding: '30px 25px', borderRadius: '24px', color: 'white', marginBottom: '20px', position: 'relative' }}>
-        <p style={{ margin: 0, opacity: 0.8, fontSize: '12px', fontWeight: 'bold' }}>TOTAL REVENUE</p>
-        <h2 style={{ margin: '10px 0', fontSize: '36px', fontWeight: '800' }}>{totalRevenue.toLocaleString()} Ks</h2>
-        <i className="fas fa-chart-line" style={{ position: 'absolute', right: '20px', bottom: '20px', fontSize: '60px', opacity: 0.2 }}></i>
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '20px' }}>
-          <p style={{ color: '#999', fontSize: '11px', fontWeight: 'bold', margin: 0 }}>ORDERS</p>
-          <h3 style={{ margin: '5px 0 0', fontSize: '24px' }}>{totalOrders}</h3>
-        </div>
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '20px' }}>
-          <p style={{ color: '#999', fontSize: '11px', fontWeight: 'bold', margin: 0 }}>CUSTOMERS</p>
-          <h3 style={{ margin: '5px 0 0', fontSize: '24px' }}>{totalCustomers}</h3>
-        </div>
-      </div>
-
-      <Link href="/admin/orders" style={{ textDecoration: 'none' }}>
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '24px', position: 'relative', display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <i className="fas fa-shopping-basket" style={{ color: '#007AFF' }}></i>
-          <span style={{ color: '#1C1C1E', fontWeight: '800' }}>Orders Live</span>
-          {newOrderCount > 0 && (
-            <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#FF3B30', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', border: '2px solid #fff' }}>
-              {newOrderCount}
-            </div>
-          )}
-        </div>
+    <>
+@@ -84,13 +59,14 @@ export default function Home() {
+        .welcome-header h1 { margin: 0; font-size: 24px; font-weight: 800; }
+        .welcome-header p { margin: 5px 0 0; color: var(--gray); font-size: 14px; text-transform: capitalize; }
+        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--pearl); padding: 20px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid rgba(0,0,0,0.02); display: block; }
+        .stat-card { background: var(--pearl); padding: 20px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid rgba(0,0,0,0.02); display: block; position: relative; }
+        .stat-card:active { transform: scale(0.95); background: #f9f9fb; }
+        .icon-circle { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; font-size: 20px; }
+        .bg-blue { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
+        .bg-purple { background: rgba(175, 82, 222, 0.1); color: var(--accent); }
+        .stat-card b { display: block; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .stat-card span { font-size: 10px; color: var(--gray); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .red-dot { position: absolute; top: 15px; right: 15px; background: #FF3B30; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid white; }
+        .banner-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 24px; padding: 25px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,122,255,0.2); }
+        .banner-card h2 { margin: 0; font-size: 20px; font-weight: 800; }
+        .section-title { font-size: 16px; font-weight: 800; margin-bottom: 15px; padding-left: 5px; }
+@@ -116,6 +92,7 @@ export default function Home() {
+            <div className="icon-circle bg-blue"><i className="fas fa-shopping-basket"></i></div>
+            <span>Menu</span>
+            <b>ဟင်းပွဲမှာယူရန်</b>
+            {newOrderCount > 0 && <div className="red-dot">{newOrderCount}</div>}
+        </Link>
+        <Link href="/track" className="stat-card">
+            <div className="icon-circle bg-purple"><i className="fas fa-truck-loading"></i></div>
+@@ -132,19 +109,17 @@ export default function Home() {
+        <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
-    </div>
+
+      {/* --- ပြင်ဆင်ထားသော History Link (Folder နာမည်အတိုင်း href ပြောင်းထားသည်) --- */}
+      <Link href="/history" className="action-item">
+        <i className="fas fa-history" style={{ color: 'var(--orange)', width: '25px', textAlign: 'center' }}></i>
+        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>
+          {user ? "Order History" : "Login to see History"}
+        </div>
+        <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
+      </Link>
+      {/* ------------------------------------------------------------------- */}
+
+      <div className="footer-note" style={{ textAlign: 'center', marginTop: '40px', color: 'var(--gray)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
+          YNS KITCHEN • VERSION 2.0.1
+      </div>
+    </>
   );
-        }
+          }
+          }
