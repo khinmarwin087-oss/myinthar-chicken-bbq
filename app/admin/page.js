@@ -1,99 +1,102 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react'; // useRef ကို သေချာထည့်ထားသည်
 import Link from 'next/link';
+import { db, auth } from "../lib/firebase"; 
+import { collection, query, where, onSnapshot } from "firebase/firestore"; // လိုအပ်တာတွေ အကုန်ပါသည်
 
-export default function AdminDashboard() {
-    const [stats, setStats] = useState({ revenue: 0, orders: 0, customers: 0, pending: 0 });
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+export default function Home() {
+  const [currentDate, setCurrentDate] = useState("");
+  const [user, setUser] = useState(null);
+  const [newOrderCount, setNewOrderCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const audioRef = useRef(null);
 
-    useEffect(() => {
-        // API မှတစ်ဆင့် Order အချက်အလက်များကို ယူပြီး Dashboard တွက်ချက်မည်
-        fetch('/api/orders') // Order API (အဆင့် ၂ မှာ ဆောက်မယ်)
-            .then(res => res.json())
-            .then(json => {
-                if (json.success) {
-                    let rev = 0, ordCount = 0, pend = 0;
-                    let custSet = new Set();
+  useEffect(() => {
+    // အသံဖိုင် Setup
+    audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
 
-                    json.data.forEach(o => {
-                        if (o.date === selectedDate) {
-                            ordCount++;
-                            if (o.status === 'Done') rev += parseInt(o.total || 0);
-                            if (o.customerName) custSet.add(o.customerName);
-                        }
-                        if (o.status === 'Pending') pend++;
-                    });
+    // Stats အားလုံးကို တွက်ချက်ခြင်း
+    const qAll = query(collection(db, "orders"));
+    const unsubscribeStats = onSnapshot(qAll, (snapshot) => {
+      let revenue = 0;
+      let customers = new Set();
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        // Firebase ထဲက totalPrice ကို Number အဖြစ်ပြောင်းပေါင်းခြင်း
+        const price = Number(data.totalPrice || 0);
+        revenue += price;
+        if (data.phone) customers.add(data.phone);
+      });
 
-                    setStats({ revenue: rev, orders: ordCount, customers: custSet.size, pending: pend });
-                }
-            });
-    }, [selectedDate]);
+      setTotalRevenue(revenue);
+      setTotalOrders(snapshot.size);
+      setTotalCustomers(customers.size);
+    });
 
-    return (
-        <div style={{ background: '#F8F9FC', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#8E8E93', fontWeight: '600' }}>Mingalaba!</p>
-                    <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800' }}>YNS Kitchen</h1>
-                </div>
-                <div style={{ width: '35px', height: '35px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#007AFF', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
-                    <i className="fas fa-user"></i>
-                </div>
-            </div>
+    // အော်ဒါသစ်စောင့်ကြည့်ခြင်း (အသံနှင့် အနီစက်အတွက်)
+    const qPending = query(collection(db, "orders"), where("status", "==", "pending"));
+    const unsubscribePending = onSnapshot(qPending, (snapshot) => {
+      if (!snapshot.empty) {
+        // အသံမြည်ရန်
+        audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+        setNewOrderCount(snapshot.size);
+        
+        if (Notification.permission === "granted") {
+          new Notification("🔔 အော်ဒါအသစ် ရောက်ရှိလာပါပြီ!");
+        }
+      } else {
+        setNewOrderCount(0);
+      }
+    });
 
-            <div style={{ marginBottom: '15px' }}>
-                <input 
-                    type="date" 
-                    value={selectedDate} 
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    style={{ border: 'none', background: '#fff', padding: '8px 12px', borderRadius: '10px', fontWeight: '700', color: '#007AFF' }} 
-                />
-            </div>
+    const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
+    setCurrentDate(new Date().toLocaleDateString('en-GB'));
+    if (Notification.permission !== "granted") Notification.requestPermission();
 
-            <div style={{ background: 'linear-gradient(135deg, #007AFF, #00D2FF)', borderRadius: '20px', padding: '22px', color: 'white', position: 'relative', marginBottom: '15px', boxShadow: '0 10px 25px rgba(0, 122, 255, 0.2)' }}>
-                <h3 style={{ margin: 0, fontSize: '11px', opacity: 0.9, textTransform: 'uppercase' }}>Total Revenue</h3>
-                <span style={{ fontSize: '32px', fontWeight: '800', display: 'block', margin: '8px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-                <span style={{ fontSize: '10px', opacity: 0.7 }}>Updated just now</span>
-                <i className="fas fa-chart-line" style={{ position: 'absolute', right: '15px', bottom: '15px', fontSize: '35px', opacity: 0.15 }}></i>
-            </div>
+    return () => {
+      unsubscribeStats();
+      unsubscribePending();
+      unsubscribeAuth();
+    };
+  }, []);
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '25px' }}>
-                <div style={{ background: 'white', padding: '15px', borderRadius: '18px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: '#8E8E93' }}>TOTAL ORDERS</span><br/>
-                    <span style={{ fontSize: '18px', fontWeight: '800' }}>{stats.orders}</span>
-                </div>
-                <div style={{ background: 'white', padding: '15px', borderRadius: '18px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: '#8E8E93' }}>CUSTOMERS</span><br/>
-                    <span style={{ fontSize: '18px', fontWeight: '800' }}>{stats.customers}</span>
-                </div>
-            </div>
+  return (
+    <div style={{ background: '#F8FAFF', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      
+      {/* Revenue Card */}
+      <div style={{ background: 'linear-gradient(135deg, #007AFF, #00C7BE)', padding: '30px 25px', borderRadius: '24px', color: 'white', marginBottom: '20px', position: 'relative' }}>
+        <p style={{ margin: 0, opacity: 0.8, fontSize: '12px', fontWeight: 'bold' }}>TOTAL REVENUE</p>
+        <h2 style={{ margin: '10px 0', fontSize: '36px', fontWeight: '800' }}>{totalRevenue.toLocaleString()} Ks</h2>
+        <i className="fas fa-chart-line" style={{ position: 'absolute', right: '20px', bottom: '20px', fontSize: '60px', opacity: 0.2 }}></i>
+      </div>
 
-            <span style={{ fontSize: '11px', fontWeight: '800', color: '#8E8E93', textTransform: 'uppercase', marginBottom: '12px', display: 'block' }}>Management</span>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <Link href="/admin/orders" style={{ textDecoration: 'none' }}>
-                    <div style={{ background: 'white', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ color: '#007AFF' }}><i className="fas fa-shopping-basket"></i></div>
-                        <div>
-                            <b style={{ color: '#1C1C1E' }}>Orders {stats.pending > 0 && <span style={{ background: '#FF3B30', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '10px' }}>{stats.pending}</span>}</b>
-                            <span style={{ fontSize: '11px', color: '#8E8E93' }}>Live Orders</span>
-                        </div>
-                    </div>
-                </Link>
-
-                <Link href="/admin/manage_menu" style={{ textDecoration: 'none' }}>
-                    <div style={{ background: 'white', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ color: '#5856D6' }}><i className="fas fa-utensils"></i></div>
-                        <div>
-                            <b style={{ color: '#1C1C1E' }}>Menus</b>
-                            <span style={{ fontSize: '11px', color: '#8E8E93' }}>Edit Dishes</span>
-                        </div>
-                    </div>
-                </Link>
-            </div>
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '20px' }}>
+          <p style={{ color: '#999', fontSize: '11px', fontWeight: 'bold', margin: 0 }}>ORDERS</p>
+          <h3 style={{ margin: '5px 0 0', fontSize: '24px' }}>{totalOrders}</h3>
         </div>
-    );
-                              }
-                            
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '20px' }}>
+          <p style={{ color: '#999', fontSize: '11px', fontWeight: 'bold', margin: 0 }}>CUSTOMERS</p>
+          <h3 style={{ margin: '5px 0 0', fontSize: '24px' }}>{totalCustomers}</h3>
+        </div>
+      </div>
+
+      <Link href="/admin/orders" style={{ textDecoration: 'none' }}>
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '24px', position: 'relative', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <i className="fas fa-shopping-basket" style={{ color: '#007AFF' }}></i>
+          <span style={{ color: '#1C1C1E', fontWeight: '800' }}>Orders Live</span>
+          {newOrderCount > 0 && (
+            <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#FF3B30', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', border: '2px solid #fff' }}>
+              {newOrderCount}
+            </div>
+          )}
+        </div>
+      </Link>
+    </div>
+  );
+}
