@@ -1,208 +1,160 @@
 "use client";
-import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
-import { db } from "../../../lib/firebase"; 
-import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { db } from "@/lib/firebase";
 
-export default function AdminHistory() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selDate, setSelDate] = useState("");
-  const [searchId, setSearchId] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showTracker, setShowTracker] = useState(false);
+export default function OrderHistory() {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selDate, setSelDate] = useState("");
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [toast, setToast] = useState(false);
 
-  useEffect(() => {
-    const q = query(collection(db, "orders"), orderBy("date", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const validOrders = allOrders.filter(o => ['Cooking', 'Ready', 'Done', 'Success', 'completed'].includes(o.status));
-      setOrders(validOrders);
-      setLoading(false);
-    }, (error) => {
-      console.error("Firestore Error:", error);
-      setLoading(false);
+    useEffect(() => {
+        const ordersRef = db.ref("orders");
+        ordersRef.on("value", (snap) => {
+            const data = snap.val();
+            if (data) {
+                const list = Object.values(data).reverse();
+                setOrders(list);
+            }
+            setLoading(false);
+        });
+        return () => ordersRef.off();
+    }, []);
+
+    // Filter Logic
+    const allowedStatus = ["Cooking", "Ready", "Done", "Success"];
+    const filteredOrders = orders.filter((order) => {
+        const matchesStatus = order.status && allowedStatus.includes(order.status);
+        const matchesDate = selDate ? order.date === selDate : true;
+        return matchesStatus && matchesDate;
     });
-    return () => unsubscribe();
-  }, []);
 
-  // Filter Logic ကို useMemo နဲ့ ပိုသေသပ်အောင် ပြင်ထားပါတယ်
-  const filteredOrders = useMemo(() => {
-    return orders.filter(o => {
-      // Google Login နာမည်များပါ စစ်နိုင်ရန်
-      const cName = (o.name || o.displayName || o.customerName || "").toLowerCase();
-      const oID = (o.id || o.orderId || "").toString().toLowerCase();
-      const search = searchId.toLowerCase();
+    const totalIncome = filteredOrders.reduce((acc, curr) => acc + curr.total, 0);
 
-      const matchesDate = selDate ? o.date === selDate : true;
-      const matchesSearch = searchId ? (oID.includes(search) || cName.includes(search)) : true;
-      
-      return matchesDate && matchesSearch;
-    });
-  }, [orders, selDate, searchId]);
+    const copyToClipboard = (text, e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(text);
+        setToast(true);
+        setTimeout(() => setToast(false), 1500);
+    };
 
-  const totalIncome = filteredOrders.reduce((acc, curr) => acc + Number(curr.totalPrice || curr.total || 0), 0);
+    const getFriendlyDate = (d) => {
+        const today = new Date().toISOString().split("T")[0];
+        const yest = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+        return d === today ? "TODAY" : d === yest ? "YESTERDAY" : d;
+    };
 
-  const getDateLabel = (dateStr) => {
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    if (dateStr === today) return "TODAY";
-    if (dateStr === yesterday) return "YESTERDAY";
-    return dateStr;
-  };
+    // Grouping orders by date
+    const groupedOrders = filteredOrders.reduce((groups, order) => {
+        const date = order.date;
+        if (!groups[date]) groups[date] = [];
+        groups[date].push(order);
+        return groups;
+    }, {});
 
-  const groupedOrders = filteredOrders.reduce((groups, order) => {
-    const date = order.date || "Unknown";
-    if (!groups[date]) groups[date] = [];
-    groups[date].push(order);
-    return groups;
-  }, {});
-
-  if (selectedOrder) {
     return (
-      <div className="modern-voucher-page">
-        <style jsx>{`
-          .modern-voucher-page { background: #0A0C10; min-height: 100vh; color: #fff; padding: 20px; font-family: sans-serif; }
-          .v-header { text-align: center; margin-bottom: 25px; }
-          .v-header h1 { font-size: 24px; font-weight: 800; margin: 0; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-          .info-card { background: #161A22; padding: 12px; border-radius: 12px; border: 1px solid #1f2229; }
-          .info-card label { display: block; font-size: 9px; color: #8e9196; margin-bottom: 4px; }
-          .info-card span { font-size: 13px; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; }
-          .items-section { background: #161A22; border-radius: 15px; padding: 15px; border: 1px solid #1f2229; margin-bottom: 20px; }
-          .items-table { width: 100%; border-collapse: collapse; }
-          .items-table th { text-align: left; font-size: 10px; color: #8e9196; padding-bottom: 8px; border-bottom: 1px solid #1f2229; }
-          .items-table td { padding: 12px 0; font-size: 13px; }
-          .total-box { background: #fff; color: #000; padding: 18px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
-          .v-actions { position: fixed; bottom: 20px; left: 20px; right: 20px; display: flex; gap: 10px; }
-          .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; }
-          .btn-back { background: #2D323D; color: #fff; }
-          .btn-print { background: #00F2EA; color: #000; }
-        `}</style>
+        <div className="history-page">
+            <style jsx>{`
+                .history-page { background: #F2F5F9; min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; }
+                .header { background: #fff; padding: 15px 20px; position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 0 rgba(0,0,0,0.05); }
+                .back-btn { width: 38px; height: 38px; border-radius: 12px; background: #F2F2F7; display: flex; align-items: center; justify-content: center; color: #1C1C1E; text-decoration: none; }
+                .filter-box { position: relative; width: 38px; height: 38px; background: #F2F2F7; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+                .filter-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+                .summary-card { margin: 20px; background: #007AFF; padding: 22px; border-radius: 24px; color: white; box-shadow: 0 10px 20px rgba(0,122,255,0.2); }
+                .history-container { padding: 0 20px 100px; }
+                .date-label { font-size: 11px; font-weight: 800; color: #8E8E93; margin: 25px 0 12px; display: flex; align-items: center; gap: 10px; }
+                .date-label::after { content: ''; flex: 1; height: 1px; background: #E5E5EA; }
+                .order-card { background: #fff; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); cursor: pointer; }
+                .order-icon { width: 48px; height: 48px; background: #F0F7FF; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #007AFF; }
+                .copy-id { background: #F2F2F7; color: #8E8E93; font-size: 10px; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-weight: 600; border:none; }
+                .amt-val { color: #34C759; font-weight: 800; font-size: 15px; }
+                .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 25px; font-size: 12px; z-index: 5000; }
+                .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; display: flex; align-items: flex-end; }
+                .modal-content { background: white; width: 100%; border-radius: 30px 30px 0 0; padding: 30px 25px; animation: slideUp 0.3s ease-out; }
+                @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+                .spinner { width: 30px; height: 30px; border: 3px solid #E5E5EA; border-top: 3px solid #007AFF; border-radius: 50%; animation: spin 1s linear infinite; }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+            `}</style>
 
-        <div className="v-header">
-          <h1>YNS KITCHEN</h1>
-          <p style={{color: '#00F2EA', fontSize: 10}}>OFFICIAL RECEIPT</p>
-        </div>
+            {loading && <div style={{position:'fixed', inset:0, background:'#F2F5F9', zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center'}}><div className="spinner"></div></div>}
+            {toast && <div className="toast">ID Copied!</div>}
 
-        <div className="info-grid">
-          <div className="info-card">
-            <label>CUSTOMER</label>
-            <span>{selectedOrder.name || selectedOrder.displayName || selectedOrder.customerName || "Guest"}</span>
-          </div>
-          <div className="info-card">
-            <label>PHONE</label>
-            <span>{selectedOrder.phone || selectedOrder.customerPhone || "-"}</span>
-          </div>
-          <div className="info-card">
-            <label>ORDER ID</label>
-            <span>#{selectedOrder.id?.slice(-6).toUpperCase()}</span>
-          </div>
-          <div className="info-card">
-            <label>DATE</label>
-            <span>{selectedOrder.date}</span>
-          </div>
-        </div>
-
-        <div className="items-section">
-          <table className="items-table">
-            <thead>
-              <tr><th>ITEM</th><th style={{textAlign:'center'}}>QTY</th><th style={{textAlign:'right'}}>PRICE</th></tr>
-            </thead>
-            <tbody>
-              {(selectedOrder.items || selectedOrder.cartItems || []).map((item, i) => (
-                <tr key={i}>
-                  <td>{item.name}</td>
-                  <td style={{textAlign:'center'}}>{item.qty || item.quantity}</td>
-                  <td style={{textAlign:'right'}}>{(Number(item.price || 0) * Number(item.qty || item.quantity || 1)).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="total-box">
-          <span style={{fontWeight: 700}}>TOTAL AMOUNT</span>
-          <span style={{fontSize: 20, fontWeight: 900}}>{Number(selectedOrder.totalPrice || selectedOrder.total || 0).toLocaleString()} Ks</span>
-        </div>
-
-        <div className="v-actions">
-          <button className="btn btn-back" onClick={() => setSelectedOrder(null)}>BACK</button>
-          <button className="btn btn-print" onClick={() => window.print()}>PRINT</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="admin-root">
-      <style jsx global>{`
-        body { background: #0A0C10; color: #fff; font-family: sans-serif; margin: 0; }
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 15px; position: sticky; top: 0; background: #0A0C10; border-bottom: 1px solid #1f2229; z-index: 100; }
-        .btn-box { background: #161A22; border: 1px solid #2d323d; color: #fff; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
-        .summary-card { background: #161A22; margin: 15px; padding: 20px; border-radius: 15px; border: 1px solid #2d323d; display: flex; justify-content: space-between; }
-        .order-card { background: #161A22; margin: 0 15px 10px; padding: 15px; border-radius: 15px; border: 1px solid #1f2229; display: flex; justify-content: space-between; align-items: center; }
-      `}</style>
-
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-      <div className="header">
-        <Link href="/admin" className="btn-box"><i className="fas fa-chevron-left"></i></Link>
-        <b style={{fontSize: '18px'}}>Order History</b>
-        <div style={{display:'flex', gap:10}}>
-          <div className="btn-box" style={{position:'relative'}}>
-            <i className="fas fa-calendar-alt"></i>
-            <input type="date" style={{position:'absolute', opacity:0, inset:0}} onChange={(e)=>setSelDate(e.target.value)} />
-          </div>
-          <div className="btn-box" onClick={()=>setShowMenu(!showMenu)}><i className="fas fa-ellipsis-v"></i></div>
-        </div>
-      </div>
-
-      {showMenu && (
-        <div style={{position:'absolute', right:16, top:65, background:'#1c1f26', border:'1px solid #2d323d', borderRadius:10, zIndex:200}}>
-            <div style={{padding:'12px 20px', fontSize:14, borderBottom: '1px solid #2d323d'}} onClick={()=>{setShowTracker(!showTracker); setShowMenu(false)}}>Tracker</div>
-            <div style={{padding:'12px 20px', fontSize:14, color:'#ff453a'}} onClick={()=>{setSelDate(""); setSearchId(""); setShowMenu(false)}}>Reset All</div>
-        </div>
-      )}
-
-      <div className="summary-card">
-        <div><small style={{color:'#8e9196'}}>REVENUE</small><div style={{fontSize:22, fontWeight:900}}>{totalIncome.toLocaleString()} Ks</div></div>
-        <div style={{textAlign:'right'}}><small style={{color:'#8e9196'}}>ORDERS</small><div style={{fontSize:22, fontWeight:900}}>{filteredOrders.length}</div></div>
-      </div>
-
-      {(showTracker || searchId) && (
-        <div style={{padding: '0 15px 15px'}}>
-          <input 
-            placeholder="Search Order ID or Name..." 
-            value={searchId}
-            style={{ width: '100%', padding: '14px', borderRadius: '12px', background: '#161A22', border: '1px solid #2d323d', color: '#fff', outline: 'none' }}
-            onChange={(e)=>setSearchId(e.target.value)}
-          />
-        </div>
-      )}
-
-      {loading ? (
-        <div style={{textAlign: 'center', marginTop: 50, color: '#8e9196'}}>Loading...</div>
-      ) : (
-        <div style={{paddingBottom: 80}}>
-          {Object.keys(groupedOrders).map(date => (
-            <div key={date}>
-              <div style={{padding:'10px 15px', color:'#00F2EA', fontSize:11, fontWeight:900}}>{getDateLabel(date)}</div>
-              {groupedOrders[date].map(order => (
-                <div key={order.id} className="order-card" onClick={() => setSelectedOrder(order)}>
-                  <div>
-                    <div style={{fontSize:15, fontWeight:'800'}}>{order.name || order.displayName || order.customerName || "Guest"}</div>
-                    <small style={{color:'#8e9196'}}>#{order.id?.slice(-5).toUpperCase()} • {order.time}</small>
-                  </div>
-                  <div style={{fontWeight:900, color:'#00F2EA'}}>+{Number(order.totalPrice || order.total || 0).toLocaleString()}</div>
+            <div className="header">
+                <Link href="/admin" className="back-btn"><i className="fas fa-arrow-left"></i></Link>
+                <h2 style={{margin:0, fontSize:'16px', fontWeight:800}}>Order History</h2>
+                <div className="filter-box">
+                    <i className="fas fa-calendar-alt" style={{color:'#007AFF'}}></i>
+                    <input type="date" onChange={(e) => setSelDate(e.target.value)} />
                 </div>
-              ))}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-    }
 
+            <div className="summary-card">
+                <div style={{fontSize:'12px', opacity:0.8, marginBottom:'5px'}}>Total Revenue</div>
+                <div style={{fontSize:'28px', fontWeight:800}}>{totalIncome.toLocaleString()} Ks</div>
+                <hr style={{border:'none', borderTop:'1px solid rgba(255,255,255,0.2)', margin:'15px 0'}} />
+                <div style={{display:'flex', justifyContent:'space-between', fontSize:'12px', fontWeight:600}}>
+                    <span>Orders Completed</span>
+                    <span>{filteredOrders.length}</span>
+                </div>
+            </div>
+
+            <div className="history-container">
+                {Object.keys(groupedOrders).map((date) => (
+                    <div key={date}>
+                        <div className="date-label">{getFriendlyDate(date)}</div>
+                        {groupedOrders[date].map((order, idx) => (
+                            <div key={idx} className="order-card" onClick={() => setSelectedOrder(order)}>
+                                <div className="order-icon"><i className="fas fa-shopping-bag"></i></div>
+                                <div style={{flex:1}}>
+                                    <b style={{fontSize:'15px'}}>{order.customerName}</b>
+                                    <span style={{fontSize:'11px', color:'#8E8E93'}}><i className="far fa-clock"></i> {order.time}</span><br/>
+                                    <button className="copy-id" onClick={(e) => copyToClipboard(order.orderId, e)}>
+                                        <i className="far fa-copy"></i> #{order.orderId}
+                                    </button>
+                                </div>
+                                <div className="amt-val">+{order.total.toLocaleString()}</div>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+
+            {selectedOrder && (
+                <div className="modal" onClick={() => setSelectedOrder(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div style={{textAlign:'center', marginBottom:'25px'}}>
+                            <div style={{fontSize:'12px', color:'#8E8E93', marginBottom:'5px'}}>Customer Name</div>
+                            <div style={{fontSize:'20px', fontWeight:800}}>{selectedOrder.customerName}</div>
+                            <div className="copy-id" style={{fontSize:'12px', padding:'5px 12px', marginTop:'10px'}}>ID: #{selectedOrder.orderId}</div>
+                        </div>
+                        <div style={{background:'#F8F9FC', borderRadius:'20px', padding:'20px', marginBottom:'20px'}}>
+                            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'12px', fontSize:'13px'}}>
+                                <span style={{color:'#8E8E93'}}>Phone</span>
+                                <span style={{fontWeight:700}}>{selectedOrder.customerPhone}</span>
+                            </div>
+                            <div style={{display:'flex', justifyContent:'space-between', fontSize:'13px'}}>
+                                <span style={{color:'#8E8E93'}}>Time</span>
+                                <span style={{fontWeight:700}}>{selectedOrder.date} | {selectedOrder.time}</span>
+                            </div>
+                        </div>
+                        <div style={{marginBottom:'10px', fontSize:'12px', fontWeight:800, color:'#8E8E93'}}>ORDER ITEMS</div>
+                        {selectedOrder.items.map((item, i) => (
+                            <div key={i} style={{display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #F2F2F7', fontSize:'14px'}}>
+                                <span>{item.name} x {item.qty}</span>
+                                <span style={{fontWeight:600}}>{(item.price * item.qty).toLocaleString()} Ks</span>
+                            </div>
+                        ))}
+                        <div style={{display:'flex', justifyBetween:'space-between', marginTop:'20px', paddingTop:'15px', borderTop:'2px solid #F2F2F7'}}>
+                            <span style={{fontWeight:800}}>Total Amount</span>
+                            <span style={{fontWeight:800, color:'#007AFF', fontSize:'18px'}}>{selectedOrder.total.toLocaleString()} Ks</span>
+                        </div>
+                        <button onClick={() => setSelectedOrder(null)} style={{width:'100%', padding:'16px', borderRadius:'16px', border:'none', background:'#1C1C1E', color:'white', fontWeight:700, marginTop:'25px'}}>Back to List</button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+              }
+              
