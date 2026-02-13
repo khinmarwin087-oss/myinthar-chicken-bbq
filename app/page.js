@@ -1,13 +1,24 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+// Firebase auth ကို လှမ်းခေါ်ရန် (လမ်းကြောင်း မှန်ပါစေ)
+import { auth } from "../lib/firebase"; 
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState("Loading date...");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    // ၁။ ယနေ့ရက်စွဲ သတ်မှတ်ခြင်း
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     setCurrentDate(new Date().toLocaleDateString('en-US', options));
+
+    // ၂။ Login ဝင်ထားတဲ့ User ရှိမရှိ စစ်ဆေးခြင်း
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -126,9 +137,11 @@ export default function Home() {
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
 
-      <Link href="/customer_history" className="action-item">
+      <Link href="/history" className="action-item">
         <i className="fas fa-history" style={{ color: 'var(--orange)', width: '25px', textAlign: 'center' }}></i>
-        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Order History</div>
+        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>
+          {user ? "Order History" : "Login to see History"}
+        </div>
         <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
       </Link>
 
