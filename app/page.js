@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 // --- အသစ်ဖြည့်စွက်ချက် (မဖျက်ပါနဲ့) ---
 // line 5 မှာ အောက်ပါအတိုင်း ပြင်ပါ
-import { auth } from "../../lib/firebase"; 
+import { auth } from "../lib/firebase"; 
 // ----------------------------------
 import { db, auth } from "../lib/firebase"; 
 import { collection, query, where, onSnapshot } from "firebase/firestore";
