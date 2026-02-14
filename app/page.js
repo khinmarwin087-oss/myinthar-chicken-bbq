@@ -30,12 +30,19 @@ export default function Home() {
   // Login Function
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
+    // ဒါလေး ထည့်ပေးရင် Popup Window ပိုငြိမ်ပါတယ်
+    provider.setCustomParameters({ prompt: 'select_account' }); 
+
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Login failed:", error);
+      // အောက်က alert လေးကို ခဏထည့်ပြီး စမ်းကြည့်ပါ
+      // ဒါမှ domain error လား၊ configuration error လားဆိုတာ လူကြီးမင်း သိရမှာပါ
+      alert("Login Error: " + error.code); 
     }
   };
+  
 
   // Logout Function
   const handleLogout = () => signOut(auth);
