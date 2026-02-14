@@ -2,7 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { db } from "../../lib/firebase"; 
-import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, onSnapshot } from "firebase/firestore";
+import { getMessaging, getToken } from "firebase/messaging";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ revenue: 0, orders: 0, customers: 0, pending: 0 });
@@ -12,41 +13,50 @@ export default function AdminDashboard() {
   const audioRef = useRef(null);
   const prevPendingRef = useRef(-1);
 
+  // Notification Token ယူသည့် Function
+  const setupNotifications = async () => {
+    try {
+      if (!('serviceWorker' in navigator)) return;
+      
+      const messaging = getMessaging();
+      const token = await getToken(messaging, { 
+        vapidKey: "BPcHRWw8jfHdJwMWiFN3v1PGj3pevV4msLVcbLCip-7jG80WY5EORbsFKLBoKuD1el6GchcP8lwpkStdTHXRsPo" 
+      });
+      
+      if (token) {
+        console.log("Notification Token ရပါပြီ");
+        // လိုအပ်ပါက ဒီ Token ကို DB မှာ သိမ်းနိုင်ပါတယ်
+      }
+    } catch (err) {
+      console.error("Notification Setup Error:", err);
+    }
+  };
+
   useEffect(() => {
-    // ၁။ Auth Session စစ်ဆေးခြင်း
     const sessionAuth = sessionStorage.getItem("isAdAuthed");
     if (sessionAuth === "true") setIsAuthorized(true);
 
-    // ၂။ Service Worker & Notification Setup
+    // Service Worker Register
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then(reg => console.log('Worker Registered!', reg.scope))
-        .catch(err => console.log('Worker Error!', err));
-    }
-    if (Notification.permission !== "granted") {
-      Notification.requestPermission();
+        .then(() => setupNotifications());
     }
 
-    // ၃။ Audio Setup
     audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
 
-    // ၄။ Real-time Firestore Listener (Refresh မလိုအောင် လုပ်ဆောင်ပေးသည့်အပိုင်း)
-    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    const todayStr = new Date().toLocaleDateString('en-CA');
     const q = query(collection(db, "orders"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let totalRevenue = 0;
-      let totalOrdersToday = 0;
-      let pendingCount = 0;
+      let totalRevenue = 0; let totalOrdersToday = 0; let pendingCount = 0;
       let customerSet = new Set();
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         const rawDate = data.orderDate || data.date || "";
-        const orderDateStr = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
+        const orderDateStr = rawDate.split('T')[0];
         const status = (data.status || "").toLowerCase();
 
-        // ယနေ့အော်ဒါစာရင်းတွက်ချက်ခြင်း
         if (orderDateStr === todayStr) {
           totalOrdersToday++;
           if (["completed", "done", "success", "ready"].includes(status)) {
@@ -55,34 +65,31 @@ export default function AdminDashboard() {
           if (data.name || data.customerName) customerSet.add(data.name || data.customerName);
         }
         
-        // Pending အရေအတွက်
-        if (status === "pending") {
-          pendingCount++;
-        }
+        if (status === "pending") pendingCount++;
       });
 
-      // ၅။ အော်ဒါအသစ်ဝင်လျှင် အသံနှင့် Notification ပေးခြင်း
+      // အော်ဒါအသစ်တက်လျှင် (Refresh မလိုဘဲ အလုပ်လုပ်မည့်အပိုင်း)
       if (prevPendingRef.current !== -1 && pendingCount > prevPendingRef.current) {
         if (isAudioReady && audioRef.current) {
-          audioRef.current.play().catch(e => console.log("Audio Play Error"));
+          audioRef.current.play().catch(() => {});
         }
-        new Notification("🔔 Order အသစ်ရပါပြီ", { body: "YNS Kitchen မှာ အော်ဒါအသစ်တစ်ခု ရောက်ရှိလာပါတယ်။" });
+        // Browser Notification ပြခြင်း
+        if (Notification.permission === "granted") {
+          new Notification("🔔 YNS Kitchen", { 
+            body: "အော်ဒါအသစ် ရောက်ရှိလာပါပြီ။",
+            icon: "/icon-192.png" 
+          });
+        }
       }
 
       prevPendingRef.current = pendingCount;
-      setStats({
-        revenue: totalRevenue,
-        orders: totalOrdersToday,
-        customers: customerSet.size,
-        pending: pendingCount
-      });
-    }, (error) => {
-      console.error("Firestore Listen Error:", error);
+      setStats({ revenue: totalRevenue, orders: totalOrdersToday, customers: customerSet.size, pending: pendingCount });
     });
 
     return () => unsubscribe();
   }, [isAudioReady]);
 
+  // Login Handle
   const handleLogin = (e) => {
     e.preventDefault();
     const correctPass = localStorage.getItem("adminPassword") || "123456";
@@ -96,9 +103,9 @@ export default function AdminDashboard() {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC' }}>
         <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', textAlign: 'center', width: '300px' }}>
-          <h2 style={{marginBottom: 20}}>Admin Login</h2>
+          <h2>Admin Login</h2>
           <form onSubmit={handleLogin}>
-            <input type="password" placeholder="Password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #DDD', marginBottom: '15px', textAlign: 'center', boxSizing: 'border-box' }} autoFocus />
+            <input type="password" placeholder="Password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #DDD', marginBottom: '15px', textAlign: 'center' }} autoFocus />
             <button type="submit" style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Login</button>
           </form>
         </div>
@@ -109,7 +116,7 @@ export default function AdminDashboard() {
   return (
     <div style={{ background: '#F8F9FC', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       <style jsx global>{`
-        .main-card { background: linear-gradient(135deg, #007AFF, #00D2FF); border-radius: 20px; padding: 25px; color: white; position: relative; margin-bottom: 20px; }
+        .main-card { background: linear-gradient(135deg, #007AFF, #00D2FF); border-radius: 20px; padding: 25px; color: white; margin-bottom: 20px; }
         .nav-item { background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; gap: 10px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         .red-dot { position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; background: #FF3B30; border-radius: 50%; border: 2px solid white; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
@@ -130,7 +137,7 @@ export default function AdminDashboard() {
       <div className="main-card">
         <h3 style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>TODAY'S REVENUE</h3>
         <span style={{ fontSize: '32px', fontWeight: '800', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Syncing...</span>
+        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Updating...</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
