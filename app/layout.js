@@ -1,7 +1,15 @@
+import "./globals.css"; // လူကြီးမင်းမှာရှိတဲ့ CSS ဖိုင်ကို ထည့်ပါ
+import PWARegistration from "../components/PWARegistration";
+
 export const metadata = {
-  title: 'YNS Kitchen Admin', // လူကြီးမင်း ကြိုက်နှစ်သက်ရာ Title ပေးပါ
+  title: 'YNS Kitchen', 
   description: 'VPN-Free Food Ordering System',
-  manifest: '/manifest.json', // 👈 ဒါက အရေးကြီးဆုံးပါ။
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'YNS Kitchen',
+  },
 }
 
 export default function RootLayout({ children }) {
@@ -9,12 +17,14 @@ export default function RootLayout({ children }) {
     <html lang="my">
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
-        {/* iOS အတွက် icon ပေါ်အောင် ဒါလေးပါ ထည့်ပေးထားပါ */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        {/* iOS Icon များအတွက် */}
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="theme-color" content="#007AFF" />
       </head>
-      <body>{children}</body>
+      <body>
+        <PWARegistration />
+        {children}
+      </body>
     </html>
-  )
+  );
 }
-
