@@ -1,7 +1,5 @@
-import "./globals.css";
 import PWARegistration from "../components/PWARegistration";
 
-// Server-side Metadata
 export const metadata = {
   title: 'YNS Kitchen', 
   description: 'VPN-Free Food Ordering System',
@@ -21,8 +19,7 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#007AFF" />
       </head>
-      <body>
-        {/* Client-side Component ကို ဒီမှာပဲ ခေါ်သုံးပါမယ် */}
+      <body style={{ margin: 0, padding: 0, fontFamily: 'sans-serif' }}>
         <PWARegistration />
         {children}
       </body>
