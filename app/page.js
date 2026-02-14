@@ -22,7 +22,6 @@ export default function Home() {
       setLoading(false);
       if (u) {
         // User ရဲ့ Active Orders အကုန်လုံးကို အချိန်နဲ့တပြေးညီ ဆွဲယူမည်
-        // Note: Console မှာ Index error တက်ခဲ့ရင် Firebase ကပေးတဲ့ link ကိုနှိပ်ပြီး Index create လုပ်ပေးရပါမယ်
         const q = query(collection(db, "orders"), where("email", "==", u.email), orderBy("orderDate", "desc"));
         const unsubOrders = onSnapshot(q, (snap) => {
           setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -79,7 +78,7 @@ export default function Home() {
 
   return (
     <div className="main-wrapper">
-      {/* FontAwesome Link ထည့်ပေးထားပါတယ် */}
+      {/* FontAwesome Link */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
       <style jsx global>{`
@@ -105,30 +104,67 @@ export default function Home() {
         .menu-grid-mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .mini-item { background: rgba(255,255,255,0.05); border-radius: 18px; padding: 10px; text-align: center; }
 
+        /* --- Profile Dropdown CSS --- */
         .profile-container { position: relative; }
-        .pfp-btn { width: 48px; height: 48px; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer; }
-        .dropdown-menu { position: absolute; top: 60px; right: 0; width: 200px; background: #fff; border-radius: 20px; padding: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.12); z-index: 100; border: 1px solid #f0f0f0; }
-        .drop-link { display: flex; align-items: center; gap: 10px; padding: 12px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 13px; border-radius: 12px; }
-        .drop-link:hover { background: #F8F9FB; }
+        .pfp-btn { width: 48px; height: 48px; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; }
+        .pfp-btn:active { transform: scale(0.95); }
+        
+        .dropdown-menu { 
+          position: absolute; top: 60px; right: 0; width: 240px; 
+          background: #fff; border-radius: 24px; padding: 20px; 
+          box-shadow: 0 20px 50px rgba(0,0,0,0.15); z-index: 100; 
+          border: 1px solid rgba(0,0,0,0.05);
+          animation: slideIn 0.2s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } }
+
+        .menu-user-info { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
+        .menu-user-info img { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .menu-user-info h4 { margin: 0; font-size: 16px; color: var(--text); }
+        .menu-user-info span { font-size: 12px; color: var(--gray); }
+
+        .menu-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-radius: 16px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 14px; transition: 0.2s; margin-bottom: 5px; }
+        .menu-item:hover { background: #F8F9FB; }
+        .menu-item i { width: 20px; text-align: center; font-size: 16px; }
       `}</style>
 
-      {/* 1. Header */}
+      {/* 1. Header with Full Profile Menu */}
       <div className="premium-header">
         <div>
           <span className="date-chip">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}</span>
           <h2 style={{margin: '8px 0 0', fontSize: '24px'}}>Hey, {user ? user.displayName.split(' ')[0] : 'Guest'} 👋</h2>
         </div>
+        
         <div className="profile-container" ref={dropdownRef}>
           {user ? (
             <img src={user.photoURL} className="pfp-btn" onClick={() => setShowDropdown(!showDropdown)} />
           ) : (
             <button onClick={() => signInWithRedirect(auth, provider)} className="date-chip" style={{border: 'none', cursor: 'pointer'}}>Login</button>
           )}
+
+          {/* Detailed Dropdown Menu */}
           {showDropdown && user && (
             <div className="dropdown-menu">
-              <div style={{padding:'10px 12px', fontSize:'12px', color:'#888', borderBottom:'1px solid #eee'}}>{user.displayName}</div>
-              <Link href="/history" className="drop-link"><i className="fas fa-history" style={{color: 'orange'}}></i> My Orders</Link>
-              <div className="drop-link" onClick={handleLogout} style={{color: '#FF3B30', cursor: 'pointer'}}><i className="fas fa-sign-out-alt"></i> Logout</div>
+              <div className="menu-user-info">
+                <img src={user.photoURL} alt="Profile" />
+                <h4>{user.displayName}</h4>
+                <span>{user.email}</span>
+              </div>
+              
+              <Link href="/profile" className="menu-item">
+                <i className="fas fa-user-circle" style={{color: '#AF52DE'}}></i>
+                <span>Profile Settings</span>
+              </Link>
+              
+              <Link href="/history" className="menu-item">
+                <i className="fas fa-history" style={{color: '#FF9500'}}></i>
+                <span>Order History</span>
+              </Link>
+              
+              <div className="menu-item" onClick={handleLogout} style={{color: '#FF3B30', cursor: 'pointer', marginTop: '10px'}}>
+                <i className="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+              </div>
             </div>
           )}
         </div>
@@ -136,7 +172,6 @@ export default function Home() {
 
       {/* 2. Smart Search */}
       <div className="search-box">
-        {/* ဒီနေရာမှာ '' ထည့်ပြီး ပြင်လိုက်ပါပြီ */}
         <i className="fas fa-search" style={{color: 'var(--p)'}}></i>
         <input type="text" placeholder="ID (သို့) ဟင်းပွဲရှာပါ..." value={searchQuery} onChange={handleSmartSearch} />
       </div>
@@ -241,5 +276,5 @@ export default function Home() {
       </div>
     </div>
   );
-            }
-            
+          }
+                
