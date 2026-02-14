@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   const audioRef = useRef(null);
   const prevPendingRef = useRef(-1);
 
-  // ၁။ Notification Token ယူခြင်းနှင့် နားထောင်ခြင်း
+  // ၁။ Notification Token ယူခြင်း
   const setupNotifications = async () => {
     try {
       if (typeof window !== "undefined" && 'serviceWorker' in navigator) {
@@ -25,7 +25,6 @@ export default function AdminDashboard() {
         
         if (token) console.log("Token ရပါပြီ");
 
-        // App ဖွင့်ထားစဉ် message ဝင်လာလျှင်
         onMessage(messaging, (payload) => {
           new Notification(payload.notification.title, {
             body: payload.notification.body,
@@ -38,7 +37,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // ၂။ အသံစနစ်ကို Active ဖြစ်အောင်လုပ်ခြင်း
+  // ၂။ အသံစနစ် Enable လုပ်ခြင်း
   const enableAudio = () => {
     setIsAudioReady(true);
     if (audioRef.current) {
@@ -53,7 +52,19 @@ export default function AdminDashboard() {
     // Auth စစ်ဆေးခြင်း
     if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
 
-    // Service Worker & Notifications
+    // Permission တောင်းခြင်းနှင့် စမ်းသပ်စာတန်းပို့ခြင်း
+    if ("Notification" in window) {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification("YNS Kitchen Admin", {
+            body: "Notification စနစ် ချိတ်ဆက်မှု အောင်မြင်ပါသည်။",
+            icon: "/icon-192.png"
+          });
+        }
+      });
+    }
+
+    // Service Worker Register လုပ်ခြင်း
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js')
         .then(() => setupNotifications());
@@ -66,7 +77,6 @@ export default function AdminDashboard() {
     const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
     const q = query(collection(db, "orders"));
 
-    // Firestore Real-time Listener
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let rev = 0; let ordToday = 0; let pend = 0;
       let customerSet = new Set();
@@ -103,7 +113,7 @@ export default function AdminDashboard() {
 
       prevPendingRef.current = pend;
       setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
-    });
+    }, (error) => console.error("Firestore Error:", error));
 
     return () => unsubscribe();
   }, [isAudioReady]);
@@ -187,5 +197,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-        }
-                                                 
+}
