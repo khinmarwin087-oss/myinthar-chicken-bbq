@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { db, auth } from "../../lib/firebase"; 
 import { collection, getDocs } from "firebase/firestore";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"; 
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth"; 
 
 export default function CustomerMenu() {
     const [menuData, setMenuData] = useState([]);
@@ -25,15 +24,33 @@ export default function CustomerMenu() {
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((u) => {
             setUser(u);
-            if (u) setCustomerInfo(prev => ({ ...prev, name: u.displayName }));
+            if (u) {
+                setCustomerInfo(prev => ({ ...prev, name: u.displayName }));
+            } else {
+                setCustomerInfo({ name: '', phone: '', note: '', date: '', time: '' });
+                setCart([]); // Logout ထွက်ရင် Cart ရှင်းမယ်
+            }
         });
         return () => unsubscribe();
     }, []);
 
     const handleLogin = async () => {
         const provider = new GoogleAuthProvider();
-        try { await signInWithPopup(auth, provider); } 
-        catch (e) { console.error(e); }
+        try { 
+            await signInWithPopup(auth, provider); 
+        } catch (e) { 
+            console.error(e);
+            setAlertMessage("Login ဝင်မရဖြစ်နေပါသည်");
+            setShowAlert(true);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     useEffect(() => {
@@ -60,6 +77,13 @@ export default function CustomerMenu() {
     }, [searchTerm, activeCat, menuData]);
 
     const addToCart = (item) => {
+        // --- ပြင်ဆင်ချက်: Login စစ်ဆေးခြင်း ---
+        if (!user) {
+            setAlertMessage("ဟင်းပွဲမှာယူရန် အရင်ဆုံး Google ဖြင့် Login ဝင်ပေးပါ");
+            setShowAlert(true);
+            return;
+        }
+
         setCart(prev => {
             const existing = prev.find(c => c.id === item.id);
             if (existing) return prev.map(c => c.id === item.id ? { ...c, qty: c.qty + 1 } : c);
@@ -89,8 +113,14 @@ export default function CustomerMenu() {
     const cartQty = cart.reduce((s, i) => s + i.qty, 0);
     const cartTotal = cart.reduce((s, i) => s + (i.qty * i.price), 0);
 
-    // ပေါင်းစည်းထားသော handleOrder Function
     const handleOrder = async () => {
+        // --- ပြင်ဆင်ချက်: Login စစ်ဆေးခြင်း ---
+        if (!user) {
+            setAlertMessage("ကျေးဇူးပြု၍ အရင်ဆုံး Login ဝင်ပါ");
+            setShowAlert(true);
+            return;
+        }
+
         if (cart.length === 0) {
             setAlertMessage("ဟင်းပွဲအရင်ရွေးပါ");
             setShowAlert(true);
@@ -155,9 +185,10 @@ export default function CustomerMenu() {
                                 </Link>
                                 <img 
                                     src={user.photoURL} 
-                                    onClick={() => auth.signOut()}
+                                    onClick={handleLogout}
                                     alt="profile"
                                     style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #007AFF', cursor: 'pointer' }} 
+                                    title="Click to Logout"
                                 />
                             </>
                         ) : (
@@ -165,7 +196,7 @@ export default function CustomerMenu() {
                                 background: '#fff', border: '1px solid #ddd', padding: '5px 10px', 
                                 borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' 
                             }}>
-                                <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={14} height={14} alt="g" />
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={14} height={14} alt="g" />
                                 Login
                             </button>
                         )}
@@ -182,20 +213,32 @@ export default function CustomerMenu() {
                 </div>
             </div>
 
-            {/* Menu Grid */}
+            {/* Menu Grid - ပြင်ဆင်ချက်: img tag ပြောင်းလဲခြင်း */}
             <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', boxSizing: 'border-box' }}>
                 {filteredMenu.map(item => (
                     <div key={item.id} style={{ background: '#fff', borderRadius: '15px', padding: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
-                        <div style={{position:'relative', width:'100%', height:'90px', borderRadius:'10px', overflow:'hidden'}}>
-                            <Image src={item.image || 'https://via.placeholder.com/150'} fill style={{objectFit:'cover'}} alt={item.name} />
+                        <div style={{position:'relative', width:'100%', height:'90px', borderRadius:'10px', overflow:'hidden', background: '#f5f5f5'}}>
+                            <img 
+                                src={item.image || 'https://via.placeholder.com/150'} 
+                                style={{width: '100%', height: '100%', objectFit: 'cover'}} 
+                                alt={item.name} 
+                                onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }}
+                            />
                         </div>
                         <div style={{fontWeight: 'bold', fontSize: '13px', margin: '8px 0', height:'35px', overflow:'hidden', lineHeight: '1.2'}}>{item.name}</div>
                         <div style={{color:'#007AFF', fontWeight:'bold', fontSize:'14px'}}>{(Number(item.price) || 0).toLocaleString()} Ks</div>
-                        <button onClick={() => addToCart(item)} style={{ width: '100%', background: '#007AFF', color: '#fff', border: 'none', padding: '8px', borderRadius: '8px', marginTop: '10px', fontWeight: 'bold' }}>Add +</button>
+                        <button 
+                            onClick={() => addToCart(item)} 
+                            style={{ width: '100%', background: user ? '#007AFF' : '#ccc', color: '#fff', border: 'none', padding: '8px', borderRadius: '8px', marginTop: '10px', fontWeight: 'bold', cursor: user ? 'pointer' : 'not-allowed' }}
+                        >
+                            Add +
+                        </button>
                     </div>
                 ))}
             </div>
 
+            {/* ... ကျန်သော UI အစိတ်အပိုင်းများ (Floating Cart, Modal စသည်တို့သည် ပြောင်းလဲမှုမရှိဘဲ အရင်အတိုင်း ရှိနေပါမည်) ... */}
+            
             {/* Floating Cart Bar */}
             {cartQty > 0 && !showCart && (
                 <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1A1A1A', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1000, borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
@@ -299,3 +342,4 @@ export default function CustomerMenu() {
 
 const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#8E8E93', marginBottom: '6px', marginTop: '12px' };
 const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA', fontSize: '15px', background: '#F9F9F9', boxSizing:'border-box', outline:'none', marginBottom: '5px' };
+                
