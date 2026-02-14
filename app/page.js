@@ -22,6 +22,7 @@ export default function Home() {
       setLoading(false);
       if (u) {
         // User ရဲ့ Active Orders အကုန်လုံးကို အချိန်နဲ့တပြေးညီ ဆွဲယူမည်
+        // Note: Console မှာ Index error တက်ခဲ့ရင် Firebase ကပေးတဲ့ link ကိုနှိပ်ပြီး Index create လုပ်ပေးရပါမယ်
         const q = query(collection(db, "orders"), where("email", "==", u.email), orderBy("orderDate", "desc"));
         const unsubOrders = onSnapshot(q, (snap) => {
           setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -78,6 +79,9 @@ export default function Home() {
 
   return (
     <div className="main-wrapper">
+      {/* FontAwesome Link ထည့်ပေးထားပါတယ် */}
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
       <style jsx global>{`
         :root { --p: #007AFF; --bg: #F8F9FB; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
         body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); margin: 0; }
@@ -87,9 +91,10 @@ export default function Home() {
         .date-chip { background: #fff; padding: 5px 15px; border-radius: 50px; font-size: 11px; font-weight: 800; color: var(--p); box-shadow: 0 4px 10px rgba(0,122,255,0.1); }
         
         .search-box { background: #fff; display: flex; align-items: center; padding: 15px 20px; border-radius: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        .search-box input { border: none; outline: none; margin-left: 12px; font-weight: 600; width: 100%; }
+        .search-box input { border: none; outline: none; margin-left: 12px; font-weight: 600; width: 100%; color: var(--text); }
 
-        .tracker-card { background: #1C1C1E; border-radius: 32px; padding: 25px; color: #fff; min-height: 180px; position: relative; overflow: hidden; margin-bottom: 25px; }
+        .tracker-card { background: #1C1C1E; border-radius: 32px; padding: 25px; color: #fff; min-height: 180px; position: relative; overflow: hidden; margin-bottom: 25px; transition: 0.3s ease; }
+        
         .order-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; scrollbar-width: none; }
         .order-slider::-webkit-scrollbar { display: none; }
         .order-item { min-width: 100%; scroll-snap-align: start; }
@@ -121,6 +126,7 @@ export default function Home() {
           )}
           {showDropdown && user && (
             <div className="dropdown-menu">
+              <div style={{padding:'10px 12px', fontSize:'12px', color:'#888', borderBottom:'1px solid #eee'}}>{user.displayName}</div>
               <Link href="/history" className="drop-link"><i className="fas fa-history" style={{color: 'orange'}}></i> My Orders</Link>
               <div className="drop-link" onClick={handleLogout} style={{color: '#FF3B30', cursor: 'pointer'}}><i className="fas fa-sign-out-alt"></i> Logout</div>
             </div>
@@ -130,12 +136,13 @@ export default function Home() {
 
       {/* 2. Smart Search */}
       <div className="search-box">
-        <i className="fas fa-search" style={{color: var(--p)}}></i>
-        <input type="text" placeholder="ID သို့မဟုတ် ဟင်းပွဲရှာပါ..." value={searchQuery} onChange={handleSmartSearch} />
+        {/* ဒီနေရာမှာ '' ထည့်ပြီး ပြင်လိုက်ပါပြီ */}
+        <i className="fas fa-search" style={{color: 'var(--p)'}}></i>
+        <input type="text" placeholder="ID (သို့) ဟင်းပွဲရှာပါ..." value={searchQuery} onChange={handleSmartSearch} />
       </div>
 
       {/* 3. Dynamic Card Content */}
-      <div className="tracker-card" style={{ background: searchQuery && !isTrackSearching ? '#fff' : '#1C1C1E', color: searchQuery && !isTrackSearching ? '#1C1C1E' : '#fff' }}>
+      <div className="tracker-card" style={{ background: searchQuery && !isTrackSearching ? '#fff' : '#1C1C1E', color: searchQuery && !isTrackSearching ? '#1C1C1E' : '#fff', border: searchQuery && !isTrackSearching ? '1px solid #eee' : 'none' }}>
         
         {/* Case A: Menu Results Search */}
         {searchQuery && searchResultItems.length > 0 && !isTrackSearching && (
@@ -143,9 +150,10 @@ export default function Home() {
             <h4 style={{margin: '0 0 15px'}}>ရှာဖွေမှုရလဒ်များ</h4>
             <div className="menu-grid-mini">
               {searchResultItems.map(item => (
-                <Link href="/customer_menu" key={item.id} className="mini-item" style={{textDecoration:'none', color:'inherit'}}>
-                  <img src={item.image} style={{width:'100%', height:'60px', borderRadius:'12px', objectFit:'cover'}} />
+                <Link href="/customer_menu" key={item.id} className="mini-item" style={{textDecoration:'none', color:'inherit', background: '#F8F9FB'}}>
+                  <img src={item.image || 'https://via.placeholder.com/100'} style={{width:'100%', height:'60px', borderRadius:'12px', objectFit:'cover'}} />
                   <div style={{fontSize:'11px', fontWeight:'bold', marginTop:'5px'}}>{item.name}</div>
+                  <div style={{fontSize:'10px', color:'var(--p)'}}>{item.price} Ks</div>
                 </Link>
               ))}
             </div>
@@ -157,9 +165,20 @@ export default function Home() {
           searchedOrder ? (
             <div className="order-item">
                <span style={{background: 'var(--p)', padding: '4px 10px', borderRadius: '10px', fontSize: '10px'}}>SEARCH RESULT</span>
-               <h2 style={{margin: '10px 0'}}>{searchedOrder.status}</h2>
+               <h2 style={{margin: '10px 0'}}>
+                   {searchedOrder.status === 'New' && 'အော်ဒါလက်ခံရရှိပြီ'}
+                   {searchedOrder.status === 'Cooking' && 'ချက်ပြုတ်နေပါပြီ'}
+                   {searchedOrder.status === 'Ready' && 'အဆင်သင့်ဖြစ်ပါပြီ'}
+                   {searchedOrder.status === 'On the way' && 'ပို့ဆောင်နေပါပြီ'}
+               </h2>
                <p style={{fontSize: '12px', opacity: 0.7}}>Order ID: {searchedOrder.orderId}</p>
-               <div className="progress-line"><div className="progress-fill" style={{width: '60%'}}></div></div>
+               <div className="progress-line">
+                   <div className="progress-fill" style={{ width: 
+                      searchedOrder.status === 'New' ? '25%' : 
+                      searchedOrder.status === 'Cooking' ? '50%' : 
+                      searchedOrder.status === 'Ready' ? '75%' : '100%' 
+                   }}></div>
+               </div>
             </div>
           ) : (
             <div style={{textAlign: 'center', paddingTop: '40px'}}>
@@ -175,14 +194,22 @@ export default function Home() {
             {orders.map(order => (
               <div key={order.id} className="order-item">
                 <div style={{display:'flex', justifyContent:'space-between', fontSize: '12px'}}>
-                   <b>{order.status === 'New' ? 'တင်ထားပြီးပါပြီ' : 'ချက်ပြုတ်နေပါပြီ'}</b>
+                   <b>
+                       {order.status === 'New' && 'တင်ထားပြီးပါပြီ'}
+                       {order.status === 'Cooking' && 'ချက်ပြုတ်နေပါပြီ'}
+                       {order.status === 'Ready' && 'အဆင်သင့်ဖြစ်ပါပြီ'}
+                   </b>
                    <span style={{opacity: 0.6}}>#{order.orderId}</span>
                 </div>
                 <h2 style={{margin: '15px 0'}}>
                    {order.status === 'New' ? 'Order Received 📝' : 'Now Cooking 👨‍🍳'}
                 </h2>
                 <div className="progress-line">
-                   <div className="progress-fill" style={{width: order.status === 'New' ? '25%' : '50%'}}></div>
+                   <div className="progress-fill" style={{ width: 
+                      order.status === 'New' ? '25%' : 
+                      order.status === 'Cooking' ? '50%' : 
+                      order.status === 'Ready' ? '75%' : '100%' 
+                   }}></div>
                 </div>
                 <p style={{fontSize: '11px', opacity: 0.5}}>ဘေးသို့ဆွဲ၍ အခြားအော်ဒါများကြည့်ပါ →</p>
               </div>
@@ -214,5 +241,5 @@ export default function Home() {
       </div>
     </div>
   );
-        }
-        
+            }
+            
