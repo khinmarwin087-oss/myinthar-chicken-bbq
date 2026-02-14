@@ -1,207 +1,200 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+// auth ရော provider ရော ပါအောင် import လုပ်ပါ
 import { auth, provider, db } from "../lib/firebase"; 
-import { collection, query, where, limit, onSnapshot, orderBy } from "firebase/firestore";
-import { signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
+import { collection, query, where, limit, onSnapshot } from "firebase/firestore";
+import { 
+  signInWithRedirect, 
+  getRedirectResult, 
+  onAuthStateChanged, 
+  signOut 
+} from "firebase/auth";
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
   const [popularItems, setPopularItems] = useState([]);
   const [recentItems, setRecentItems] = useState([]);
+  const [lang, setLang] = useState('MM'); // Language Switcher State
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+      
       if (currentUser) {
-        // ၁။ လက်ရှိ အော်ဒါအခြေအနေကို စစ်ဆေးရန် (Active Order Tracking)
+        // Active Order Tracking Logic
         const qOrder = query(collection(db, "orders"), where("email", "==", currentUser.email), where("status", "in", ["Pending", "Cooking", "Ready"]), limit(1));
-        onSnapshot(qOrder, (snap) => {
+        const unsubOrder = onSnapshot(qOrder, (snap) => {
           if (!snap.empty) setActiveOrder({ id: snap.docs[0].id, ...snap.docs[0].data() });
           else setActiveOrder(null);
         });
-
-        // ၂။ အရင်မှာဖူးတဲ့ ဟင်းပွဲများ (Quick Re-order)
-        const qRecent = query(collection(db, "orders"), where("email", "==", currentUser.email), limit(5));
-        onSnapshot(qRecent, (snap) => {
-          let items = [];
-          snap.docs.forEach(doc => items.push(...doc.data().items));
-          setRecentItems(items.slice(0, 4));
-        });
+        return () => unsubOrder();
       }
     });
 
-    // ၃။ လူကြိုက်အများဆုံး ဟင်းပွဲများ (Popular Items)
-    const qPop = query(collection(db, "menu"), limit(5));
-    onSnapshot(qPop, (snap) => {
-      setPopularItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    // Mock Popular Items (Database မရှိသေးခင် ပြရန်)
+    setPopularItems([
+      { id: 1, name: "Spicy Chicken", price: "4500", img: "🍗" },
+      { id: 2, name: "Pork Salad", price: "3800", img: "🥗" },
+      { id: 3, name: "Ice Coffee", price: "2500", img: "🍹" }
+    ]);
 
     return () => unsubscribeAuth();
   }, []);
 
   const handleLogout = async () => {
-    if (window.confirm("Logout ထွက်မှာ သေချာပါသလား?")) {
-      await signOut(auth);
-      setShowProfileModal(false);
+    if (window.confirm(lang === 'MM' ? "Logout ထွက်မှာ သေချာပါသလား?" : "Are you sure you want to logout?")) {
+      try {
+        await signOut(auth);
+        setShowProfile(false);
+      } catch (error) { console.error(error); }
     }
   };
 
   if (loading) return <SkeletonLoader />;
 
   return (
-    <div className="dashboard-container">
+    <div className="app-container">
       <style jsx global>{`
-        :root { --p: #007AFF; --bg: #F8F9FB; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
-        body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); margin: 0; }
-        .dashboard-container { padding: 20px 20px 40px 20px; max-width: 500px; margin: 0 auto; }
+        :root { --p: #007AFF; --bg: #F2F2F7; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
+        @media (prefers-color-scheme: dark) {
+          :root { --bg: #000000; --card: #1C1C1E; --text: #FFFFFF; --gray: #8E8E93; }
+        }
+        body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); margin: 0; transition: 0.3s; }
+        .app-container { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 100px; }
         
-        /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .pfp { width: 45px; height: 45px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
+        .pfp-circle { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--p); cursor: pointer; object-fit: cover; }
         
-        /* Active Order Tracking Widget */
-        .tracking-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 28px; padding: 20px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; }
-        .status-badge { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: bold; }
+        .widget-card { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .tracking-widget { background: linear-gradient(135deg, #007AFF, #00C7BE); color: white; }
         
-        /* Horizontal Scroll Sections */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 800; font-size: 17px; }
-        .h-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .h-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
         .h-scroll::-webkit-scrollbar { display: none; }
         
-        .pop-card { min-width: 140px; background: var(--card); border-radius: 20px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .pop-card img { width: 100%; height: 100px; border-radius: 15px; object-fit: cover; }
-        
-        /* Categories Grid */
-        .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .cat-item { text-align: center; font-size: 11px; font-weight: 700; }
-        .cat-icon { height: 60px; background: white; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .pop-item { min-width: 130px; background: var(--card); border-radius: 20px; padding: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
+        .pop-icon { font-size: 30px; margin-bottom: 10px; }
 
-        /* Profile Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
-        .profile-modal { background: white; width: 100%; max-width: 320px; border-radius: 30px; padding: 25px; position: relative; }
-        .modal-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 15px; text-decoration: none; color: #1c1c1e; font-weight: 700; margin-bottom: 5px; background: #F8F9FB; }
+        .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .cat-btn { background: var(--card); padding: 15px 5px; border-radius: 18px; text-align: center; font-size: 11px; font-weight: bold; border: none; color: var(--text); }
+        
+        /* Modal Style */
+        .full-modal { position: fixed; inset: 0; background: var(--bg); z-index: 3000; padding: 30px 20px; display: ${showProfile ? 'block' : 'none'}; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .menu-item { display: flex; align-items: center; gap: 15px; padding: 18px; background: var(--card); border-radius: 20px; margin-bottom: 12px; font-weight: 700; text-decoration: none; color: var(--text); }
+        .logout-text { color: #FF3B30 !important; }
       `}</style>
 
-      {/* Header */}
+      {/* 1. Header & Profile Dropdown Area */}
       <div className="header">
         <div>
-          <h2 style={{margin:0, fontSize:'22px'}}>YNS Kitchen</h2>
-          <p style={{margin:0, color:'var(--gray)', fontSize:'13px'}}>{new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', weekday:'short'})}</p>
+          <h1 style={{margin:0, fontSize: '24px'}}>{lang === 'MM' ? 'မင်္ဂလာပါ' : 'Hello'}, {user ? user.displayName.split(' ')[0] : 'Guest'}</h1>
+          <p style={{margin:0, color: 'var(--gray)', fontSize:'14px'}}>{new Date().toLocaleDateString()}</p>
         </div>
         {user ? (
-          <img src={user.photoURL} className="pfp" onClick={() => setShowProfileModal(true)} />
+          <img src={user.photoURL} className="pfp-circle" onClick={() => setShowProfile(true)} />
         ) : (
-          <button onClick={() => signInWithRedirect(auth, provider)} style={{border:'none', background:'#007AFF', color:'#fff', padding:'10px 20px', borderRadius:'15px', fontWeight:'bold'}}>Login</button>
+          <button onClick={loginWithGoogle} className="user-chip" style={{padding:'8px 15px', borderRadius:'20px', border:'none', background:'var(--p)', color:'white', fontWeight:'bold'}}>Login</button>
         )}
       </div>
 
-      {/* 1. Active Order Tracking (မှာထားတာရှိရင် ပေါ်မည်) */}
-      {activeOrder && (
-        <div className="tracking-card">
-          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px'}}>
-            <span className="status-badge">LIVE TRACKING</span>
-            <span style={{fontSize:'12px'}}>{activeOrder.orderId}</span>
+      {/* 2. Active Tracking Widget */}
+      {activeOrder ? (
+        <div className="widget-card tracking-widget">
+          <div style={{display:'flex', justifyContent:'space-between', fontSize:'12px'}}>
+            <b>LIVE TRACKING</b>
+            <span>#{activeOrder.id.slice(0,5)}</span>
           </div>
-          <h3 style={{margin:0}}>ဟင်းချက်နေပါပြီ 👨‍🍳</h3>
-          <p style={{fontSize:'13px', opacity:0.8}}>နောက် ၁၅ မိနစ်ခန့်တွင် အဆင်သင့်ဖြစ်ပါမည်</p>
-          <div style={{height:'6px', background:'rgba(255,255,255,0.2)', borderRadius:'10px', marginTop:'15px'}}>
-            <div style={{width:'60%', height:'100%', background:'#fff', borderRadius:'10px'}}></div>
+          <h2 style={{margin:'10px 0'}}>ချက်ပြုတ်နေပါပြီ 🍳</h2>
+          <div style={{height:6, background:'rgba(255,255,255,0.3)', borderRadius:10}}>
+             <div style={{width:'65%', height:'100%', background:'#fff', borderRadius:10}}></div>
           </div>
+        </div>
+      ) : (
+        <div className="widget-card" style={{background: 'linear-gradient(135deg, #FF9500, #FFCC00)', color: 'white'}}>
+          <h3 style={{margin:0}}>{lang === 'MM' ? 'ဗိုက်စာနေပြီလား?' : 'Hungry?'}</h3>
+          <p style={{fontSize: '14px'}}>{lang === 'MM' ? 'အခုပဲ မှာယူလိုက်ပါ' : 'Order your favorite food now'}</p>
+          <Link href="/customer_menu" style={{display:'inline-block', padding:'8px 20px', background:'white', color:'#FF9500', borderRadius:'12px', textDecoration:'none', fontWeight:'bold', fontSize:'13px'}}>Shop Now</Link>
         </div>
       )}
 
-      {/* 2. Popular Items (Horizontal Scroll) */}
-      <div className="section-header">Popular Items 🔥</div>
+      {/* 3. Popular Items Scroll */}
+      <h3 style={{fontSize:'17px', marginBottom:15}}>{lang === 'MM' ? 'လူကြိုက်အများဆုံး' : 'Popular Now'} 🔥</h3>
       <div className="h-scroll">
         {popularItems.map(item => (
-          <div key={item.id} className="pop-card">
-            <img src={item.image} />
-            <div style={{fontSize:'13px', fontWeight:'bold', marginTop:'8px'}}>{item.name}</div>
-            <div style={{color:'var(--p)', fontSize:'12px', fontWeight:'800'}}>{item.price} Ks</div>
+          <div key={item.id} className="pop-item">
+            <div className="pop-icon">{item.img}</div>
+            <div style={{fontSize:'13px', fontWeight:'bold'}}>{item.name}</div>
+            <div style={{color:'var(--p)', fontSize:'12px'}}>{item.price} Ks</div>
           </div>
         ))}
       </div>
 
-      {/* 3. Categories Grid */}
-      <div className="section-header" style={{marginTop:'25px'}}>Categories 📂</div>
+      {/* 4. Category Grid */}
+      <h3 style={{fontSize:'17px', margin:'25px 0 15px'}}>{lang === 'MM' ? 'အမျိုးအစားများ' : 'Categories'} 📂</h3>
       <div className="cat-grid">
-        <div className="cat-item"><div className="cat-icon" style={{color:'#FF9500'}}>🍗</div>အသားဟင်း</div>
-        <div className="cat-item"><div className="cat-icon" style={{color:'#34C759'}}>🥗</div>အသုပ်</div>
-        <div className="cat-item"><div className="cat-icon" style={{color:'#5856D6'}}>🍜</div>ခေါက်ဆွဲ</div>
-        <div className="cat-item"><div className="cat-icon" style={{color:'#FF2D55'}}>🍹</div>ဖျော်ရည်</div>
+        <button className="cat-btn">🍗<br/>Meat</button>
+        <button className="cat-btn">🥗<br/>Salad</button>
+        <button className="cat-btn">🍹<br/>Drinks</button>
+        <button className="cat-btn">🍜<br/>Noodle</button>
       </div>
 
-      {/* 4. Quick Re-order (အရင်မှာဖူးတာရှိရင် ပေါ်မည်) */}
-      {recentItems.length > 0 && (
-        <>
-          <div className="section-header">Quick Re-order 🔄</div>
-          <div className="h-scroll">
-            {recentItems.map((item, idx) => (
-              <div key={idx} className="pop-card" style={{minWidth:'120px', border:'1px dashed #ccc', background:'transparent'}}>
-                 <div style={{fontSize:'12px', fontWeight:'bold'}}>{item.name}</div>
-                 <button style={{marginTop:'10px', width:'100%', background:'#fff', border:'1px solid #eee', borderRadius:'8px', fontSize:'10px', padding:'5px'}}>Re-order</button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* 5. Main Buttons (Dashboard ပေါ်မှာပဲ လှလှပပ ဖြန့်ထားခြင်း) */}
-      <div style={{marginTop:'30px', display:'grid', gap:'15px'}}>
-        <Link href="/customer_menu" className="modal-item" style={{background:'white', border:'1px solid #eee'}}>
-           <div style={{width:'40px', height:'40px', background:'#E6F2FF', borderRadius:'12px', display:'flex', alignItems:'center', justifyCenter:'center', fontSize:'20px'}}>🛒</div>
-           <div style={{flex:1}}><b>မှာယူရန်သွားမည်</b><br/><small style={{color:'var(--gray)'}}>Explore full menu</small></div>
-           <i className="fas fa-chevron-right" style={{color:'#ccc'}}></i>
-        </Link>
-      </div>
+      {/* 5. Quick Action Button (အရမ်းကြီးမနေအောင် အောက်မှာပဲထားပါတယ်) */}
+      <Link href="/customer_menu" className="menu-item" style={{marginTop:30, border:'2px solid var(--p)'}}>
+        <span style={{fontSize:20}}>🛒</span>
+        <div style={{flex:1}}>
+          <b>{lang === 'MM' ? 'ဟင်းပွဲမှာယူရန်' : 'Go to Menu'}</b>
+          <br/><small style={{color:'var(--gray)'}}>Explore 50+ dishes</small>
+        </div>
+        <i className="fas fa-arrow-right" style={{color:'var(--p)'}}></i>
+      </Link>
 
       {/* Profile Modal (All-in-one Menu) */}
-      {showProfileModal && user && (
-        <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
-          <div className="profile-modal" onClick={e => e.stopPropagation()}>
-            <div style={{textAlign:'center', marginBottom:'20px'}}>
-              <img src={user.photoURL} style={{width:'70px', borderRadius:'50%', border:'4px solid #E6F2FF'}} />
-              <h3 style={{margin:'10px 0 0 0'}}>{user.displayName}</h3>
-              <p style={{margin:0, color:'var(--gray)', fontSize:'12px'}}>{user.email}</p>
-            </div>
-            
-            <Link href="/history" className="modal-item"><i className="fas fa-history" style={{color:'#FF9500'}}></i> My Orders</Link>
-            <Link href="/profile" className="modal-item"><i className="fas fa-user-edit" style={{color:'#007AFF'}}></i> Profile Settings</Link>
-            <div className="modal-item"><i className="fas fa-language" style={{color:'#34C759'}}></i> Language (MM/EN)</div>
-            <Link href="/support" className="modal-item"><i className="fas fa-headset" style={{color:'#AF52DE'}}></i> Contact Support</Link>
-            
-            <button onClick={handleLogout} className="modal-item" style={{width:'100%', border:'none', color:'#FF3B30', marginTop:'15px', background:'#FFF2F2'}}>
-              <i className="fas fa-sign-out-alt"></i> Logout
-            </button>
-          </div>
+      <div className="full-modal">
+        <div style={{display:'flex', justifyContent:'space-between', marginBottom:30}}>
+          <button onClick={() => setShowProfile(false)} style={{border:'none', background:'none', fontSize:20}}><i className="fas fa-times"></i></button>
+          <button onClick={() => setLang(lang === 'MM' ? 'EN' : 'MM')} style={{background:'var(--p)', color:'white', border:'none', padding:'5px 15px', borderRadius:10, fontWeight:'bold'}}>{lang}</button>
         </div>
-      )}
+        
+        {user && (
+          <div style={{textAlign:'center', marginBottom:30}}>
+            <img src={user.photoURL} style={{width:80, borderRadius:50, marginBottom:10}} />
+            <h2 style={{margin:0}}>{user.displayName}</h2>
+            <p style={{color:'var(--gray)'}}>{user.email}</p>
+          </div>
+        )}
 
-      <div style={{textAlign:'center', marginTop:'40px', color:'var(--gray)', fontSize:'10px', fontWeight:700}}>YNS KITCHEN • V 2.1.0</div>
+        <Link href="/history" className="menu-item"><i className="fas fa-clock-rotate-left" style={{color:'#FF9500'}}></i> {lang === 'MM' ? 'မှာယူခဲ့သည့်မှတ်တမ်း' : 'Order History'}</Link>
+        <Link href="/profile" className="menu-item"><i className="fas fa-user-circle" style={{color:'var(--p)'}}></i> {lang === 'MM' ? 'ကိုယ်ရေးအချက်အလက်' : 'My Profile'}</Link>
+        <Link href="https://m.me/yourpage" className="menu-item"><i className="fab fa-facebook-messenger" style={{color:'#0084FF'}}></i> {lang === 'MM' ? 'အကူအညီတောင်းရန်' : 'Contact Support'}</Link>
+        
+        <div className="menu-item logout-text" onClick={handleLogout} style={{cursor:'pointer'}}>
+          <i className="fas fa-right-from-bracket"></i> {lang === 'MM' ? 'အကောင့်မှထွက်ရန်' : 'Logout'}
+        </div>
+      </div>
     </div>
   );
+
+  async function loginWithGoogle() {
+    try { await signInWithRedirect(auth, provider); } catch (e) { alert(e.code); }
+  }
 }
 
-// Skeleton Loader Component
 function SkeletonLoader() {
   return (
-    <div style={{padding:'20px'}}>
-      <div style={{height:'30px', width:'150px', background:'#eee', borderRadius:'10px', marginBottom:'20px'}} className="skeleton"></div>
-      <div style={{height:'180px', width:'100%', background:'#eee', borderRadius:'28px', marginBottom:'25px'}} className="skeleton"></div>
-      <div style={{display:'flex', gap:'15px'}}>
-        <div style={{height:'150px', width:'130px', background:'#eee', borderRadius:'20px'}} className="skeleton"></div>
-        <div style={{height:'150px', width:'130px', background:'#eee', borderRadius:'20px'}} className="skeleton"></div>
+    <div style={{padding:20}}>
+      <div style={{height:40, width:150, background:'#eee', borderRadius:10, marginBottom:20}}></div>
+      <div style={{height:180, width:'100%', background:'#eee', borderRadius:24, marginBottom:25}}></div>
+      <div style={{display:'flex', gap:15}}>
+        <div style={{height:130, width:120, background:'#eee', borderRadius:20}}></div>
+        <div style={{height:130, width:120, background:'#eee', borderRadius:20}}></div>
       </div>
-      <style>{`
-        .skeleton { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-      `}</style>
     </div>
   );
         }
-        
+      
