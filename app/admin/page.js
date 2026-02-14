@@ -5,87 +5,126 @@ import { db } from "../../lib/firebase";
 import { collection, query, onSnapshot } from "firebase/firestore";
 
 export default function AdminDashboard() {
+  const [currentDate, setCurrentDate] = useState("");
   const [stats, setStats] = useState({ revenue: 0, orders: 0, customers: 0, pending: 0 });
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [isAudioReady, setIsAudioReady] = useState(false);
   const audioRef = useRef(null);
-  const prevPendingRef = useRef(-1); 
+  const prevPendingRef = useRef(-1);
 
   useEffect(() => {
     // ၁။ အသံဖိုင် Setup
     audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
-    
-    // ၂။ Notification ခွင့်ပြုချက်တောင်းခြင်း
-    if (typeof window !== "undefined" && "Notification" in window) {
+
+    // ၂။ Notification Permission တောင်းခြင်း
+    if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const q = query(collection(db, "orders"));
+    setCurrentDate(today);
 
+    const q = query(collection(db, "orders"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let revenue = 0; let ordersToday = 0; let pending = 0;
-      let customers = new Set();
+      let totalRevenue = 0;
+      let totalOrdersToday = 0;
+      let pendingCount = 0;
+      let customerSet = new Set();
+      let lastCustomer = "";
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         const orderDate = data.orderDate ? data.orderDate.split('T')[0] : (data.date || "");
         const status = (data.status || "").toLowerCase();
 
-        // Revenue & Today Stats Logic
+        // Revenue & Stats Logic (ယနေ့အတွက်)
         if (orderDate === today) {
-          ordersToday++;
-          if (["success", "ready", "done", "completed"].includes(status)) {
-            revenue += Number(data.totalPrice || data.total || 0);
+          totalOrdersToday++;
+          // Status မျိုးစုံကို စစ်ပေးထားပါတယ်
+          if (["completed", "done", "success", "ready"].includes(status)) {
+            totalRevenue += Number(data.totalPrice || data.total || 0);
           }
-          if (data.name || data.phone) customers.add(data.name || data.phone);
+          if (data.name || data.phone) customerSet.add(data.name || data.phone);
         }
-
-        // Pending Count (For Notification & Red Dot)
-        if (status === "pending") pending++;
+        
+        // Pending Count (Notification အတွက်)
+        if (status === "pending") {
+          pendingCount++;
+          lastCustomer = data.name || "Customer";
+        }
       });
 
-      // ၃။ အော်ဒါအသစ်တက်လာရင် အသံမြည်စေခြင်း (prevPendingRef သုံးပြီး စစ်ဆေးသည်)
-      if (prevPendingRef.current !== -1 && pending > prevPendingRef.current) {
-        if (audioEnabled && audioRef.current) {
-          audioRef.current.play().catch(() => {});
+      // ၃။ အသံမြည်ရန် နှင့် Notification ပြရန် Logic
+      if (prevPendingRef.current !== -1 && pendingCount > prevPendingRef.current) {
+        // အသံဖွင့်ရန်
+        if (audioRef.current && isAudioReady) {
+          audioRef.current.play().catch(e => console.log("Audio play blocked"));
         }
+        // Notification ပြရန်
         if (Notification.permission === "granted") {
-          new Notification("🔔 New Order!", { body: "အော်ဒါအသစ်တစ်ခု ရောက်ရှိနေပါတယ်" });
+          new Notification("🔔 New Order Received!", {
+            body: `${lastCustomer} ထံမှ အော်ဒါအသစ် ရောက်ရှိလာပါပြီ။`,
+            icon: "/favicon.ico"
+          });
         }
       }
-      
-      prevPendingRef.current = pending;
-      setStats({ revenue, orders: ordersToday, customers: customers.size, pending });
+
+      prevPendingRef.current = pendingCount;
+      setStats({ revenue: totalRevenue, orders: totalOrdersToday, customers: customerSet.size, pending: pendingCount });
     });
 
     return () => unsubscribe();
-  }, [audioEnabled]);
+  }, [isAudioReady]);
 
   return (
     <div style={{ background: '#F8F9FC', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       <style jsx global>{`
-        .main-gradient-card { background: linear-gradient(135deg, #007AFF, #00D2FF); border-radius: 20px; padding: 25px; color: white; position: relative; margin-bottom: 20px; }
-        .nav-card { background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; gap: 12px; position: relative; border: 1px solid #F0F0F0; }
-        .badge { background: #FF3B30; color: white; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
-        .red-dot { position: absolute; top: -5px; right: -5px; width: 15px; height: 15px; background: #FF3B30; border-radius: 50%; border: 2px solid white; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .main-gradient-card {
+            background: linear-gradient(135deg, #007AFF, #00D2FF);
+            border-radius: 20px; padding: 25px; color: white; position: relative;
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.2); margin-bottom: 20px;
+        }
+        .nav-card {
+            background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 12px;
+            position: relative; transition: 0.2s;
+        }
+        .nav-card:active { transform: scale(0.96); }
+        .badge { background: #FF3B30; color: white; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; float: right; }
+        
+        /* အနီစက် Animation */
+        .red-dot {
+          position: absolute; top: 10px; right: 10px; width: 12px; height: 12px;
+          background: #FF3B30; border-radius: 50%; border: 2px solid white;
+          animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.7; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .audio-banner {
+          background: #007AFF; color: white; padding: 12px; border-radius: 12px;
+          margin-bottom: 20px; text-align: center; font-size: 13px; font-weight: bold; cursor: pointer;
+        }
       `}</style>
 
-      {/* Audio Activator - ဒါကို နှိပ်မှ အသံထွက်လာမှာပါ */}
-      {!audioEnabled && (
-        <div onClick={() => setAudioEnabled(true)} style={{ background: '#FFF3CD', color: '#856404', padding: '10px', borderRadius: '10px', marginBottom: '15px', fontSize: '12px', textAlign: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
-          ⚠️ အသံကြားရအောင် ဒီနေရာကို တစ်ချက်နှိပ်ပေးပါ (Enable Audio)
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+      {/* Audio Activator: Browser Policy ကြောင့် User က တစ်ချက်နှိပ်ပေးဖို့လိုပါတယ် */}
+      {!isAudioReady && (
+        <div className="audio-banner" onClick={() => setIsAudioReady(true)}>
+          <i className="fas fa-volume-up"></i> အော်ဒါအသံကြားရအောင် ဒီမှာတစ်ချက်နှိပ်ပါ
         </div>
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
         <div>
           <p style={{ margin: 0, fontSize: '12px', color: '#8E8E93', fontWeight: 600 }}>Mingalaba!</p>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800 }}>YNS Kitchen</h1>
         </div>
-        <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: audioEnabled ? '#34C759' : '#8E8E93' }}>
-          <i className={`fas ${audioEnabled ? 'fa-bell' : 'fa-bell-slash'}`}></i>
+        <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isAudioReady ? '#34C759' : '#007AFF', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+          <i className={`fas ${isAudioReady ? 'fa-bell' : 'fa-user'}`}></i>
         </div>
       </div>
 
@@ -93,10 +132,25 @@ export default function AdminDashboard() {
       <div className="main-gradient-card">
         <h3 style={{ margin: 0, fontSize: '11px', textTransform: 'uppercase', opacity: 0.9 }}>Today's Revenue</h3>
         <span style={{ fontSize: '32px', fontWeight: '800', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-        <span style={{ fontSize: '10px', opacity: 0.7 }}>Updated: Live Today</span>
+        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Update: {currentDate}</span>
+        <i className="fas fa-chart-line" style={{ position: 'absolute', right: '20px', bottom: '20px', fontSize: '40px', opacity: 0.2 }}></i>
       </div>
 
-      {/* Management Grid */}
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
+        <div style={{ background: 'white', padding: '15px', borderRadius: '18px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#8E8E93', display: 'block' }}>DAILY ORDERS</span>
+          <span style={{ fontSize: '20px', fontWeight: 800 }}>{stats.orders}</span>
+        </div>
+        <div style={{ background: 'white', padding: '15px', borderRadius: '18px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#8E8E93', display: 'block' }}>PENDING</span>
+          <span style={{ fontSize: '20px', fontWeight: 800, color: '#FF3B30' }}>{stats.pending}</span>
+        </div>
+      </div>
+
+      <p style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', marginBottom: '15px' }}>Management</p>
+
+      {/* Navigation Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
         <Link href="/admin/orders" className="nav-card">
             {stats.pending > 0 && <div className="red-dot"></div>}
@@ -122,3 +176,4 @@ export default function AdminDashboard() {
     </div>
   );
         }
+        
