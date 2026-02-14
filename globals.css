@@ -1,0 +1,63 @@
+/* Google Fonts - Plus Jakarta Sans */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --pearl-white: #FCFCFD;
+  --soft-gray: #F2F2F7;
+  --accent-blue: #007AFF;
+  --text-main: #1C1C1E;
+  --text-muted: #8E8E93;
+  --glass-effect: rgba(255, 255, 255, 0.7);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-tap-highlight-color: transparent; /* Mobile click effect ဖျောက်ရန် */
+}
+
+body {
+  background-color: var(--pearl-white);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Premium Card Effect */
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* အလွန်နုသော အရိပ် */
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease;
+}
+
+.card:active {
+  transform: scale(0.98); /* နှိပ်လိုက်ရင် အထဲချိုင့်သွားမည့် effect */
+}
+
+/* Smooth Button Style */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D1D6;
+  border-radius: 10px;
+}
