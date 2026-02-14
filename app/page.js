@@ -36,12 +36,7 @@ export default function Home() {
       }
     });
 
-    // Mock Popular Items (Database မရှိသေးခင် ပြရန်)
-    setPopularItems([
-      { id: 1, name: "Spicy Chicken", price: "4500", img: "🍗" },
-      { id: 2, name: "Pork Salad", price: "3800", img: "🥗" },
-      { id: 3, name: "Ice Coffee", price: "2500", img: "🍹" }
-    ]);
+    
 
     return () => unsubscribeAuth();
   }, []);
