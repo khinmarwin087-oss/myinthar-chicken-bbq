@@ -1,9 +1,14 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-// Firebase logic များ (လမ်းကြောင်း မှန်ပါစေ)
-import { auth } from "../lib/firebase"; 
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
+// auth ရော provider ရော ပါအောင် import လုပ်ပါ
+import { auth, provider } from "../lib/firebase"; 
+import { 
+  signInWithRedirect, 
+  getRedirectResult, 
+  onAuthStateChanged, 
+  signOut 
+} from "firebase/auth";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState("Loading date...");
@@ -14,7 +19,21 @@ export default function Home() {
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     setCurrentDate(new Date().toLocaleDateString('en-US', options));
 
-    // ၂။ Login အခြေအနေကို စစ်ဆေးရန်
+    // ၂။ Redirect ပြန်လာတဲ့ အဖြေကို စစ်ဆေးရန် (Login ဝင်ပြီး ပြန်ရောက်လာချိန်)
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          setUser(result.user);
+          localStorage.setItem('myDeviceUID', result.user.uid);
+        }
+      } catch (error) {
+        console.error("Redirect Error:", error);
+      }
+    };
+    checkRedirect();
+
+    // ၃။ Login အခြေအနေ အမြဲစစ်ဆေးရန်
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -27,26 +46,25 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  // Login Function
+  // Login Function (Redirect ကို သုံးထားပါတယ်)
   const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    // ဒါလေး ထည့်ပေးရင် Popup Window ပိုငြိမ်ပါတယ်
-    provider.setCustomParameters({ prompt: 'select_account' }); 
-
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error("Login failed:", error);
-      // အောက်က alert လေးကို ခဏထည့်ပြီး စမ်းကြည့်ပါ
-      // ဒါမှ domain error လား၊ configuration error လားဆိုတာ လူကြီးမင်း သိရမှာပါ
-      alert("Login Error: " + error.code); 
+      alert("Error: " + error.code);
     }
   };
-  
 
   // Logout Function
-  const handleLogout = () => signOut(auth);
-
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
   return (
     <>
       <style jsx global>{`
