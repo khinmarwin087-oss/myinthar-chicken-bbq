@@ -8,7 +8,13 @@ export default function ManageMenu() {
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({ name: '', price: '', stock: '', category: '', image: '' });
+    const [searchCat, setSearchCat] = useState("");
 
+    // render အပိုင်းမှာ Category filter လုပ်ထားတဲ့ list ကိုပြပါ
+const filteredDisplayMenu = menuData.filter(item => 
+    item.category?.toLowerCase().includes(searchCat.toLowerCase()) ||
+    item.name?.toLowerCase().includes(searchCat.toLowerCase())
+);
     // Data ဆွဲယူရန်
     const fetchMenu = async () => {
         setLoading(true);
@@ -55,6 +61,17 @@ export default function ManageMenu() {
     };
 
     return (
+        // UI ထဲမှာ search box ထည့်ပါ
+<div className="search-box" style={{marginBottom:'15px'}}>
+    <input 
+        type="text" 
+        placeholder="Category သို့မဟုတ် ဟင်းပွဲအမည်ဖြင့် ရှာပါ..." 
+        value={searchCat} 
+        onChange={(e) => setSearchCat(e.target.value)} 
+        style={{width:'100%', padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}}
+    />
+</div>
+        
         <div style={{ background: '#F2F2F7', minHeight: '100vh', padding: '15px', fontFamily: 'sans-serif' }}>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             
