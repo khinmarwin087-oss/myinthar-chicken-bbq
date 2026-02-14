@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 // ဒီနေရာမှာ လမ်းကြောင်း (၃) မျိုး စမ်းကြည့်ပါမယ်
-import { db } from "../lib/firebase"; 
+import { db } from "../../lib/firebase"; 
 
 export default function TestPage() {
   const [msg, setMsg] = useState("စစ်ဆေးနေဆဲ...");
