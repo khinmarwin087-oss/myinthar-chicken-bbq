@@ -5,198 +5,120 @@ import { db } from "../../lib/firebase";
 import { collection, query, onSnapshot } from "firebase/firestore";
 
 export default function AdminDashboard() {
-  const [currentDate, setCurrentDate] = useState("");
-  const [stats, setStats] = useState({
-    revenue: 0,
-    orders: 0,
-    customers: 0,
-    pending: 0
-  });
-  
-  // အော်ဒါဟောင်းအရေအတွက်ကို မှတ်ထားရန်
-  const prevPendingRef = useRef(0);
+  const [stats, setStats] = useState({ revenue: 0, orders: 0, customers: 0, pending: 0 });
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const audioRef = useRef(null);
+  const prevPendingRef = useRef(-1); 
 
   useEffect(() => {
-    // ၁။ အသံဖိုင် Setup (User က Page ကို တစ်ချက်နှိပ်ပြီးမှ အလုပ်လုပ်ပါမည်)
+    // ၁။ အသံဖိုင် Setup
     audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
-    audioRef.current.load();
-
-    // ၂။ Notification ခွင့်ပြုချက် တောင်းခံခြင်း
-    if ("Notification" in window) {
-      if (Notification.permission !== "granted") {
-        Notification.requestPermission();
-      }
+    
+    // ၂။ Notification ခွင့်ပြုချက်တောင်းခြင်း
+    if (typeof window !== "undefined" && "Notification" in window) {
+      Notification.requestPermission();
     }
 
     const today = new Date().toISOString().split('T')[0];
-    setCurrentDate(today);
-
     const q = query(collection(db, "orders"));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let totalRevenue = 0;
-      let totalOrders = 0;
-      let pendingCount = 0;
-      let customerSet = new Set();
-      let lastOrderName = "";
+      let revenue = 0; let ordersToday = 0; let pending = 0;
+      let customers = new Set();
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.date === today) {
-          totalOrders++;
-          if (data.status === "completed" || data.status === "Done" || data.status === "Success") {
-            totalRevenue += Number(data.totalPrice || 0);
+        const orderDate = data.orderDate ? data.orderDate.split('T')[0] : (data.date || "");
+        const status = (data.status || "").toLowerCase();
+
+        // Revenue & Today Stats Logic
+        if (orderDate === today) {
+          ordersToday++;
+          if (["success", "ready", "done", "completed"].includes(status)) {
+            revenue += Number(data.totalPrice || data.total || 0);
           }
-          if (data.name || data.phone) {
-            customerSet.add(data.name || data.phone);
-          }
+          if (data.name || data.phone) customers.add(data.name || data.phone);
         }
-        
-        if (data.status === "pending" || data.status === "Pending") {
-          pendingCount++;
-          lastOrderName = data.name || "Customer";
-        }
+
+        // Pending Count (For Notification & Red Dot)
+        if (status === "pending") pending++;
       });
 
-      // ၃။ အော်ဒါအသစ်တက်လာလျှင် အသံမြည်ခြင်းနှင့် Notification ပြခြင်း
-      if (pendingCount > prevPendingRef.current) {
-        // အသံမြည်ရန်
-        if (audioRef.current) {
-          audioRef.current.play().catch(e => console.log("Interaction required for audio"));
+      // ၃။ အော်ဒါအသစ်တက်လာရင် အသံမြည်စေခြင်း (prevPendingRef သုံးပြီး စစ်ဆေးသည်)
+      if (prevPendingRef.current !== -1 && pending > prevPendingRef.current) {
+        if (audioEnabled && audioRef.current) {
+          audioRef.current.play().catch(() => {});
         }
-
-        // Notification ပြရန် (အခြား App သုံးနေရင်လည်း ပေါ်လာမည်)
         if (Notification.permission === "granted") {
-          new Notification("🔔 အော်ဒါအသစ် တက်လာပါပြီ!", {
-            body: `${lastOrderName} ထံမှ အော်ဒါအသစ် ရရှိပါတယ်ဗျာ။`,
-            icon: "/favicon.ico" // သင့် App icon path ကို ထည့်ပါ
-          });
-        }
-
-        // ဖုန်းမှာဆိုရင် တုန်ခါမှု (Vibrate) ပါ ထည့်ချင်လျှင်
-        if ("vibrate" in navigator) {
-          navigator.vibrate([200, 100, 200]);
+          new Notification("🔔 New Order!", { body: "အော်ဒါအသစ်တစ်ခု ရောက်ရှိနေပါတယ်" });
         }
       }
-
-      // လက်ရှိအရေအတွက်ကို Update လုပ်ထားမည်
-      prevPendingRef.current = pendingCount;
-
-      setStats({
-        revenue: totalRevenue,
-        orders: totalOrders,
-        customers: customerSet.size,
-        pending: pendingCount
-      });
+      
+      prevPendingRef.current = pending;
+      setStats({ revenue, orders: ordersToday, customers: customers.size, pending });
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [audioEnabled]);
 
   return (
     <div style={{ background: '#F8F9FC', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       <style jsx global>{`
-        .main-gradient-card {
-            background: linear-gradient(135deg, #007AFF, #00D2FF);
-            border-radius: 20px; padding: 25px; color: white; position: relative;
-            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.2); margin-bottom: 20px;
-        }
-        .nav-card {
-            background: white; border-radius: 22px; padding: 20px; text-decoration: none; color: #1C1C1E;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 12px;
-            transition: 0.3s; border: 1px solid #FFF;
-        }
-        .nav-card:active { transform: scale(0.95); background: #F2F2F7; }
-        .badge { background: #FF3B30; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 800; margin-left: 5px; }
+        .main-gradient-card { background: linear-gradient(135deg, #007AFF, #00D2FF); border-radius: 20px; padding: 25px; color: white; position: relative; margin-bottom: 20px; }
+        .nav-card { background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; gap: 12px; position: relative; border: 1px solid #F0F0F0; }
+        .badge { background: #FF3B30; color: white; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .red-dot { position: absolute; top: -5px; right: -5px; width: 15px; height: 15px; background: #FF3B30; border-radius: 50%; border: 2px solid white; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
       `}</style>
 
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      {/* Audio Activator - ဒါကို နှိပ်မှ အသံထွက်လာမှာပါ */}
+      {!audioEnabled && (
+        <div onClick={() => setAudioEnabled(true)} style={{ background: '#FFF3CD', color: '#856404', padding: '10px', borderRadius: '10px', marginBottom: '15px', fontSize: '12px', textAlign: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+          ⚠️ အသံကြားရအောင် ဒီနေရာကို တစ်ချက်နှိပ်ပေးပါ (Enable Audio)
+        </div>
+      )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <p style={{ margin: 0, fontSize: '12px', color: '#8E8E93', fontWeight: 700, letterSpacing: '0.5px' }}>MANAGEMENT PANEL</p>
-          <h1 style={{ margin: '5px 0 0', fontSize: '24px', fontWeight: 900, color: '#1C1C1E' }}>YNS Kitchen</h1>
+          <p style={{ margin: 0, fontSize: '12px', color: '#8E8E93', fontWeight: 600 }}>Mingalaba!</p>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800 }}>YNS Kitchen</h1>
         </div>
-        <div style={{ width: '45px', height: '45px', background: 'white', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#007AFF', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
-          <i className="fas fa-store" style={{ fontSize: '20px' }}></i>
+        <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: audioEnabled ? '#34C759' : '#8E8E93' }}>
+          <i className={`fas ${audioEnabled ? 'fa-bell' : 'fa-bell-slash'}`}></i>
         </div>
       </div>
 
       {/* Revenue Card */}
       <div className="main-gradient-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-                <h3 style={{ margin: 0, fontSize: '12px', textTransform: 'uppercase', opacity: 0.8, fontWeight: 700 }}>Today's Revenue</h3>
-                <span style={{ fontSize: '34px', fontWeight: '900', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
-                LIVE
-            </div>
-        </div>
-        <span style={{ fontSize: '11px', opacity: 0.8 }}>Date: {currentDate}</span>
-        <i className="fas fa-wallet" style={{ position: 'absolute', right: '20px', bottom: '20px', fontSize: '50px', opacity: 0.15 }}></i>
+        <h3 style={{ margin: 0, fontSize: '11px', textTransform: 'uppercase', opacity: 0.9 }}>Today's Revenue</h3>
+        <span style={{ fontSize: '32px', fontWeight: '800', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
+        <span style={{ fontSize: '10px', opacity: 0.7 }}>Updated: Live Today</span>
       </div>
 
-      {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
-        <div style={{ background: 'white', padding: '18px', borderRadius: '22px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
-          <i className="fas fa-shopping-bag" style={{ color: '#007AFF', marginBottom: '10px' }}></i>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#8E8E93', display: 'block' }}>DAILY ORDERS</span>
-          <span style={{ fontSize: '22px', fontWeight: 900 }}>{stats.orders}</span>
-        </div>
-        <div style={{ background: 'white', padding: '18px', borderRadius: '22px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
-          <i className="fas fa-users" style={{ color: '#5856D6', marginBottom: '10px' }}></i>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#8E8E93', display: 'block' }}>CUSTOMERS</span>
-          <span style={{ fontSize: '22px', fontWeight: 900 }}>{stats.customers}</span>
-        </div>
-      </div>
-
-      <p style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '1px' }}>Control Center</p>
-
-      {/* Navigation Grid */}
+      {/* Management Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
         <Link href="/admin/orders" className="nav-card">
-            <div style={{ color: '#007AFF', background: '#F0F7FF', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-              <i className="fas fa-clock"></i>
+            {stats.pending > 0 && <div className="red-dot"></div>}
+            <div style={{ color: '#007AFF', background: '#F0F7FF', width: '35px', height: '35px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="fas fa-shopping-basket"></i>
             </div>
             <div>
               <b style={{ fontSize: '15px' }}>Orders {stats.pending > 0 && <span className="badge">{stats.pending}</span>}</b>
-              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Manage Live Orders</span>
-            </div>
-        </Link>
-
-        <Link href="/admin/manage_menu" className="nav-card">
-            <div style={{ color: '#AF52DE', background: '#FDF0FF', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-              <i className="fas fa-list-ul"></i>
-            </div>
-            <div>
-              <b style={{ fontSize: '15px' }}>Inventory</b>
-              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Stock & Items</span>
+              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Live Monitoring</span>
             </div>
         </Link>
 
         <Link href="/admin/history" className="nav-card">
-            <div style={{ color: '#34C759', background: '#F2FFF5', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-              <i className="fas fa-file-invoice-dollar"></i>
+            <div style={{ color: '#34C759', background: '#F2FFF5', width: '35px', height: '35px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="fas fa-history"></i>
             </div>
             <div>
               <b style={{ fontSize: '15px' }}>History</b>
-              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Sales Reports</span>
-            </div>
-        </Link>
-
-        <Link href="/admin/settings" className="nav-card">
-            <div style={{ color: '#FF9500', background: '#FFF9F0', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-              <i className="fas fa-sliders-h"></i>
-            </div>
-            <div>
-              <b style={{ fontSize: '15px' }}>Settings</b>
-              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Shop Profile</span>
+              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Sales Log</span>
             </div>
         </Link>
       </div>
     </div>
   );
         }
-        
