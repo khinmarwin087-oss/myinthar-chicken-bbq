@@ -3,52 +3,72 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { db } from "../../lib/firebase"; 
 import { collection, query, onSnapshot } from "firebase/firestore";
-import { getMessaging, getToken } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ revenue: 0, orders: 0, customers: 0, pending: 0 });
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [inputPass, setInputPass] = useState("");
   const [isAudioReady, setIsAudioReady] = useState(false);
+  
   const audioRef = useRef(null);
   const prevPendingRef = useRef(-1);
 
-  // Notification Token ယူသည့် Function
+  // ၁။ Notification Token ယူခြင်းနှင့် နားထောင်ခြင်း
   const setupNotifications = async () => {
     try {
-      if (!('serviceWorker' in navigator)) return;
-      
-      const messaging = getMessaging();
-      const token = await getToken(messaging, { 
-        vapidKey: "BPcHRWw8jfHdJwMWiFN3v1PGj3pevV4msLVcbLCip-7jG80WY5EORbsFKLBoKuD1el6GchcP8lwpkStdTHXRsPo" 
-      });
-      
-      if (token) {
-        console.log("Notification Token ရပါပြီ");
-        // လိုအပ်ပါက ဒီ Token ကို DB မှာ သိမ်းနိုင်ပါတယ်
+      if (typeof window !== "undefined" && 'serviceWorker' in navigator) {
+        const messaging = getMessaging();
+        const token = await getToken(messaging, { 
+          vapidKey: "BPcHRWw8jfHdJwMWiFN3v1PGj3pevV4msLVcbLCip-7jG80WY5EORbsFKLBoKuD1el6GchcP8lwpkStdTHXRsPo" 
+        });
+        
+        if (token) console.log("Token ရပါပြီ");
+
+        // App ဖွင့်ထားစဉ် message ဝင်လာလျှင်
+        onMessage(messaging, (payload) => {
+          new Notification(payload.notification.title, {
+            body: payload.notification.body,
+            icon: "/icon-192.png"
+          });
+        });
       }
     } catch (err) {
       console.error("Notification Setup Error:", err);
     }
   };
 
-  useEffect(() => {
-    const sessionAuth = sessionStorage.getItem("isAdAuthed");
-    if (sessionAuth === "true") setIsAuthorized(true);
+  // ၂။ အသံစနစ်ကို Active ဖြစ်အောင်လုပ်ခြင်း
+  const enableAudio = () => {
+    setIsAudioReady(true);
+    if (audioRef.current) {
+      audioRef.current.play().then(() => {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }).catch(e => console.log("Audio Init Error"));
+    }
+  };
 
-    // Service Worker Register
+  useEffect(() => {
+    // Auth စစ်ဆေးခြင်း
+    if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
+
+    // Service Worker & Notifications
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js')
         .then(() => setupNotifications());
     }
 
-    audioRef.current = new Audio('/soundreality-notification-3-158189.mp3');
+    // အသံဖိုင် Load လုပ်ခြင်း
+    audioRef.current = new Audio('/order-sound.mp3'); 
+    audioRef.current.load();
 
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
     const q = query(collection(db, "orders"));
 
+    // Firestore Real-time Listener
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let totalRevenue = 0; let totalOrdersToday = 0; let pendingCount = 0;
+      let rev = 0; let ordToday = 0; let pend = 0;
       let customerSet = new Set();
 
       snapshot.docs.forEach(doc => {
@@ -58,42 +78,39 @@ export default function AdminDashboard() {
         const status = (data.status || "").toLowerCase();
 
         if (orderDateStr === todayStr) {
-          totalOrdersToday++;
+          ordToday++;
           if (["completed", "done", "success", "ready"].includes(status)) {
-            totalRevenue += Number(data.totalPrice || data.total || 0);
+            rev += Number(data.totalPrice || data.total || 0);
           }
           if (data.name || data.customerName) customerSet.add(data.name || data.customerName);
         }
-        
-        if (status === "pending") pendingCount++;
+        if (status === "pending") pend++;
       });
 
-      // အော်ဒါအသစ်တက်လျှင် (Refresh မလိုဘဲ အလုပ်လုပ်မည့်အပိုင်း)
-      if (prevPendingRef.current !== -1 && pendingCount > prevPendingRef.current) {
+      // အော်ဒါအသစ်တက်လာလျှင် အသံမြည်ရန်
+      if (prevPendingRef.current !== -1 && pend > prevPendingRef.current) {
         if (isAudioReady && audioRef.current) {
+          audioRef.current.currentTime = 0;
           audioRef.current.play().catch(() => {});
         }
-        // Browser Notification ပြခြင်း
         if (Notification.permission === "granted") {
-          new Notification("🔔 YNS Kitchen", { 
-            body: "အော်ဒါအသစ် ရောက်ရှိလာပါပြီ။",
+          new Notification("🔔 Order အသစ်ရပါပြီ", { 
+            body: "YNS Kitchen မှာ အော်ဒါအသစ်တစ်ခု ရောက်ရှိလာပါတယ်။",
             icon: "/icon-192.png" 
           });
         }
       }
 
-      prevPendingRef.current = pendingCount;
-      setStats({ revenue: totalRevenue, orders: totalOrdersToday, customers: customerSet.size, pending: pendingCount });
+      prevPendingRef.current = pend;
+      setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
     });
 
     return () => unsubscribe();
   }, [isAudioReady]);
 
-  // Login Handle
   const handleLogin = (e) => {
     e.preventDefault();
-    const correctPass = localStorage.getItem("adminPassword") || "123456";
-    if (inputPass === correctPass) {
+    if (inputPass === (localStorage.getItem("adminPassword") || "123456")) {
       setIsAuthorized(true);
       sessionStorage.setItem("isAdAuthed", "true");
     } else { alert("Password မှားယွင်းနေပါသည်။"); }
@@ -102,13 +119,11 @@ export default function AdminDashboard() {
   if (!isAuthorized) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC' }}>
-        <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', textAlign: 'center', width: '300px' }}>
-          <h2>Admin Login</h2>
-          <form onSubmit={handleLogin}>
-            <input type="password" placeholder="Password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #DDD', marginBottom: '15px', textAlign: 'center' }} autoFocus />
-            <button type="submit" style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Login</button>
-          </form>
-        </div>
+        <form onSubmit={handleLogin} style={{ background: 'white', padding: '30px', borderRadius: '20px', textAlign: 'center', width: '300px' }}>
+          <h2 style={{marginBottom: 20}}>Admin Login</h2>
+          <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '10px', border: '1px solid #ddd', textAlign: 'center' }} placeholder="Password" autoFocus />
+          <button type="submit" style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Login</button>
+        </form>
       </div>
     );
   }
@@ -117,7 +132,7 @@ export default function AdminDashboard() {
     <div style={{ background: '#F8F9FC', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       <style jsx global>{`
         .main-card { background: linear-gradient(135deg, #007AFF, #00D2FF); border-radius: 20px; padding: 25px; color: white; margin-bottom: 20px; }
-        .nav-item { background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; gap: 10px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .nav-item { background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; gap: 10px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .red-dot { position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; background: #FF3B30; border-radius: 50%; border: 2px solid white; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
       `}</style>
@@ -129,15 +144,15 @@ export default function AdminDashboard() {
       </div>
 
       {!isAudioReady && (
-        <div onClick={() => setIsAudioReady(true)} style={{ background: '#007AFF', color: 'white', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
-          🔊 အော်ဒါအသံဖွင့်ရန် နှိပ်ပါ
-        </div>
+        <button onClick={enableAudio} style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '12px', marginBottom: '20px', fontWeight: 'bold' }}>
+          🔊 အော်ဒါအသံ စတင်ရန် နှိပ်ပါ
+        </button>
       )}
 
       <div className="main-card">
         <h3 style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>TODAY'S REVENUE</h3>
         <span style={{ fontSize: '32px', fontWeight: '800', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Updating...</span>
+        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Syncing...</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
@@ -173,4 +188,4 @@ export default function AdminDashboard() {
     </div>
   );
         }
-        
+                                                 
