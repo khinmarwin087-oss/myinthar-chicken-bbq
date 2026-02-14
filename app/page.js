@@ -1,228 +1,207 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { auth, provider } from "../lib/firebase"; 
-import { 
-  signInWithRedirect, 
-  getRedirectResult, 
-  onAuthStateChanged, 
-  signOut 
-} from "firebase/auth";
+import { auth, provider, db } from "../lib/firebase"; 
+import { collection, query, where, limit, onSnapshot, orderBy } from "firebase/firestore";
+import { signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function Home() {
-  const [currentDate, setCurrentDate] = useState("Loading date...");
   const [user, setUser] = useState(null);
-  const [showMenu, setShowMenu] = useState(false); // Menu ပွင့်/ပိတ် အတွက်
-  const menuRef = useRef(null); // အပြင်ကနေနှိပ်ရင် Menu ပိတ်ဖို့
+  const [loading, setLoading] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [activeOrder, setActiveOrder] = useState(null);
+  const [popularItems, setPopularItems] = useState([]);
+  const [recentItems, setRecentItems] = useState([]);
 
   useEffect(() => {
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    setCurrentDate(new Date().toLocaleDateString('en-US', options));
-
-    const checkRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result && result.user) {
-          setUser(result.user);
-          localStorage.setItem('myDeviceUID', result.user.uid);
-        }
-      } catch (error) { console.error("Redirect Error:", error); }
-    };
-    checkRedirect();
-
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
       if (currentUser) {
-        setUser(currentUser);
-        localStorage.setItem('myDeviceUID', currentUser.uid);
-      } else {
-        setUser(null);
+        // ၁။ လက်ရှိ အော်ဒါအခြေအနေကို စစ်ဆေးရန် (Active Order Tracking)
+        const qOrder = query(collection(db, "orders"), where("email", "==", currentUser.email), where("status", "in", ["Pending", "Cooking", "Ready"]), limit(1));
+        onSnapshot(qOrder, (snap) => {
+          if (!snap.empty) setActiveOrder({ id: snap.docs[0].id, ...snap.docs[0].data() });
+          else setActiveOrder(null);
+        });
+
+        // ၂။ အရင်မှာဖူးတဲ့ ဟင်းပွဲများ (Quick Re-order)
+        const qRecent = query(collection(db, "orders"), where("email", "==", currentUser.email), limit(5));
+        onSnapshot(qRecent, (snap) => {
+          let items = [];
+          snap.docs.forEach(doc => items.push(...doc.data().items));
+          setRecentItems(items.slice(0, 4));
+        });
       }
     });
 
-    // Menu ပွင့်နေတုန်း အပြင်ကနေနှိပ်ရင် Menu ကို ပြန်ပိတ်ပေးမယ့် Logic
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
+    // ၃။ လူကြိုက်အများဆုံး ဟင်းပွဲများ (Popular Items)
+    const qPop = query(collection(db, "menu"), limit(5));
+    onSnapshot(qPop, (snap) => {
+      setPopularItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
 
-    return () => {
-      unsubscribe();
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => unsubscribeAuth();
   }, []);
-
-  const loginWithGoogle = async () => {
-    try { await signInWithRedirect(auth, provider); } 
-    catch (error) { alert("Error: " + error.code); }
-  };
 
   const handleLogout = async () => {
     if (window.confirm("Logout ထွက်မှာ သေချာပါသလား?")) {
-      try {
-        await signOut(auth);
-        setUser(null);
-        setShowMenu(false);
-      } catch (error) { console.error("Logout failed:", error); }
+      await signOut(auth);
+      setShowProfileModal(false);
     }
   };
 
+  if (loading) return <SkeletonLoader />;
+
   return (
-    <>
+    <div className="dashboard-container">
       <style jsx global>{`
-        :root { 
-          --pearl: #ffffff; --bg: #F2F2F7; --primary: #007AFF; 
-          --text: #1C1C1E; --gray: #8E8E93; --accent: #AF52DE; --orange: #FF9500; 
-        }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        :root { --p: #007AFF; --bg: #F8F9FB; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
+        body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); margin: 0; }
+        .dashboard-container { padding: 20px 20px 40px 20px; max-width: 500px; margin: 0 auto; }
         
-        /* Header & Chip */
-        .welcome-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; padding: 10px 5px; position: relative; }
-        .welcome-header h1 { margin: 0; font-size: 24px; font-weight: 800; }
-        .welcome-header p { margin: 5px 0 0; color: var(--gray); font-size: 14px; text-transform: capitalize; }
-        .user-chip { background: white; padding: 5px 12px; border-radius: 50px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; }
-        .user-chip:active { transform: scale(0.95); }
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .pfp { width: 45px; height: 45px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
+        
+        /* Active Order Tracking Widget */
+        .tracking-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 28px; padding: 20px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .status-badge { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: bold; }
+        
+        /* Horizontal Scroll Sections */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 800; font-size: 17px; }
+        .h-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .h-scroll::-webkit-scrollbar { display: none; }
+        
+        .pop-card { min-width: 140px; background: var(--card); border-radius: 20px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .pop-card img { width: 100%; height: 100px; border-radius: 15px; object-fit: cover; }
+        
+        /* Categories Grid */
+        .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .cat-item { text-align: center; font-size: 11px; font-weight: 700; }
+        .cat-icon { height: 60px; background: white; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
 
-        /* Premium Profile Menu */
-        .profile-menu { 
-          position: absolute; top: 55px; right: 0; width: 220px; 
-          background: white; border-radius: 20px; padding: 15px; 
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1000;
-          animation: slideIn 0.3s ease-out;
-          border: 1px solid rgba(0,0,0,0.05);
-        }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .menu-user-info { text-align: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #f2f2f7; }
-        .menu-user-info img { width: 45px; height: 45px; border-radius: 50%; margin-bottom: 8px; border: 2px solid var(--primary); }
-        .menu-user-info b { display: block; font-size: 14px; color: var(--text); }
-        .menu-user-info span { font-size: 11px; color: var(--gray); }
-
-        .menu-item { 
-          display: flex; align-items: center; gap: 12px; padding: 12px; 
-          border-radius: 12px; text-decoration: none; color: var(--text); 
-          font-size: 13px; font-weight: 600; transition: 0.2s;
-        }
-        .menu-item:active { background: #f2f2f7; }
-        .menu-item i { width: 18px; text-align: center; font-size: 14px; }
-        .logout-btn { color: #FF3B30; margin-top: 5px; cursor: pointer; }
-
-        /* Existing Grid & Cards */
-        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: var(--pearl); padding: 20px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid rgba(0,0,0,0.02); display: block; }
-        .stat-card:active { transform: scale(0.95); }
-        .icon-circle { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; font-size: 20px; }
-        .bg-blue { background: rgba(0, 122, 255, 0.1); color: var(--primary); }
-        .bg-purple { background: rgba(175, 82, 222, 0.1); color: var(--accent); }
-        .banner-card { background: linear-gradient(135deg, #007AFF, #00C7BE); border-radius: 24px; padding: 25px; color: white; margin-bottom: 25px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,122,255,0.2); }
-        .banner-card i { position: absolute; right: -20px; bottom: -20px; font-size: 120px; opacity: 0.2; }
-        .section-title { font-size: 16px; font-weight: 800; margin-bottom: 15px; padding-left: 5px; }
-        .action-item { background: var(--pearl); display: flex; align-items: center; padding: 18px; border-radius: 20px; margin-bottom: 12px; text-decoration: none; color: inherit; gap: 15px; border: 1px solid rgba(0,0,0,0.01); }
-        .action-item:active { background: #f9f9fb; transform: scale(0.98); }
+        /* Profile Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+        .profile-modal { background: white; width: 100%; max-width: 320px; border-radius: 30px; padding: 25px; position: relative; }
+        .modal-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 15px; text-decoration: none; color: #1c1c1e; font-weight: 700; margin-bottom: 5px; background: #F8F9FB; }
       `}</style>
 
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-      <div className="welcome-header">
+      {/* Header */}
+      <div className="header">
         <div>
-          <p>{currentDate}</p>
-          <h1>YNS Kitchen 👋</h1>
+          <h2 style={{margin:0, fontSize:'22px'}}>YNS Kitchen</h2>
+          <p style={{margin:0, color:'var(--gray)', fontSize:'13px'}}>{new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', weekday:'short'})}</p>
         </div>
-        
-        <div ref={menuRef}>
-          {user ? (
-            <>
-              <button className="user-chip" onClick={() => setShowMenu(!showMenu)}>
-                <img src={user.photoURL} alt="pfp" style={{ width: '24px', borderRadius: '50%' }} />
-                <span>{user.displayName.split(' ')[0]}</span>
-                <i className={`fas fa-chevron-${showMenu ? 'up' : 'down'}`} style={{fontSize: '10px', color: '#ccc'}}></i>
-              </button>
+        {user ? (
+          <img src={user.photoURL} className="pfp" onClick={() => setShowProfileModal(true)} />
+        ) : (
+          <button onClick={() => signInWithRedirect(auth, provider)} style={{border:'none', background:'#007AFF', color:'#fff', padding:'10px 20px', borderRadius:'15px', fontWeight:'bold'}}>Login</button>
+        )}
+      </div>
 
-              {/* Profile Menu Dropdown */}
-              {showMenu && (
-                <div className="profile-menu">
-                  <div className="menu-user-info">
-                    <img src={user.photoURL} alt="pfp" />
-                    <b>{user.displayName}</b>
-                    <span>{user.email}</span>
-                  </div>
-                  
-                  <Link href="/profile" className="menu-item">
-                    <i className="fas fa-user-circle" style={{color: 'var(--accent)'}}></i>
-                    Edit Profile
-                  </Link>
-                  
-                  <Link href="/history" className="menu-item">
-                    <i className="fas fa-clock-rotate-left" style={{color: 'var(--orange)'}}></i>
-                    Order History
-                  </Link>
+      {/* 1. Active Order Tracking (မှာထားတာရှိရင် ပေါ်မည်) */}
+      {activeOrder && (
+        <div className="tracking-card">
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px'}}>
+            <span className="status-badge">LIVE TRACKING</span>
+            <span style={{fontSize:'12px'}}>{activeOrder.orderId}</span>
+          </div>
+          <h3 style={{margin:0}}>ဟင်းချက်နေပါပြီ 👨‍🍳</h3>
+          <p style={{fontSize:'13px', opacity:0.8}}>နောက် ၁၅ မိနစ်ခန့်တွင် အဆင်သင့်ဖြစ်ပါမည်</p>
+          <div style={{height:'6px', background:'rgba(255,255,255,0.2)', borderRadius:'10px', marginTop:'15px'}}>
+            <div style={{width:'60%', height:'100%', background:'#fff', borderRadius:'10px'}}></div>
+          </div>
+        </div>
+      )}
 
-                  <div className="menu-item logout-btn" onClick={handleLogout}>
-                    <i className="fas fa-right-from-bracket"></i>
-                    Logout
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <button className="user-chip" onClick={loginWithGoogle}>
-              <i className="fab fa-google" style={{ color: '#4285F4' }}></i>
-              <span>Login</span>
+      {/* 2. Popular Items (Horizontal Scroll) */}
+      <div className="section-header">Popular Items 🔥</div>
+      <div className="h-scroll">
+        {popularItems.map(item => (
+          <div key={item.id} className="pop-card">
+            <img src={item.image} />
+            <div style={{fontSize:'13px', fontWeight:'bold', marginTop:'8px'}}>{item.name}</div>
+            <div style={{color:'var(--p)', fontSize:'12px', fontWeight:'800'}}>{item.price} Ks</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 3. Categories Grid */}
+      <div className="section-header" style={{marginTop:'25px'}}>Categories 📂</div>
+      <div className="cat-grid">
+        <div className="cat-item"><div className="cat-icon" style={{color:'#FF9500'}}>🍗</div>အသားဟင်း</div>
+        <div className="cat-item"><div className="cat-icon" style={{color:'#34C759'}}>🥗</div>အသုပ်</div>
+        <div className="cat-item"><div className="cat-icon" style={{color:'#5856D6'}}>🍜</div>ခေါက်ဆွဲ</div>
+        <div className="cat-item"><div className="cat-icon" style={{color:'#FF2D55'}}>🍹</div>ဖျော်ရည်</div>
+      </div>
+
+      {/* 4. Quick Re-order (အရင်မှာဖူးတာရှိရင် ပေါ်မည်) */}
+      {recentItems.length > 0 && (
+        <>
+          <div className="section-header">Quick Re-order 🔄</div>
+          <div className="h-scroll">
+            {recentItems.map((item, idx) => (
+              <div key={idx} className="pop-card" style={{minWidth:'120px', border:'1px dashed #ccc', background:'transparent'}}>
+                 <div style={{fontSize:'12px', fontWeight:'bold'}}>{item.name}</div>
+                 <button style={{marginTop:'10px', width:'100%', background:'#fff', border:'1px solid #eee', borderRadius:'8px', fontSize:'10px', padding:'5px'}}>Re-order</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* 5. Main Buttons (Dashboard ပေါ်မှာပဲ လှလှပပ ဖြန့်ထားခြင်း) */}
+      <div style={{marginTop:'30px', display:'grid', gap:'15px'}}>
+        <Link href="/customer_menu" className="modal-item" style={{background:'white', border:'1px solid #eee'}}>
+           <div style={{width:'40px', height:'40px', background:'#E6F2FF', borderRadius:'12px', display:'flex', alignItems:'center', justifyCenter:'center', fontSize:'20px'}}>🛒</div>
+           <div style={{flex:1}}><b>မှာယူရန်သွားမည်</b><br/><small style={{color:'var(--gray)'}}>Explore full menu</small></div>
+           <i className="fas fa-chevron-right" style={{color:'#ccc'}}></i>
+        </Link>
+      </div>
+
+      {/* Profile Modal (All-in-one Menu) */}
+      {showProfileModal && user && (
+        <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal" onClick={e => e.stopPropagation()}>
+            <div style={{textAlign:'center', marginBottom:'20px'}}>
+              <img src={user.photoURL} style={{width:'70px', borderRadius:'50%', border:'4px solid #E6F2FF'}} />
+              <h3 style={{margin:'10px 0 0 0'}}>{user.displayName}</h3>
+              <p style={{margin:0, color:'var(--gray)', fontSize:'12px'}}>{user.email}</p>
+            </div>
+            
+            <Link href="/history" className="modal-item"><i className="fas fa-history" style={{color:'#FF9500'}}></i> My Orders</Link>
+            <Link href="/profile" className="modal-item"><i className="fas fa-user-edit" style={{color:'#007AFF'}}></i> Profile Settings</Link>
+            <div className="modal-item"><i className="fas fa-language" style={{color:'#34C759'}}></i> Language (MM/EN)</div>
+            <Link href="/support" className="modal-item"><i className="fas fa-headset" style={{color:'#AF52DE'}}></i> Contact Support</Link>
+            
+            <button onClick={handleLogout} className="modal-item" style={{width:'100%', border:'none', color:'#FF3B30', marginTop:'15px', background:'#FFF2F2'}}>
+              <i className="fas fa-sign-out-alt"></i> Logout
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Banner */}
-      <div className="banner-card">
-        <h2>Special Offer!</h2>
-        <p>ယနေ့ မှာယူတဲ့ ဟင်းပွဲတိုင်းအတွက် <br/>10% Discount ရရှိနိုင်ပါတယ်။</p>
-        <i className="fas fa-utensils"></i>
-      </div>
-
-      <div className="section-title">Main Services</div>
-      <div className="grid-menu">
-        <Link href="/customer_menu" className="stat-card">
-          <div className="icon-circle bg-blue"><i className="fas fa-shopping-basket"></i></div>
-          <span>Menu</span>
-          <b>ဟင်းပွဲမှာယူရန်</b>
-        </Link>
-        {/* Profile Card ကို Grid ထဲမှာ မထားချင်တော့ရင် ဒီကနေ ဖြုတ်နိုင်ပါတယ် (Menu ထဲမှာ ပါပြီးသားမို့လို့ပါ) */}
-        <Link href="/profile" className="stat-card">
-          <div className="icon-circle bg-purple"><i className="fas fa-user-edit"></i></div>
-          <span>Profile</span>
-          <b>ကိုယ်ရေးအချက်အလက်</b>
-        </Link>
-      </div>
-
-      <div className="section-title">Support & Feedback</div>
-      
-      <Link href="/feedback" className="action-item">
-        <i className="fas fa-star" style={{ color: '#FFCC00', width: '25px', textAlign: 'center' }}></i>
-        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Rate our Service</div>
-        <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
-      </Link>
-
-      <Link href="https://m.me/your_page_link" className="action-item" target="_blank">
-        <i className="fab fa-facebook-messenger" style={{ color: '#0084FF', width: '25px', textAlign: 'center' }}></i>
-        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Contact Support</div>
-        <i className="fas fa-external-link-alt" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
-      </Link>
-
-      {/* History Card ကိုလည်း Menu ထဲမှာ ပါပြီးသားဖြစ်လို့ ဒီမှာ ထားချင်သေးရင် ထားနိုင်ပါတယ် */}
-      <Link href="/history" className="action-item">
-        <i className="fas fa-history" style={{ color: 'var(--orange)', width: '25px', textAlign: 'center' }}></i>
-        <div style={{ flex: 1, fontWeight: 700, fontSize: '14px' }}>Order History</div>
-        <i className="fas fa-chevron-right" style={{ color: '#C7C7CC', fontSize: '12px' }}></i>
-      </Link>
-
-      <div style={{ textAlign: 'center', marginTop: '40px', color: 'var(--gray)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
-          YNS KITCHEN • VERSION 2.1.0
-      </div>
-    </>
+      <div style={{textAlign:'center', marginTop:'40px', color:'var(--gray)', fontSize:'10px', fontWeight:700}}>YNS KITCHEN • V 2.1.0</div>
+    </div>
   );
-  }
-                
+}
+
+// Skeleton Loader Component
+function SkeletonLoader() {
+  return (
+    <div style={{padding:'20px'}}>
+      <div style={{height:'30px', width:'150px', background:'#eee', borderRadius:'10px', marginBottom:'20px'}} className="skeleton"></div>
+      <div style={{height:'180px', width:'100%', background:'#eee', borderRadius:'28px', marginBottom:'25px'}} className="skeleton"></div>
+      <div style={{display:'flex', gap:'15px'}}>
+        <div style={{height:'150px', width:'130px', background:'#eee', borderRadius:'20px'}} className="skeleton"></div>
+        <div style={{height:'150px', width:'130px', background:'#eee', borderRadius:'20px'}} className="skeleton"></div>
+      </div>
+      <style>{`
+        .skeleton { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+      `}</style>
+    </div>
+  );
+        }
+        
