@@ -11,38 +11,22 @@ export default function AdminHistory() {
   const [selDate, setSelDate] = useState("");
   const [searchId, setSearchId] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "orders"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const allOrders = snapshot.docs.map(doc => {
         const data = doc.data();
-        
-        // Date ကို YYYY-MM-DD ပြောင်းလဲခြင်း
-        let cleanDate = "";
-        if (data.orderDate) {
-           cleanDate = data.orderDate.split('T')[0]; // ISO string မှ ဖြတ်ယူခြင်း
-        } else if (data.date) {
-           cleanDate = data.date;
-        }
-
-        return { 
-          id: doc.id, 
-          ...data,
-          displayDate: cleanDate
-        };
+        let cleanDate = data.orderDate ? data.orderDate.split('T')[0] : (data.date || "");
+        return { id: doc.id, ...data, displayDate: cleanDate };
       });
-
-      // 🔥 အရေးကြီးဆုံးအချက် - History မှာ ပေါ်ဖို့ status ကို ပိုစုံအောင် ထည့်ထားပါတယ်
-      // အခု လောလောဆယ် "Ready" ဖြစ်သွားရင်တင် History ထဲ စဝင်အောင် လုပ်ထားပေးပါတယ်
-      const historyItems = allOrders.filter(o => 
-        ['Ready', 'Success', 'Done', 'completed', 'Success'].includes(o.status)
-      );
-
+      const historyItems = allOrders.filter(o => ['Ready', 'Success', 'Done', 'completed'].includes(o.status));
       historyItems.sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0));
       setOrders(historyItems);
       setLoading(false);
-    });
+    }, () => setLoading(false));
     return () => unsubscribe();
   }, []);
 
@@ -50,91 +34,155 @@ export default function AdminHistory() {
     return orders.filter(o => {
       const name = (o.name || "").toLowerCase();
       const orderID = (o.orderId || o.id || "").toLowerCase();
-      const search = searchId.toLowerCase();
-      
       const matchesDate = selDate ? o.displayDate === selDate : true;
-      const matchesSearch = searchId ? (orderID.includes(search) || name.includes(search)) : true;
+      const matchesSearch = searchId ? (orderID.includes(searchId.toLowerCase()) || name.includes(searchId.toLowerCase())) : true;
       return matchesDate && matchesSearch;
     });
   }, [orders, selDate, searchId]);
 
   const totalIncome = filteredOrders.reduce((acc, curr) => acc + Number(curr.totalPrice || 0), 0);
-  const totalOrders = filteredOrders.length;
-  const uniqueCustomers = new Set(filteredOrders.map(o => o.phone || o.name)).size;
+
+  // လအလိုက် Report ထုတ်ရန် (ယခုလ နှင့် ပြီးခဲ့သောလ)
+  const getMonthOptions = () => {
+    const options = [];
+    const now = new Date();
+    for (let i = 0; i < 2; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+      const value = d.toISOString().slice(0, 7); // YYYY-MM
+      options.push({ label, value });
+    }
+    return options;
+  };
+
+  const handleMonthlyPDF = (monthVal) => {
+    const monthlyData = orders.filter(o => o.displayDate.startsWith(monthVal));
+    console.log("Downloading PDF for:", monthVal, monthlyData);
+    setShowDownloadModal(false);
+    window.print();
+  };
+
+  if (selectedOrder) {
+    return (
+      <div className="full-page">
+        <style jsx>{`
+          .full-page { background: #FFF; min-height: 100vh; font-family: sans-serif; }
+          .top-nav { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #F0F0F0; }
+          .back-btn { background: none; border: none; font-size: 24px; cursor: pointer; }
+          .content { padding: 20px; }
+          .voucher { border: 1px solid #EEE; border-radius: 15px; padding: 20px; margin-top: 15px; }
+          .v-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+          .v-total { border-top: 1px dashed #DDD; padding-top: 10px; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; }
+        `}</style>
+        <div className="top-nav">
+          <button className="back-btn" onClick={() => setSelectedOrder(null)}>←</button>
+          <b style={{marginLeft: '15px'}}>Order Details</b>
+        </div>
+        <div className="content">
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
+             <b>#{selectedOrder.orderId || selectedOrder.id.slice(-6).toUpperCase()}</b>
+             <span style={{color:'#27AE60', fontWeight:'bold'}}>{selectedOrder.status}</span>
+          </div>
+          <div style={{fontSize:'14px', lineHeight:'2'}}>
+            <div>Customer: {selectedOrder.name}</div>
+            <div>Phone: {selectedOrder.phone}</div>
+            <div>Date: {selectedOrder.displayDate}</div>
+          </div>
+          <div className="voucher">
+            {selectedOrder.items?.map((item, i) => (
+              <div key={i} className="v-item"><span>{item.name} x{item.qty}</span><span>{(item.price * item.qty).toLocaleString()} Ks</span></div>
+            ))}
+            <div className="v-total"><span>Total</span><span>{Number(selectedOrder.totalPrice).toLocaleString()} Ks</span></div>
+          </div>
+          <button onClick={() => window.print()} style={{width:'100%', padding:'15px', background:'#000', color:'#FFF', borderRadius:'12px', marginTop:'20px', fontWeight:'bold', border:'none'}}>PRINT PDF</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="history-root">
+    <div className="root">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       <style jsx>{`
-        .history-root { background: #FBFBFC; min-height: 100vh; font-family: -apple-system, sans-serif; }
-        .nav-bar { background: #FFF; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #F0F0F0; position: sticky; top: 0; z-index: 50; }
-        .nav-back { border: none; background: none; font-size: 20px; color: #444; cursor: pointer; }
+        .root { background: #FBFBFC; min-height: 100vh; font-family: sans-serif; padding-bottom: 30px; }
+        .nav { background: #FFF; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #F0F0F0; position: sticky; top: 0; z-index: 50; }
+        .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 15px; }
+        .s-card { background: #FFF; padding: 12px 5px; border-radius: 12px; border: 1px solid #EEF0F2; text-align: center; }
+        .s-card small { display: block; font-size: 9px; color: #888; margin-bottom: 4px; }
+        .s-card b { font-size: 12px; }
         
-        .summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 12px 16px; }
-        .card { background: #FFF; padding: 10px 5px; border-radius: 12px; border: 1px solid #EEF0F2; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .card span { display: block; font-size: 8px; color: #8E8E93; text-transform: uppercase; margin-bottom: 2px; }
-        .card b { font-size: 11px; color: #1C1C1E; font-weight: 700; }
-
-        .filter-row { padding: 0 16px 12px; display: flex; gap: 8px; }
-        .search-field { flex: 1.5; background: #FFF; border: 1px solid #E5E5EA; border-radius: 10px; padding: 8px 12px; font-size: 11px; outline: none; }
-        .date-field { flex: 1; background: #FFF; border: 1px solid #E5E5EA; border-radius: 10px; padding: 8px; font-size: 10px; }
-
-        .order-card { background: #FFF; border: 1px solid #F0F0F2; border-radius: 14px; padding: 12px; margin: 0 16px 8px; display: flex; justify-content: space-between; align-items: center; }
-        .order-main b { display: block; font-size: 12px; color: #222; margin-bottom: 2px; }
-        .order-main small { font-size: 10px; color: #999; }
-        .price { font-size: 12px; font-weight: 700; color: #1C1C1E; }
-        .status-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #E8F8F0; color: #27AE60; font-weight: bold; }
+        .filter-box { padding: 0 15px 15px; display: flex; gap: 10px; align-items: center; }
+        .search-container { position: relative; flex: 1; }
+        .search-input { width: 100%; padding: 10px 35px 10px 12px; border-radius: 10px; border: 1px solid #E5E5EA; font-size: 12px; outline: none; background: #FFF; box-sizing: border-box; }
+        .clear-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #CCC; cursor: pointer; border: none; background: none; }
         
-        .menu-pop { position: absolute; right: 16px; top: 50px; background: #FFF; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: 1px solid #F0F0F0; width: 170px; z-index: 100; }
-        .menu-item { width: 100%; padding: 12px 16px; border: none; background: none; text-align: left; font-size: 12px; color: #333; }
-
-        @media print { .nav-bar, .summary-row, .filter-row { display: none !important; } .order-card { border: none; border-bottom: 1px solid #EEE; } }
+        .calendar-box { position: relative; width: 40px; height: 40px; background: #FFF; border: 1px solid #E5E5EA; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .date-picker { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        
+        .order-card { background: #FFF; margin: 0 15px 10px; padding: 15px; border-radius: 15px; border: 1px solid #F0F0F2; display: flex; justify-content: space-between; align-items: center; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justifyContent: center; z-index: 1000; padding: 20px; }
+        .modal { background: #FFF; width: 100%; max-width: 300px; border-radius: 20px; padding: 20px; text-align: center; }
+        .m-btn { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EEE; background: #F9F9F9; margin-bottom: 10px; font-weight: bold; cursor: pointer; }
       `}</style>
 
-      <div className="nav-bar">
-        <button className="nav-back" onClick={() => router.back()}>✕</button>
-        <b style={{ fontSize: '13px' }}>Order History</b>
-        <div style={{ position: 'relative' }}>
-          <button className="nav-back" onClick={() => setShowMenu(!showMenu)}>⋮</button>
-          {showMenu && (
-            <div className="menu-pop">
-              <button className="menu-item" onClick={() => { window.print(); setShowMenu(false); }}>📄 Download PDF</button>
-              <button className="menu-item" onClick={() => { setSelDate(""); setShowMenu(false); }}>🔄 View All</button>
-            </div>
-          )}
+      <div className="nav">
+        <button style={{background:'none', border:'none', fontSize:'22px'}} onClick={() => router.back()}>←</button>
+        <b style={{fontSize:'14px'}}>Order History</b>
+        <button style={{background:'none', border:'none', fontSize:'20px'}} onClick={() => setShowMenu(!showMenu)}>⋮</button>
+        {showMenu && (
+          <div style={{position:'absolute', right:15, top:50, background:'#FFF', borderRadius:10, boxShadow:'0 4px 12px rgba(0,0,0,0.1)', width:150, zIndex:100, border:'1px solid #F0F0F0'}}>
+            <button style={{width:'100%', padding:12, border:'none', background:'none', textAlign:'left', fontSize:12}} onClick={() => { setShowDownloadModal(true); setShowMenu(false); }}>📥 Download Report</button>
+            <button style={{width:'100%', padding:12, border:'none', background:'none', textAlign:'left', fontSize:12}} onClick={() => { setSelDate(""); setSearchId(""); setShowMenu(false); }}>🔄 View All</button>
+          </div>
+        )}
+      </div>
+
+      <div className="summary">
+        <div className="s-card"><small>REVENUE</small><b>{totalIncome.toLocaleString()}</b></div>
+        <div className="s-card"><small>ORDERS</small><b>{filteredOrders.length}</b></div>
+        <div className="s-card"><small>CUSTOMER</small><b>{new Set(filteredOrders.map(o => o.phone)).size}</b></div>
+      </div>
+
+      <div className="filter-box">
+        <div className="search-container">
+          <input className="search-input" placeholder="Track Order ID or Name..." value={searchId} onChange={(e) => setSearchId(e.target.value)} />
+          {searchId && <button className="clear-btn" onClick={() => setSearchId("")}>✕</button>}
+        </div>
+        <div className="calendar-box">
+          <i className="fa-regular fa-calendar-days" style={{color:'#555'}}></i>
+          <input type="date" className="date-picker" value={selDate} onChange={(e) => setSelDate(e.target.value)} />
         </div>
       </div>
 
-      <div className="summary-row">
-        <div className="card"><span>Revenue</span><b>{totalIncome.toLocaleString()}</b></div>
-        <div className="card"><span>Orders</span><b>{totalOrders}</b></div>
-        <div className="card"><span>Customer</span><b>{uniqueCustomers}</b></div>
-      </div>
-
-      <div className="filter-row">
-        <input className="search-field" placeholder="Search by ID or Name..." value={searchId} onChange={(e) => setSearchId(e.target.value)} />
-        <input type="date" className="date-field" value={selDate} onChange={(e) => setSelDate(e.target.value)} />
-      </div>
-
-      <div className="list-container">
-        {loading ? (
-          <div style={{ textAlign: 'center', fontSize: '11px', color: '#999', padding: '20px' }}>Loading records...</div>
-        ) : filteredOrders.length === 0 ? (
-          <div style={{ textAlign: 'center', fontSize: '11px', color: '#999', padding: '20px' }}>No records found</div>
-        ) : (
-          filteredOrders.map((order) => (
-            <div key={order.id} className="order-card">
-              <div className="order-main">
-                <b>{order.name || "Customer"}</b>
-                <small>{order.orderId || order.id.slice(-6)} • {order.displayDate}</small>
-              </div>
-              <div className="order-side">
-                <div className="price">{Number(order.totalPrice || 0).toLocaleString()} Ks</div>
-                <span className="status-tag">{order.status}</span>
-              </div>
+      <div className="list">
+        {filteredOrders.map(order => (
+          <div key={order.id} className="order-card" onClick={() => setSelectedOrder(order)}>
+            <div>
+              <b style={{fontSize:'13px'}}>{order.name}</b>
+              <div style={{fontSize:'10px', color:'#999'}}>#{order.orderId || order.id.slice(-5)} • {order.displayDate}</div>
             </div>
-          ))
-        )}
+            <div style={{textAlign:'right'}}>
+              <div style={{fontWeight:'bold', fontSize:'13px'}}>{Number(order.totalPrice).toLocaleString()} Ks</div>
+              <div style={{fontSize:'9px', color:'#27AE60', fontWeight:'bold'}}>{order.status}</div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {showDownloadModal && (
+        <div className="modal-overlay" onClick={() => setShowDownloadModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h4 style={{marginTop:0}}>Download History</h4>
+            <p style={{fontSize:'12px', color:'#666'}}>ဘယ်လစာရင်းကို ဒေါင်းလုဒ်လုပ်မလဲ?</p>
+            {getMonthOptions().map((opt, i) => (
+              <button key={i} className="m-btn" onClick={() => handleMonthlyPDF(opt.value)}>{opt.label}</button>
+            ))}
+            <button onClick={() => setShowDownloadModal(false)} style={{color:'red', border:'none', background:'none', marginTop:10}}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+          }
+            
