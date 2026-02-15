@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'; // ဒါလေး ထည့်ပေးပါ
+
 import { db } from "../../../lib/firebase"; 
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { NextResponse } from "next/server";
