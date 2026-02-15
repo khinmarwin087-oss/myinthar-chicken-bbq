@@ -11,16 +11,21 @@ export default function ManageMenu() {
     const [searchCat, setSearchCat] = useState("");
 
     // render အပိုင်းမှာ Category filter လုပ်ထားတဲ့ list ကိုပြပါ
-const filteredDisplayMenu = menuData.filter(item => 
-    item.category?.toLowerCase().includes(searchCat.toLowerCase()) ||
-    item.name?.toLowerCase().includes(searchCat.toLowerCase())
-);
+    const filteredDisplayMenu = menuData.filter(item => 
+        item.category?.toLowerCase().includes(searchCat.toLowerCase()) ||
+        item.name?.toLowerCase().includes(searchCat.toLowerCase())
+    );
+
     // Data ဆွဲယူရန်
     const fetchMenu = async () => {
         setLoading(true);
-        const res = await fetch('/api/data');
-        const json = await res.json();
-        if (json.success) setMenuData(json.data);
+        try {
+            const res = await fetch('/api/data');
+            const json = await res.json();
+            if (json.success) setMenuData(json.data);
+        } catch (error) {
+            console.error("Fetch Error:", error);
+        }
         setLoading(false);
     };
 
@@ -30,7 +35,7 @@ const filteredDisplayMenu = menuData.filter(item =>
     const handleSave = async () => {
         if (!formData.name || !formData.price) return alert("အမည်နှင့် ဈေးနှုန်းထည့်ပါ");
         
-        const method = editId ? 'PUT' : 'POST'; // ပြင်မှာလား၊ အသစ်ထည့်မှာလား
+        const method = editId ? 'PUT' : 'POST';
         const res = await fetch('/api/data', {
             method: method,
             headers: { 'Content-Type': 'application/json' },
@@ -61,20 +66,11 @@ const filteredDisplayMenu = menuData.filter(item =>
     };
 
     return (
-        // UI ထဲမှာ search box ထည့်ပါ
-<div className="search-box" style={{marginBottom:'15px'}}>
-    <input 
-        type="text" 
-        placeholder="Category သို့မဟုတ် ဟင်းပွဲအမည်ဖြင့် ရှာပါ..." 
-        value={searchCat} 
-        onChange={(e) => setSearchCat(e.target.value)} 
-        style={{width:'100%', padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}}
-    />
-</div>
-        
+        /* UI တစ်ခုလုံးကို Div တစ်ခုတည်းထဲမှာ စုထည့်လိုက်ပါပြီ */
         <div style={{ background: '#F2F2F7', minHeight: '100vh', padding: '15px', fontFamily: 'sans-serif' }}>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Link href="/admin" style={{ textDecoration: 'none', background: '#E5E5EA', color: '#1C1C1E', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '700' }}>
@@ -87,23 +83,37 @@ const filteredDisplayMenu = menuData.filter(item =>
                 </button>
             </div>
 
+            {/* UI ထဲမှာ search box */}
+            <div className="search-box" style={{marginBottom:'15px'}}>
+                <input 
+                    type="text" 
+                    placeholder="Category သို့မဟုတ် ဟင်းပွဲအမည်ဖြင့် ရှာပါ..." 
+                    value={searchCat} 
+                    onChange={(e) => setSearchCat(e.target.value)} 
+                    style={{width:'100%', padding:'12px', borderRadius:'10px', border:'1px solid #ddd', boxSizing: 'border-box'}}
+                />
+            </div>
+
+            {/* Form အပိုင်း */}
             {showForm && (
                 <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-                    <h3>{editId ? 'ဟင်းပွဲပြင်ဆင်ရန်' : 'ဟင်းပွဲအသစ်ထည့်ရန်'}</h3>
-                    <input style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #E5E5EA' }} placeholder="Dish Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <h3 style={{marginTop: 0}}>{editId ? 'ဟင်းပွဲပြင်ဆင်ရန်' : 'ဟင်းပွဲအသစ်ထည့်ရန်'}</h3>
+                    <input style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #E5E5EA', boxSizing: 'border-box' }} placeholder="Dish Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                        <input type="number" style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA' }} placeholder="Price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
-                        <input type="number" style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA' }} placeholder="Stock" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} />
+                        <input type="number" style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA', width: '50%' }} placeholder="Price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                        <input type="number" style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #E5E5EA', width: '50%' }} placeholder="Stock" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} />
                     </div>
-                    <input style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #E5E5EA' }} placeholder="Category" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
-                    <input style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #E5E5EA' }} placeholder="Image URL" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
-                    <button onClick={handleSave} style={{ width: '100%', background: '#007AFF', color: 'white', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: '700' }}>SAVE</button>
-                    <button onClick={() => setShowForm(false)} style={{ width: '100%', background: 'none', border: 'none', color: '#FF3B30', padding: '10px', fontWeight: '600' }}>CANCEL</button>
+                    <input style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #E5E5EA', boxSizing: 'border-box' }} placeholder="Category" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
+                    <input style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #E5E5EA', boxSizing: 'border-box' }} placeholder="Image URL" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
+                    <button onClick={handleSave} style={{ width: '100%', background: '#007AFF', color: 'white', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: '700', cursor: 'pointer' }}>SAVE</button>
+                    <button onClick={() => setShowForm(false)} style={{ width: '100%', background: 'none', border: 'none', color: '#FF3B30', padding: '10px', fontWeight: '600', cursor: 'pointer' }}>CANCEL</button>
                 </div>
             )}
 
+            {/* List အပိုင်း - filteredDisplayMenu ကို သုံးထားပါတယ် */}
             <div style={{ display: 'grid', gap: '12px' }}>
-                {loading ? <p style={{textAlign:'center'}}>Loading...</p> : menuData.map(item => (
+                {loading ? <p style={{textAlign:'center'}}>Loading...</p> : 
+                 filteredDisplayMenu.length > 0 ? filteredDisplayMenu.map(item => (
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', background: 'white', padding: '12px', borderRadius: '16px', gap: '12px' }}>
                         <img src={item.image || 'https://via.placeholder.com/55'} style={{ width: '55px', height: '55px', borderRadius: '10px', objectFit: 'cover' }} />
                         <div style={{ flex: 1 }}>
@@ -116,9 +126,9 @@ const filteredDisplayMenu = menuData.filter(item =>
                             <i className="fas fa-trash" style={{ color: '#FF3B30', cursor: 'pointer' }} onClick={() => handleDelete(item.id)}></i>
                         </div>
                     </div>
-                ))}
+                )) : <p style={{textAlign: 'center', color: '#888'}}>ဟင်းပွဲမတွေ့ပါ</p>}
             </div>
         </div>
     );
-  }
-                                                                                                                                                               
+                }
+                
