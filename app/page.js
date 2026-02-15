@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+// Firebase Import လမ်းကြောင်း မှန်မမှန် သတိပြုပါ (lib folder က root မှာရှိရင် ../lib/firebase မှန်ပါတယ်)
 import { auth, provider, db } from "../lib/firebase"; 
 import { collection, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
 import { signInWithRedirect, onAuthStateChanged, signOut } from "firebase/auth";
@@ -14,14 +15,17 @@ export default function Home() {
   const [searchResultItems, setSearchResultItems] = useState([]);
   const [isTrackSearching, setIsTrackSearching] = useState(false);
   const [searchedOrder, setSearchedOrder] = useState(null);
+  const [currentDate, setCurrentDate] = useState(""); // Hydration Error Fix
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    // Client ရောက်မှ Date ကို Set ပါ (Build Error မတက်အောင်)
+    setCurrentDate(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' }));
+
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
       if (u) {
-        // User ရဲ့ Active Orders အကုန်လုံးကို အချိန်နဲ့တပြေးညီ ဆွဲယူမည်
         const q = query(collection(db, "orders"), where("email", "==", u.email), orderBy("orderDate", "desc"));
         const unsubOrders = onSnapshot(q, (snap) => {
           setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -78,10 +82,10 @@ export default function Home() {
 
   return (
     <div className="main-wrapper">
-      {/* FontAwesome Link */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-      <style jsx global>{`
+      {/* Standard Style Tag instead of styled-jsx */}
+      <style>{`
         :root { --p: #007AFF; --bg: #F8F9FB; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
         body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); margin: 0; }
         .main-wrapper { padding: 25px 20px; max-width: 500px; margin: 0 auto; }
@@ -104,7 +108,6 @@ export default function Home() {
         .menu-grid-mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .mini-item { background: rgba(255,255,255,0.05); border-radius: 18px; padding: 10px; text-align: center; }
 
-        /* --- Profile Dropdown CSS --- */
         .profile-container { position: relative; }
         .pfp-btn { width: 48px; height: 48px; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; }
         .pfp-btn:active { transform: scale(0.95); }
@@ -128,21 +131,20 @@ export default function Home() {
         .menu-item i { width: 20px; text-align: center; font-size: 16px; }
       `}</style>
 
-      {/* 1. Header with Full Profile Menu */}
+      {/* Header */}
       <div className="premium-header">
         <div>
-          <span className="date-chip">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}</span>
+          <span className="date-chip">{currentDate}</span>
           <h2 style={{margin: '8px 0 0', fontSize: '24px'}}>Hey, {user ? user.displayName.split(' ')[0] : 'Guest'} 👋</h2>
         </div>
         
         <div className="profile-container" ref={dropdownRef}>
           {user ? (
-            <img src={user.photoURL} className="pfp-btn" onClick={() => setShowDropdown(!showDropdown)} />
+            <img src={user.photoURL} className="pfp-btn" onClick={() => setShowDropdown(!showDropdown)} alt="User" />
           ) : (
             <button onClick={() => signInWithRedirect(auth, provider)} className="date-chip" style={{border: 'none', cursor: 'pointer'}}>Login</button>
           )}
 
-          {/* Detailed Dropdown Menu */}
           {showDropdown && user && (
             <div className="dropdown-menu">
               <div className="menu-user-info">
@@ -170,23 +172,23 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 2. Smart Search */}
+      {/* Search */}
       <div className="search-box">
         <i className="fas fa-search" style={{color: 'var(--p)'}}></i>
         <input type="text" placeholder="ID (သို့) ဟင်းပွဲရှာပါ..." value={searchQuery} onChange={handleSmartSearch} />
       </div>
 
-      {/* 3. Dynamic Card Content */}
+      {/* Tracker Card */}
       <div className="tracker-card" style={{ background: searchQuery && !isTrackSearching ? '#fff' : '#1C1C1E', color: searchQuery && !isTrackSearching ? '#1C1C1E' : '#fff', border: searchQuery && !isTrackSearching ? '1px solid #eee' : 'none' }}>
         
-        {/* Case A: Menu Results Search */}
+        {/* Menu Search */}
         {searchQuery && searchResultItems.length > 0 && !isTrackSearching && (
           <div>
             <h4 style={{margin: '0 0 15px'}}>ရှာဖွေမှုရလဒ်များ</h4>
             <div className="menu-grid-mini">
               {searchResultItems.map(item => (
                 <Link href="/customer_menu" key={item.id} className="mini-item" style={{textDecoration:'none', color:'inherit', background: '#F8F9FB'}}>
-                  <img src={item.image || 'https://via.placeholder.com/100'} style={{width:'100%', height:'60px', borderRadius:'12px', objectFit:'cover'}} />
+                  <img src={item.image || 'https://via.placeholder.com/100'} style={{width:'100%', height:'60px', borderRadius:'12px', objectFit:'cover'}} alt={item.name} />
                   <div style={{fontSize:'11px', fontWeight:'bold', marginTop:'5px'}}>{item.name}</div>
                   <div style={{fontSize:'10px', color:'var(--p)'}}>{item.price} Ks</div>
                 </Link>
@@ -195,7 +197,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Case B: ID Track Search */}
+        {/* ID Search */}
         {isTrackSearching && (
           searchedOrder ? (
             <div className="order-item">
@@ -223,7 +225,7 @@ export default function Home() {
           )
         )}
 
-        {/* Case C: Multi-Order Slider (Default) */}
+        {/* Default Slider */}
         {!searchQuery && orders.length > 0 && (
           <div className="order-slider">
             {orders.map(order => (
@@ -252,7 +254,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Case D: Empty State */}
+        {/* Empty State */}
         {!searchQuery && orders.length === 0 && (
           <div style={{textAlign: 'center', padding: '20px'}}>
             <div style={{fontSize: '40px', marginBottom: '10px'}}>🍕</div>
@@ -263,7 +265,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* 4. Action Buttons */}
+      {/* Action Buttons */}
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
         <Link href="/customer_menu" style={{background: '#fff', padding: '20px', borderRadius: '25px', textDecoration: 'none', color: 'inherit', boxShadow: '0 5px 15px rgba(0,0,0,0.02)'}}>
           <div style={{width: '40px', height: '40px', background: '#E6F2FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px'}}>🛒</div>
@@ -277,4 +279,4 @@ export default function Home() {
     </div>
   );
           }
-                
+          
