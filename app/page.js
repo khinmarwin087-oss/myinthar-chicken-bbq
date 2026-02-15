@@ -1,17 +1,18 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { auth, provider, db } from "../lib/firebase"; 
 import { collection, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
 import { signInWithRedirect, onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function Home() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   
-  // Search state နှစ်ခုခွဲလိုက်ပါတယ်
   const [menuSearch, setMenuSearch] = useState("");
   const [searchResultItems, setSearchResultItems] = useState([]);
   
@@ -44,7 +45,6 @@ export default function Home() {
     return () => { unsub(); document.removeEventListener("mousedown", handleClickOutside); };
   }, []);
 
-  // ဟင်းပွဲရှာရန် Function
   const handleMenuSearch = async (e) => {
     const term = e.target.value;
     setMenuSearch(term);
@@ -60,148 +60,170 @@ export default function Home() {
     }
   };
 
-  // Order ID Track လုပ်ရန် Function
   const handleTrackOrder = async () => {
     if (!trackID.trim()) return;
     setHasSearched(true);
     const searchID = trackID.toUpperCase().startsWith('ORD-') ? trackID.toUpperCase() : "ORD-" + trackID.toUpperCase();
-    
     const q = query(collection(db, "orders"), where("orderId", "==", searchID));
     const snap = await getDocs(q);
-    if (!snap.empty) {
-      setSearchedOrder({ id: snap.docs[0].id, ...snap.docs[0].data() });
-    } else {
-      setSearchedOrder(null);
-    }
+    if (!snap.empty) setSearchedOrder({ id: snap.docs[0].id, ...snap.docs[0].data() });
+    else setSearchedOrder(null);
   };
 
-  const handleLogout = async () => {
-    if (window.confirm("Logout ထွက်မှာ သေချာပါသလား?")) {
-      await signOut(auth);
-      setShowDropdown(false);
-    }
-  };
+  const clearTrack = () => { setTrackID(""); setHasSearched(false); setSearchedOrder(null); };
+  const clearMenuSearch = () => { setMenuSearch(""); setSearchResultItems([]); };
 
-  if (loading) return <div style={{padding: '50px', textAlign: 'center'}}>YNS Premium Loading...</div>;
+  if (loading) return <div style={{padding: '50px', textAlign: 'center', color: '#007AFF', fontWeight: 'bold'}}>YNS Premium Loading...</div>;
 
   return (
     <div className="main-wrapper">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
       <style>{`
-        :root { --p: #007AFF; --bg: #F8F9FB; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
+        :root { --p: #007AFF; --bg: #F2F5F9; --card: #ffffff; --text: #1C1C1E; --gray: #8E8E93; }
         body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); margin: 0; }
-        .main-wrapper { padding: 25px 20px; max-width: 500px; margin: 0 auto; }
+        .main-wrapper { padding: 25px 20px; max-width: 500px; margin: 0 auto; overflow-x: hidden; }
         
+        /* Header */
         .premium-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .date-chip { background: #fff; padding: 5px 15px; border-radius: 50px; font-size: 11px; font-weight: 800; color: var(--p); box-shadow: 0 4px 10px rgba(0,122,255,0.1); }
+        .date-chip { background: #fff; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 800; color: var(--p); box-shadow: 0 4px 12px rgba(0,122,255,0.12); }
         
-        .search-box { background: #fff; display: flex; align-items: center; padding: 15px 20px; border-radius: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        .search-box input { border: none; outline: none; margin-left: 12px; font-weight: 600; width: 100%; color: var(--text); }
+        /* Search Box */
+        .search-box { background: #fff; display: flex; align-items: center; padding: 14px 20px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); margin-bottom: 30px; position: relative; border: 1px solid rgba(0,0,0,0.02); }
+        .search-box input { border: none; outline: none; margin-left: 12px; font-weight: 600; width: 80%; color: var(--text); background: transparent; }
+        .clear-btn { position: absolute; right: 18px; color: #D1D1D6; cursor: pointer; font-size: 18px; transition: 0.3s; }
+        .clear-btn:hover { color: #FF3B30; }
 
-        .tracker-card { background: #1C1C1E; border-radius: 32px; padding: 25px; color: #fff; min-height: 180px; margin-bottom: 25px; }
+        /* Order Tracker Card - Enhanced */
+        .tracker-card { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            border-radius: 40px; padding: 30px; color: #fff; 
+            min-height: 280px; margin-bottom: 40px; 
+            box-shadow: 0 25px 50px -12px rgba(118, 75, 162, 0.35);
+            position: relative;
+            overflow: hidden;
+            animation: floating 6s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .tracker-card::before {
+            content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px;
+            background: rgba(255,255,255,0.1); border-radius: 50%;
+        }
         
-        .inner-search { background: rgba(255,255,255,0.1); display: flex; border-radius: 15px; padding: 8px 15px; margin-bottom: 20px; }
-        .inner-search input { background: transparent; border: none; color: #fff; outline: none; width: 100%; font-size: 13px; }
-        .inner-search button { background: var(--p); border: none; color: #fff; padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .inner-search { background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); display: flex; border-radius: 20px; padding: 12px 18px; margin-bottom: 25px; align-items: center; border: 1px solid rgba(255,255,255,0.2); }
+        .inner-search input { background: transparent; border: none; color: #fff; outline: none; width: 100%; font-size: 15px; font-weight: 500; }
+        .inner-search input::placeholder { color: rgba(255,255,255,0.6); }
 
         .order-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; scrollbar-width: none; }
         .order-slider::-webkit-scrollbar { display: none; }
-        .order-item { min-width: 100%; scroll-snap-align: start; }
+        .order-item { min-width: 100%; scroll-snap-align: start; cursor: pointer; }
         
-        .progress-line { height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 15px 0; position: relative; }
-        .progress-fill { height: 100%; background: var(--p); border-radius: 10px; transition: 1s ease; }
+        .progress-line { height: 8px; background: rgba(255,255,255,0.15); border-radius: 20px; margin: 20px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: #fff; border-radius: 20px; width: 0%; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 15px rgba(255,255,255,0.5); }
         
-        .menu-grid-mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
-        .mini-item { background: #fff; border: 1px solid #eee; border-radius: 18px; padding: 10px; text-align: center; text-decoration: none; color: inherit; }
+        .mini-card { background: rgba(255,255,255,0.12); padding: 18px; border-radius: 24px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
 
-        .profile-container { position: relative; }
-        .pfp-btn { width: 48px; height: 48px; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer; }
-        
-        .dropdown-menu { 
-          position: absolute; top: 60px; right: 0; width: 240px; 
-          background: #fff; border-radius: 24px; padding: 20px; 
-          box-shadow: 0 20px 50px rgba(0,0,0,0.15); z-index: 100; 
+        /* 3D Action Cards */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .action-card { 
+            background: #fff; padding: 25px; border-radius: 30px; 
+            text-decoration: none; color: inherit; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column; align-items: center;
+            border-bottom: 4px solid #eee;
         }
+        .action-card:hover { transform: translateY(-12px) scale(1.02); box-shadow: 0 25px 45px rgba(0,0,0,0.08); border-bottom-color: var(--p); }
+        .icon-box { width: 50px; height: 50px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 22px; }
+
+        /* Menu Result Animation */
+        .menu-item-3d { 
+            background: #fff; padding: 12px; border-radius: 22px; 
+            text-decoration: none; color: inherit; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: 0.3s; border: 1px solid rgba(0,0,0,0.02);
+        }
+        .menu-item-3d:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
       `}</style>
 
       {/* Header */}
       <div className="premium-header">
         <div>
           <span className="date-chip">{currentDate}</span>
-          <h2 style={{margin: '8px 0 0', fontSize: '24px'}}>Hey, {user ? user.displayName.split(' ')[0] : 'Guest'} 👋</h2>
+          <h2 style={{margin: '10px 0 0', fontSize: '26px', letterSpacing: '-0.5px'}}>Hey, {user ? user.displayName.split(' ')[0] : 'Guest'} 👋</h2>
         </div>
-        <div className="profile-container" ref={dropdownRef}>
-          {user ? (
-            <img src={user.photoURL} className="pfp-btn" onClick={() => setShowDropdown(!showDropdown)} alt="User" />
-          ) : (
-            <button onClick={() => signInWithRedirect(auth, provider)} className="date-chip" style={{border: 'none', cursor: 'pointer'}}>Login</button>
-          )}
-          {showDropdown && (
-            <div className="dropdown-menu">
-              <div style={{textAlign:'center', marginBottom:15}}>
-                <img src={user.photoURL} style={{width:50, borderRadius:'50%'}} />
-                <h4 style={{margin:'5px 0'}}>{user.displayName}</h4>
-              </div>
-              <Link href="/history" style={{textDecoration:'none', color:'#333', display:'block', padding:'10px 0'}}>Order History</Link>
-              <div onClick={handleLogout} style={{color:'red', cursor:'pointer', paddingTop:10}}>Log Out</div>
-            </div>
-          )}
+        <div className="profile-container" ref={dropdownRef} style={{position: 'relative'}}>
+            {user ? (
+                <img src={user.photoURL} style={{width: 50, height: 50, borderRadius: 18, border: '4px solid #fff', cursor: 'pointer', boxShadow: '0 8px 20px rgba(0,0,0,0.1)'}} onClick={() => setShowDropdown(!showDropdown)} />
+            ) : (
+                <button onClick={() => signInWithRedirect(auth, provider)} className="date-chip" style={{border: 'none', cursor: 'pointer'}}>Login</button>
+            )}
+            {showDropdown && (
+                <div style={{position:'absolute', right:0, top:65, background:'#fff', padding:18, borderRadius:24, boxShadow:'0 15px 40px rgba(0,0,0,0.12)', zIndex:100, width:190, animation: 'slideIn 0.3s ease'}}>
+                    <Link href="/history" style={{display:'flex', alignItems: 'center', gap: 10, textDecoration:'none', color:'#333', marginBottom:15, fontWeight:700}}>
+                        <i className="fas fa-history" style={{color: '#FF9500'}}></i> History
+                    </Link>
+                    <div onClick={() => signOut(auth)} style={{display:'flex', alignItems: 'center', gap: 10, color:'red', fontWeight:700, cursor:'pointer'}}>
+                        <i className="fas fa-sign-out-alt"></i> Logout
+                    </div>
+                </div>
+            )}
         </div>
       </div>
 
-      {/* 1. Main Menu Search Bar */}
+      {/* 1. Menu Search Bar */}
       <div className="search-box">
         <i className="fas fa-utensils" style={{color: 'var(--p)'}}></i>
-        <input type="text" placeholder="ဟင်းပွဲအမည်ဖြင့် ရှာဖွေပါ..." value={menuSearch} onChange={handleMenuSearch} />
+        <input type="text" placeholder="ဟင်းပွဲနာမည်ဖြင့် ရှာဖွေပါ..." value={menuSearch} onChange={handleMenuSearch} />
+        {menuSearch && <i className="fas fa-times-circle clear-btn" onClick={clearMenuSearch}></i>}
       </div>
 
-      {/* Menu Search Results (Show outside tracker card) */}
+      {/* Menu Search Results (3D Cards) */}
       {menuSearch && (
-        <div style={{marginBottom: 20}}>
-            <h4 style={{margin: '0 0 10px'}}>Search Results:</h4>
-            {searchResultItems.length > 0 ? (
-                <div className="menu-grid-mini">
-                    {searchResultItems.map(item => (
-                        <Link href="/customer_menu" key={item.id} className="mini-item">
-                            <img src={item.image || 'https://via.placeholder.com/100'} style={{width:'100%', height:'70px', borderRadius:'12px', objectFit:'cover'}} alt={item.name} />
-                            <div style={{fontSize:'12px', fontWeight:'bold', marginTop:5}}>{item.name}</div>
-                            <div style={{fontSize:'11px', color:'var(--p)'}}>{item.price} Ks</div>
-                        </Link>
-                    ))}
-                </div>
-            ) : <p style={{fontSize: 13, color: '#888'}}>ဟင်းပွဲမတွေ့ပါ</p>}
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:15, marginBottom:35}}>
+            {searchResultItems.map(item => (
+                <Link href="/customer_menu" key={item.id} className="menu-item-3d">
+                    <img src={item.image} style={{width:'100%', height:85, borderRadius:16, objectFit:'cover'}} />
+                    <div style={{fontSize:13, fontWeight:800, marginTop:10}}>{item.name}</div>
+                    <div style={{fontSize:12, color: 'var(--p)', fontWeight: 700}}>{item.price} Ks</div>
+                </Link>
+            ))}
         </div>
       )}
 
-      {/* Tracker Card */}
+      {/* 2. Order Tracker Card (BIG & GRADIENT) */}
       <div className="tracker-card">
-        {/* 2. Order ID Search Bar (Inside Tracker) */}
         <div className="inner-search">
+            <i className="fas fa-search-location" style={{marginRight: 12, opacity: 0.8}}></i>
             <input 
               type="text" 
-              placeholder="Order ID (ဥပမာ- 1234)" 
+              placeholder="Track Order ID (e.g. 1234)" 
               value={trackID} 
-              onChange={(e) => {
-                setTrackID(e.target.value);
-                if(!e.target.value) { setHasSearched(false); setSearchedOrder(null); }
-              }}
+              onChange={(e) => setTrackID(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleTrackOrder()}
             />
-            <button onClick={handleTrackOrder}>Track</button>
+            {trackID && <i className="fas fa-times-circle" onClick={clearTrack} style={{marginLeft:10, cursor:'pointer', opacity: 0.7}}></i>}
         </div>
 
-        {/* Track Result Display */}
         {hasSearched ? (
+            /* SEARCH RESULT WITH DETAILS */
             searchedOrder ? (
-                <div className="order-item">
-                    <span style={{background: 'var(--p)', padding: '4px 10px', borderRadius: '10px', fontSize: '10px'}}>TRACKING ID: {searchedOrder.orderId}</span>
-                    <h2 style={{margin: '10px 0'}}>
-                        {searchedOrder.status === 'New' && 'လက်ခံရရှိပြီ 📝'}
-                        {searchedOrder.status === 'Cooking' && 'ချက်ပြုတ်နေဆဲ 👨‍🍳'}
-                        {searchedOrder.status === 'Ready' && 'အဆင်သင့်ဖြစ်ပြီ 🥡'}
-                        {searchedOrder.status === 'Success' && 'ပို့ဆောင်ပြီးပြီ ✅'}
+                <div className="order-item" onClick={() => router.push('/history')}>
+                    <span style={{fontSize: 10, background: 'rgba(255,255,255,0.25)', padding: '5px 12px', borderRadius: 10, fontWeight: 800}}>FOUND ORDER</span>
+                    <h2 style={{margin: '12px 0 5px', fontSize: 32}}>
+                        {searchedOrder.status === 'New' && 'Received 📝'}
+                        {searchedOrder.status === 'Cooking' && 'Cooking 👨‍🍳'}
+                        {searchedOrder.status === 'Ready' && 'Ready 🥡'}
+                        {searchedOrder.status === 'Success' && 'Success ✅'}
                     </h2>
+                    <p style={{fontSize: 13, opacity: 0.9, marginBottom: 5}}>ID: {searchedOrder.orderId}</p>
+                    
                     <div className="progress-line">
                         <div className="progress-fill" style={{ width: 
                             searchedOrder.status === 'New' ? '25%' : 
@@ -209,26 +231,31 @@ export default function Home() {
                             searchedOrder.status === 'Ready' ? '75%' : '100%' 
                         }}></div>
                     </div>
+
+                    <div className="mini-card" style={{marginTop: 15}}>
+                         {searchedOrder.items?.map((item, i) => (
+                             <div key={i} style={{display:'flex', justifyContent:'space-between', fontSize: 13, marginBottom: 4}}>
+                                 <span>{item.name} x {item.quantity}</span>
+                                 <span>{item.price * item.quantity} Ks</span>
+                             </div>
+                         ))}
+                         <div style={{borderTop:'1px solid rgba(255,255,255,0.2)', marginTop:8, paddingTop:8, textAlign:'right', fontWeight:800}}>
+                             Total: {searchedOrder.totalPrice} Ks
+                         </div>
+                    </div>
                 </div>
-            ) : (
-                <div style={{textAlign:'center', padding: '10px 0'}}>
-                    <p style={{fontSize: 13, opacity: 0.7}}>ID မတွေ့ပါ၊ ပြန်စစ်ပေးပါ</p>
-                    <button onClick={() => setHasSearched(false)} style={{background:'none', border:'1px solid #555', color:'#fff', padding:'5px 15px', borderRadius:10, fontSize:11}}>Back</button>
-                </div>
-            )
+            ) : <div style={{textAlign:'center', paddingTop: 30}}><i className="fas fa-ghost" style={{fontSize: 40, opacity:0.3, marginBottom: 10}}></i><p>အော်ဒါမတွေ့ပါ</p></div>
         ) : (
-            /* Recent Orders Slider (Only show when not searching) */
+            /* DEFAULT VIEW (RECENT ORDERS) */
             orders.length > 0 ? (
                 <div className="order-slider">
-                    {orders.map(order => (
-                        <div key={order.id} className="order-item">
-                            <div style={{display:'flex', justifyContent:'space-between', fontSize: '12px'}}>
-                                <b>{order.status}</b>
-                                <span style={{opacity: 0.6}}>#{order.orderId}</span>
+                    {orders.slice(0, 3).map(order => (
+                        <div key={order.id} className="order-item" onClick={() => router.push('/history')}>
+                            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end'}}>
+                                <h3 style={{margin: 0, fontSize: 24}}>{order.status} ✨</h3>
+                                <span style={{opacity: 0.6, fontSize: 12, fontWeight: 700}}>#{order.orderId}</span>
                             </div>
-                            <h2 style={{margin: '15px 0'}}>
-                                {order.status === 'New' ? 'Order Received' : 'Now Cooking'}
-                            </h2>
+                            
                             <div className="progress-line">
                                 <div className="progress-fill" style={{ width: 
                                     order.status === 'New' ? '25%' : 
@@ -236,31 +263,55 @@ export default function Home() {
                                     order.status === 'Ready' ? '75%' : '100%' 
                                 }}></div>
                             </div>
-                            <p style={{fontSize: '11px', opacity: 0.5}}>Slide to see more orders →</p>
+
+                            <div className="mini-card">
+                                {order.items?.slice(0, 2).map((item, idx) => (
+                                    <div key={idx} style={{display:'flex', justifyContent:'space-between', fontSize: 13, marginBottom: 4}}>
+                                        <span>{item.name} x {item.quantity}</span>
+                                        <span>{item.price * item.quantity} Ks</span>
+                                    </div>
+                                ))}
+                                <div style={{marginTop: 8, textAlign:'right', fontWeight:800, fontSize: 15}}>
+                                    Total: {order.totalPrice} Ks
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div style={{textAlign: 'center', padding: '10px'}}>
-                    <div style={{fontSize: '30px', marginBottom: '5px'}}>🍕</div>
-                    <h4 style={{margin: 0}}>ဗိုက်ဆာနေပြီလား?</h4>
-                    <Link href="/customer_menu" style={{color: 'var(--p)', fontSize: '13px', textDecoration:'none'}}>ဟင်းပွဲများမှာယူရန် နှိပ်ပါ</Link>
+                <div style={{textAlign:'center', padding: '15px 0'}}>
+                    <div style={{fontSize: 55, marginBottom: 15, animation: 'floating 3s infinite'}}>🍕</div>
+                    <h3 style={{margin: 0, fontSize: 22}}>Hungry Now?</h3>
+                    <p style={{fontSize: 13, opacity: 0.8, margin: '10px 0 20px'}}>အကောင်းဆုံးဟင်းပွဲများကို အခုပဲ မှာယူလိုက်ပါ။</p>
+                    <Link href="/customer_menu" style={{background: '#fff', color: '#764ba2', padding: '12px 25px', borderRadius: 15, textDecoration: 'none', fontWeight: 800, boxShadow: '0 10px 20px rgba(0,0,0,0.1)'}}>ဟင်းပွဲများ ကြည့်မည်</Link>
                 </div>
             )
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
-        <Link href="/customer_menu" style={{background: '#fff', padding: '20px', borderRadius: '25px', textDecoration: 'none', color: 'inherit', boxShadow: '0 5px 15px rgba(0,0,0,0.02)'}}>
-          <div style={{width: '40px', height: '40px', background: '#E6F2FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px'}}>🛒</div>
-          <b style={{fontSize: '14px'}}>Menu သို့သွားရန်</b>
+      {/* 3. Action Buttons (3D Floating Style) */}
+      <div className="action-grid">
+        <Link href="/customer_menu" className="action-card">
+          <div className="icon-box" style={{background: '#E6F2FF', color: '#007AFF'}}>
+            <i className="fas fa-shopping-cart"></i>
+          </div>
+          <b style={{fontSize: '15px'}}>Order Now</b>
+          <span style={{fontSize: '11px', color: '#8E8E93', marginTop: 4}}>ဟင်းပွဲများမှာယူရန်</span>
         </Link>
-        <Link href="https://m.me/yourpage" style={{background: '#fff', padding: '20px', borderRadius: '25px', textDecoration: 'none', color: 'inherit', boxShadow: '0 5px 15px rgba(0,0,0,0.02)'}}>
-          <div style={{width: '40px', height: '40px', background: '#FFF2F2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px'}}>💬</div>
-          <b style={{fontSize: '14px'}}>အကူအညီရယူရန်</b>
+        
+        <Link href="https://m.me/yourpage" className="action-card">
+          <div className="icon-box" style={{background: '#FFF2F2', color: '#FF3B30'}}>
+            <i className="fas fa-comment-dots"></i>
+          </div>
+          <b style={{fontSize: '15px'}}>Help Center</b>
+          <span style={{fontSize: '11px', color: '#8E8E93', marginTop: 4}}>အကူအညီရယူရန်</span>
         </Link>
       </div>
+
+      <p style={{textAlign:'center', fontSize: 12, color: '#AEAEB2', marginTop: 40, paddingBottom: 20}}>
+        © 2024 YNS Premium Kitchen • Quality Food
+      </p>
     </div>
   );
-        }
+              }
+                           
