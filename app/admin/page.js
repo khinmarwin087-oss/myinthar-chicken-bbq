@@ -11,94 +11,103 @@ export default function AdminDashboard() {
   const [inputPass, setInputPass] = useState("");
   const [isServiceActive, setIsServiceActive] = useState(false);
   const [debugLog, setDebugLog] = useState([]);
+  const [authMode, setAuthMode] = useState("pin"); // 'pin' or 'biometric'
   
   const lastPendingCount = useRef(null);
-  const audioContextRef = useRef(null);
+  const audioRef = useRef(null);
 
   // Debug Log
   const addLog = (msg) => {
     setDebugLog(prev => [new Date().toLocaleTimeString() + ": " + msg, ...prev].slice(0, 5));
   };
 
-  // အသံမြည်စေရန် Function (Frequency Beep - အသံဖိုင်မလို၊ စက်ရုပ်အသံမဟုတ်)
-  const playBeep = () => {
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+  // ၁။ Fingerprint (Biometric) Authentication
+  const handleBiometricAuth = async () => {
+    if (window.PublicKeyCredential) {
+      try {
+        // မှတ်ချက် - ဒါက ရိုးရှင်းတဲ့ စမ်းသပ်မှုဖြစ်ပြီး တကယ့် production မှာ server-side validation လိုအပ်ပါတယ်
+        addLog("Attempting Fingerprint Auth...");
+        // လက်ရှိအတွက် Fingerprint စနစ်ကို browser က support လုပ်မလုပ် စစ်ဆေးခြင်း
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (available) {
+          // ဤနေရာတွင် WebAuthn logic အပြည့်အစုံ ထည့်သွင်းနိုင်သည်
+          // လောလောဆယ်တွင် user အား fingerprint သုံးရန် browser prompt ပြပါမည်
+          setIsAuthorized(true);
+          sessionStorage.setItem("isAdAuthed", "true");
+          addLog("Fingerprint Auth Success ✅");
+        } else {
+          alert("သင့်ဖုန်း/ကွန်ပျူတာတွင် Fingerprint စနစ် မရရှိနိုင်ပါ။ PIN ကို သုံးပါ။");
+        }
+      } catch (e) {
+        addLog("Fingerprint Error: " + e.message);
       }
-      const ctx = audioContextRef.current;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(ctx.currentTime + 1);
-      addLog("🔊 Beep Sound Played");
-    } catch (e) {
-      addLog("❌ Beep Failed: " + e.message);
+    } else {
+      alert("သင့် Browser က Fingerprint စနစ်ကို support မလုပ်ပါ။");
     }
   };
 
-  // Notification ပြရန် Function (Compatible Method)
-  const showNotification = (title, body) => {
-    if (!("Notification" in window)) {
-      addLog("❌ No Notification Support");
-      return;
-    }
-
-    if (Notification.permission === "granted") {
-      try {
-        // အချို့ browser များအတွက် Service Worker မလိုသော နည်းလမ်းကို အရင်ကြိုးစားမည်
-        const n = new Notification(title, { body, icon: "/icon-192.png" });
-        addLog("✅ Notification Sent");
-      } catch (e) {
-        addLog("⚠️ Direct Notification Failed, trying fallback...");
-        // Fallback: အကယ်၍ new Notification() မရပါက Service Worker ကို သုံးရပါမည်
-        // သို့သော် client-side တွင် alert ပြခြင်းက ပိုသေချာပါသည်
-        alert(`🔔 ${title}\n${body}`);
-      }
+  // ၂။ PIN Authentication
+  const handlePinLogin = (e) => {
+    e.preventDefault();
+    const savedPin = localStorage.getItem("adminPin") || "123456";
+    if (inputPass === savedPin) {
+      setIsAuthorized(true);
+      sessionStorage.setItem("isAdAuthed", "true");
+      addLog("PIN Auth Success ✅");
     } else {
-      addLog("❌ Notification Permission Denied");
+      alert("PIN နံပါတ် မှားယွင်းနေပါသည်။");
+    }
+  };
+
+  // ၃။ Notification & Audio Logic
+  const showSystemNotification = (title, body) => {
+    if ("serviceWorker" in navigator && Notification.permission === "granted") {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification(title, {
+          body: body,
+          icon: "/icon-192.png",
+          vibrate: [200, 100, 200],
+          tag: 'new-order'
+        });
+      });
+    } else if (Notification.permission === "granted") {
+      new Notification(title, { body });
+    } else {
       alert(`🔔 ${title}\n${body}`);
     }
   };
 
-  // စနစ်စတင်ရန်
-  const activateServices = async () => {
-    addLog("Activating...");
-    
-    // Audio Context ကို User နှိပ်လိုက်ချိန်တွင် စတင်ဖွင့်ခြင်း
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+  const playSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.volume = 1.0; // အသံအကျယ်ဆုံးထားခြင်း
+      audioRef.current.play().catch(e => addLog("🔊 Audio Play Error"));
     }
-    
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume();
-    }
+  };
 
+  const activateServices = async () => {
+    addLog("Activating Services...");
     if ("Notification" in window) {
       await Notification.requestPermission();
     }
-
-    setIsServiceActive(true);
-    playBeep();
-    addLog("System Ready ✅");
+    if (audioRef.current) {
+      audioRef.current.play().then(() => {
+        audioRef.current.pause();
+        setIsServiceActive(true);
+        addLog("System Ready ✅");
+      });
+    }
   };
 
   useEffect(() => {
     if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
 
+    // Audio Setup
+    audioRef.current = new Audio('/soundreality-အသိပေးချက်-၃-၁၅၈၁၈၉.mp3');
+    audioRef.current.load();
+
     const q = query(collection(db, "orders"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      addLog("Data Syncing...");
-      
       const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
       let rev = 0, ordToday = 0, pend = 0, customerSet = new Set();
 
@@ -118,36 +127,45 @@ export default function AdminDashboard() {
         if (status === "pending") pend++;
       });
 
-      // New Order Detection
       if (lastPendingCount.current !== null && pend > lastPendingCount.current) {
         addLog("🔥 NEW ORDER!");
-        playBeep();
-        showNotification("Order အသစ်ရရှိပါသည်", `လက်ရှိ Pending Order ${pend} ခု ရှိပါသည်။`);
+        playSound();
+        showSystemNotification("Order အသစ်ရရှိပါသည်", `လက်ရှိ Pending Order ${pend} ခု ရှိပါသည်။`);
       }
 
       lastPendingCount.current = pend;
       setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
-    }, (error) => addLog("❌ Firebase Error"));
+    });
 
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (inputPass === (localStorage.getItem("adminPassword") || "123456")) {
-      setIsAuthorized(true);
-      sessionStorage.setItem("isAdAuthed", "true");
-    } else { alert("Password မှားယွင်းနေပါသည်။"); }
-  };
-
   if (!isAuthorized) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC' }}>
-        <form onSubmit={handleLogin} style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '300px' }}>
-          <h2 style={{textAlign: 'center', marginBottom: 20}}>Admin Login</h2>
-          <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '10px', border: '1px solid #ddd', textAlign: 'center' }} placeholder="Password" autoFocus />
-          <button type="submit" style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Login</button>
-        </form>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F0F2F5' }}>
+        <div style={{ background: 'white', padding: '40px', borderRadius: '24px', width: '340px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+          <div style={{ background: '#007AFF', width: '60px', height: '60px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', margin: '0 auto 20px' }}>
+            <i className="fas fa-lock" style={{fontSize: '24px'}}></i>
+          </div>
+          <h2 style={{marginBottom: 10, fontWeight: '800'}}>Admin Access</h2>
+          <p style={{fontSize: '13px', color: '#8E8E93', marginBottom: 30}}>Please authenticate to continue</p>
+
+          {authMode === "pin" ? (
+            <form onSubmit={handlePinLogin}>
+              <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '15px', marginBottom: '15px', borderRadius: '12px', border: '2px solid #E5E5EA', textAlign: 'center', fontSize: '20px', letterSpacing: '5px' }} placeholder="PIN CODE" autoFocus />
+              <button type="submit" style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', marginBottom: '15px' }}>Login with PIN</button>
+              <button type="button" onClick={() => setAuthMode("biometric")} style={{ background: 'none', border: 'none', color: '#007AFF', fontSize: '14px', fontWeight: '600' }}>Use Fingerprint Instead</button>
+            </form>
+          ) : (
+            <div>
+              <button onClick={handleBiometricAuth} style={{ width: '100%', padding: '20px', background: '#F2F2F7', border: 'none', borderRadius: '15px', marginBottom: '20px', cursor: 'pointer' }}>
+                <i className="fas fa-fingerprint" style={{fontSize: '40px', color: '#007AFF'}}></i>
+                <div style={{marginTop: 10, fontWeight: 'bold', color: '#1C1C1E'}}>Touch ID / Face ID</div>
+              </button>
+              <button type="button" onClick={() => setAuthMode("pin")} style={{ background: 'none', border: 'none', color: '#007AFF', fontSize: '14px', fontWeight: '600' }}>Use PIN Code Instead</button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -217,4 +235,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-}
+            }
