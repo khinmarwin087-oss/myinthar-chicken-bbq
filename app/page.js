@@ -195,7 +195,7 @@ export default function Home() {
   </div>
 ) : (
   // ... resto del code
-  
+     <>
           {/* Header */}
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, position:'relative'}}>
             <div>
