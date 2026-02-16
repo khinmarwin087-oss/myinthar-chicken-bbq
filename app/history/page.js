@@ -66,7 +66,7 @@ export default function OrderHistory() {
             {/* Header */}
             <div className="no-print" style={{ display: 'flex', alignItems: 'center', padding: '20px', background: '#fff', borderBottom: '1px solid #eee' }}>
                 <button 
-                    onClick={() => selectedOrder ? setSelectedOrder(null) : window.location.href='/customer_menu'} 
+                    onClick={() => selectedOrder ? setSelectedOrder(null) : window.location.href='/'} 
                     style={{ border: 'none', background: 'none', color: '#007AFF', fontSize: '20px' }}
                 >
                     <i className="fas fa-chevron-left"></i>
