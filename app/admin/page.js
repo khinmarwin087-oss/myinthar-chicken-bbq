@@ -15,53 +15,66 @@ export default function AdminDashboard() {
   const audioRef = useRef(null);
   const lastPendingCount = useRef(null);
 
+  // အသံမြည်စေရန် Function (Fallback ပါဝင်သည်)
+  const playNotificationSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(err => {
+        console.error("Audio Play Error:", err);
+        // အသံဖိုင်ဖွင့်မရပါက Browser Beep အသံလုပ်ရန် ကြိုးစားခြင်း
+        try {
+          const context = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = context.createOscillator();
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(440, context.currentTime);
+          oscillator.connect(context.destination);
+          oscillator.start();
+          oscillator.stop(context.currentTime + 0.5);
+        } catch (e) { console.log("Beep failed"); }
+      });
+    }
+  };
+
   // ၁။ အသံနှင့် Notification ကို စတင်ဖွင့်လှစ်ခြင်း
   const activateServices = async () => {
     // Browser Notification Permission တောင်းခြင်း
     if ("Notification" in window) {
-      const permission = await Notification.requestPermission();
-      console.log("Notification Permission:", permission);
+      await Notification.requestPermission();
     }
 
-    // Audio ကို User က နှိပ်လိုက်တဲ့အချိန်မှာ စတင် Play ခွင့်ယူခြင်း
+    // Audio Activation
     if (audioRef.current) {
       audioRef.current.play().then(() => {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
         setIsServiceActive(true);
-        setDebugMsg("System Active: Audio & Notifications Ready ✅");
+        setDebugMsg("System Active ✅");
         
-        // စမ်းသပ်ရန် Notification တစ်ခု ပြကြည့်ခြင်း
         if (Notification.permission === "granted") {
-          new Notification("🔔 စနစ်စတင်ပါပြီ", { body: "အော်ဒါအသစ်ဝင်လာပါက ဤနေရာတွင် အသိပေးပါမည်။" });
+          new Notification("🔔 စနစ်စတင်ပါပြီ", { body: "အော်ဒါအသစ်ဝင်လာပါက အသိပေးပါမည်။" });
         }
       }).catch(err => {
-        console.error("Audio activation failed:", err);
-        alert("အသံဖွင့်ရန် အခက်အခဲရှိနေပါသည်။ Browser settings တွင် အသံဖွင့်ထားပေးပါ။");
+        console.error("Activation Error:", err);
+        alert("အသံဖွင့်ရန် အခက်အခဲရှိနေပါသည်။ အသံဖိုင်လမ်းကြောင်း မှားနေခြင်း သို့မဟုတ် Browser က ပိတ်ထားခြင်း ဖြစ်နိုင်ပါသည်။");
       });
     }
   };
 
   useEffect(() => {
-    // Auth Check
     if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
 
-    // Audio Setup (Public folder ထဲမှာ order-sound.mp3 ရှိရပါမယ်)
-    audioRef.current = new Audio('/soundreality-အသိပေးချက်-၃-၁၅၈၁၈၉.mp3');
+    // အသံဖိုင်လမ်းကြောင်းကို သေချာစစ်ဆေးပါ (Public folder ထဲက ဖိုင်အမည်အတိအကျ ဖြစ်ရပါမယ်)
+    // အောက်ပါအမည်သည် သင်ပေးထားသော attachment ထဲမှ အမည်ဖြစ်သည်
+    const soundFileName = '/soundreality-အသိပေးချက်-၃-၁၅၈၁၈၉.mp3';
+    audioRef.current = new Audio(soundFileName);
     audioRef.current.load();
 
-    // Firestore Real-time Listener
     const q = query(collection(db, "orders"));
-    setDebugMsg("Connecting to Database...");
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setDebugMsg(`Live Syncing... Last update: ${new Date().toLocaleTimeString()}`);
+      setDebugMsg(`Live Syncing... ${new Date().toLocaleTimeString()}`);
       
       const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
-      let rev = 0; 
-      let ordToday = 0; 
-      let pend = 0;
-      let customerSet = new Set();
+      let rev = 0, ordToday = 0, pend = 0, customerSet = new Set();
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
@@ -76,24 +89,12 @@ export default function AdminDashboard() {
           }
           if (data.name || data.customerName) customerSet.add(data.name || data.customerName);
         }
-        
-        if (status === "pending") {
-          pend++;
-        }
+        if (status === "pending") pend++;
       });
 
-      // --- အသံနှင့် Notification Logic ---
-      // Pending အရေအတွက် တိုးလာမှသာ အလုပ်လုပ်မည်
+      // New Order Detection
       if (lastPendingCount.current !== null && pend > lastPendingCount.current) {
-        console.log("New Order Detected! Pending count increased.");
-        
-        // ၁။ အသံမြည်စေခြင်း
-        if (audioRef.current) {
-          audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(e => console.log("Audio play error:", e));
-        }
-
-        // ၂။ Notification စာသားပြခြင်း
+        playNotificationSound();
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("🔔 Order အသစ်တစ်ခု ရောက်ရှိ!", {
             body: `လက်ရှိ Pending Order ${pend} ခု ရှိနေပါသည်။`,
@@ -102,14 +103,9 @@ export default function AdminDashboard() {
         }
       }
 
-      // State & Ref Update
       lastPendingCount.current = pend;
       setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
-
-    }, (error) => {
-      console.error("Firestore Error:", error);
-      setDebugMsg("Connection Lost ❌");
-    });
+    }, (error) => setDebugMsg("Connection Lost ❌"));
 
     return () => unsubscribe();
   }, []);
@@ -125,7 +121,7 @@ export default function AdminDashboard() {
   if (!isAuthorized) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC' }}>
-        <form onSubmit={handleLogin} style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '300px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+        <form onSubmit={handleLogin} style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '300px' }}>
           <h2 style={{textAlign: 'center', marginBottom: 20}}>Admin Login</h2>
           <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '10px', border: '1px solid #ddd', textAlign: 'center' }} placeholder="Password" autoFocus />
           <button type="submit" style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Login</button>
@@ -152,7 +148,6 @@ export default function AdminDashboard() {
         <button onClick={() => {sessionStorage.removeItem("isAdAuthed"); setIsAuthorized(false);}} style={{ border: 'none', background: '#FFF1F0', color: '#FF3B30', padding: '8px 15px', borderRadius: '10px', fontWeight: 'bold' }}>Logout</button>
       </div>
 
-      {/* Activation Button - အသံမြည်ဖို့ ဒါကို မဖြစ်မနေ နှိပ်ရပါမယ် */}
       {!isServiceActive && (
         <button onClick={activateServices} style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '12px', marginBottom: '20px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
           🔔 အသံနှင့် Notification စတင်ရန် နှိပ်ပါ
@@ -197,4 +192,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-      }
+    }
