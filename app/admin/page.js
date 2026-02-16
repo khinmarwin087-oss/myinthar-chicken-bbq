@@ -3,107 +3,67 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { db } from "../../lib/firebase"; 
-import { collection, query, onSnapshot } from "firebase/firestore";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ revenue: 0, orders: 0, customers: 0, pending: 0 });
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [inputPass, setInputPass] = useState("");
-  const [isAudioReady, setIsAudioReady] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [debugMsg, setDebugMsg] = useState("Initializing...");
   
   const audioRef = useRef(null);
-  const isFirstLoad = useRef(true);
+  const lastOrderCount = useRef(null);
 
-  // ၁။ Notification Setup (Browser Notification Permission)
-  const setupNotifications = async () => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "default") {
-        await Notification.requestPermission();
-      }
-      
-      // FCM Setup (Optional - if you have firebase-messaging-sw.js)
-      try {
-        const messaging = getMessaging();
-        const token = await getToken(messaging, { 
-          vapidKey: "BPcHRWw8jfHdJwMWiFN3v1PGj3pevV4msLVcbLCip-7jG80WY5EORbsFKLBoKuD1el6GchcP8lwpkStdTHXRsPo" 
-        });
-        console.log("FCM Token:", token);
-        
-        onMessage(messaging, (payload) => {
-          new Notification(payload.notification.title, {
-            body: payload.notification.body,
-            icon: "/icon-192.png"
-          });
-        });
-      } catch (err) {
-        console.log("FCM Setup skipped or error:", err.message);
-      }
-    }
-  };
-
-  // ၂။ Audio Enable (Browser policy အရ user က တစ်ချက်နှိပ်ပေးဖို့လိုပါတယ်)
-  const enableAudio = () => {
-    setIsAudioReady(true);
-    window.isAudioEnabled = true; 
+  // ၁။ Audio & Notification Permission
+  const startService = async () => {
+    // Audio Enable
     if (audioRef.current) {
-      audioRef.current.play().then(() => {
+      try {
+        await audioRef.current.play();
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
-      }).catch(e => console.log("Audio Start Error:", e));
+        setIsAudioEnabled(true);
+        setDebugMsg("Audio & Notifications Active ✅");
+      } catch (e) {
+        console.error("Audio play failed", e);
+        setDebugMsg("Audio Blocked by Browser ❌");
+      }
     }
-    setupNotifications(); // Audio နှိပ်တဲ့အချိန်မှာ Notification permission ပါ တစ်ခါတည်းတောင်းမယ်
+
+    // Notification Permission
+    if ("Notification" in window) {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        alert("Notification ခွင့်ပြုချက်မပေးထားပါက အော်ဒါအသစ်တက်လာလျှင် စာပို့ပေးမည်မဟုတ်ပါ။");
+      }
+    }
   };
 
   useEffect(() => {
     // Auth Check
     if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
 
-    // Initial Sound Load
+    // Audio Setup
     audioRef.current = new Audio('/order-sound.mp3');
-    audioRef.current.load();
+    audioRef.current.loop = false;
 
     // Firestore Real-time Listener
+    // query ကို ရိုးရှင်းအောင်ထားပြီး အကုန်ဆွဲထုတ်ပါမယ်
     const q = query(collection(db, "orders"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log("🔥 Firestore Data Received!");
+    setDebugMsg("Connecting to Firestore...");
 
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setDebugMsg(`Connected! Last update: ${new Date().toLocaleTimeString()}`);
+      
       const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
       let rev = 0; 
       let ordToday = 0; 
       let pend = 0;
       let customerSet = new Set();
+      let currentPendingOrders = [];
 
-      // အော်ဒါအသစ်ဝင်လာတာကို docChanges နဲ့ စစ်မယ် (ဒါက ပိုတိကျပါတယ်)
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added" && !isFirstLoad.current) {
-          const newData = change.doc.data();
-          const status = (newData.status || "").toLowerCase();
-
-          // Pending order အသစ်ဖြစ်မှ အသံမြည်မယ်
-          if (status === "pending") {
-            console.log("🔔 New Pending Order Detected!");
-            
-            // ၁။ အသံဖွင့်မယ်
-            if (window.isAudioEnabled && audioRef.current) {
-              audioRef.current.currentTime = 0;
-              audioRef.current.play().catch(e => console.log("Sound play error:", e));
-            }
-
-            // ၂။ Notification ပြမယ်
-            if (Notification.permission === "granted") {
-              new Notification("🔔 Order အသစ်တစ်ခု ရောက်ရှိ!", {
-                body: `Customer: ${newData.name || 'N/A'}\nTotal: ${newData.totalPrice || 0} Ks`,
-                icon: "/icon-192.png",
-                tag: change.doc.id // ID တူရင် notification ထပ်မပြအောင်
-              });
-            }
-          }
-        }
-      });
-
-      // Stats တွက်ချက်ခြင်း
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         const rawDate = data.orderDate || data.date || "";
@@ -117,26 +77,45 @@ export default function AdminDashboard() {
           }
           if (data.name || data.customerName) customerSet.add(data.name || data.customerName);
         }
-        if (status === "pending") pend++;
+        
+        if (status === "pending") {
+          pend++;
+          currentPendingOrders.push({ id: doc.id, ...data });
+        }
       });
 
-      setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
-      
-      // ပထမဆုံးအကြိမ် load ပြီးသွားပြီဖြစ်ကြောင်း မှတ်သားမယ်
-      if (isFirstLoad.current) {
-        isFirstLoad.current = false;
+      // --- အသံနှင့် Notification Logic ---
+      // အရင်ကထက် ပိုရိုးရှင်းအောင် Pending အရေအတွက် တိုးလာတာနဲ့ မြည်အောင်လုပ်ပါမယ်
+      if (lastOrderCount.current !== null && pend > lastOrderCount.current) {
+        console.log("New Order Detected!");
+        
+        // ၁။ အသံဖွင့်ခြင်း
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(err => console.log("Audio play error:", err));
+        }
+
+        // ၂။ Notification ပြခြင်း
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("🔔 Order အသစ်ရရှိပါသည်", {
+            body: `Pending Orders: ${pend}`,
+            icon: "/icon-192.png"
+          });
+        }
       }
 
+      // State Update
+      lastOrderCount.current = pend;
+      setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
+
     }, (error) => {
-      console.error("Firestore Sync Error:", error);
-      // Network ကျသွားရင် သိနိုင်အောင် alert ပြပေးထားပါတယ်
-      // alert("Database ချိတ်ဆက်မှု ပြတ်တောက်သွားပါသည်။ ကျေးဇူးပြု၍ Refresh လုပ်ပေးပါ။");
+      console.error("Firestore Error:", error);
+      setDebugMsg(`Connection Error: ${error.message} ❌`);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // --- UI Rendering အပိုင်း ---
   const handleLogin = (e) => {
     e.preventDefault();
     if (inputPass === (localStorage.getItem("adminPassword") || "123456")) {
@@ -147,77 +126,108 @@ export default function AdminDashboard() {
 
   if (!isAuthorized) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC' }}>
-        <form onSubmit={handleLogin} style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '300px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-          <h2 style={{textAlign: 'center', marginBottom: 20, color: '#1C1C1E'}}>Admin Login</h2>
-          <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '10px', border: '1px solid #ddd', textAlign: 'center', fontSize: '16px' }} placeholder="Password" autoFocus />
-          <button type="submit" style={{ width: '100%', padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Login</button>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F0F2F5' }}>
+        <form onSubmit={handleLogin} style={{ background: 'white', padding: '40px', borderRadius: '24px', width: '320px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+          <h2 style={{textAlign: 'center', marginBottom: 30, color: '#1C1C1E', fontWeight: '800'}}>Admin Login</h2>
+          <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '15px', marginBottom: '20px', borderRadius: '12px', border: '2px solid #E5E5EA', textAlign: 'center', fontSize: '18px', outline: 'none' }} placeholder="••••••" autoFocus />
+          <button type="submit" style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>Sign In</button>
         </form>
       </div>
     );
   }
 
   return (
-    <div style={{ background: '#F8F9FC', minHeight: '100vh', padding: '20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+    <div style={{ background: '#F2F2F7', minHeight: '100vh', padding: '20px', fontFamily: '-apple-system, sans-serif' }}>
       <style jsx global>{`
-        .main-card { background: linear-gradient(135deg, #007AFF, #00D2FF); border-radius: 20px; padding: 25px; color: white; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,122,255,0.2); }
-        .nav-item { background: white; border-radius: 18px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; gap: 10px; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s; }
-        .nav-item:active { transform: scale(0.95); }
-        .red-dot { position: absolute; top: 12px; right: 12px; width: 12px; height: 12px; background: #FF3B30; border-radius: 50%; border: 2px solid white; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+        .card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .stat-label { font-size: 12px; color: #8E8E93; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #1C1C1E; display: block; margin-top: 5px; }
+        .nav-btn { background: white; border-radius: 20px; padding: 20px; text-decoration: none; color: #1C1C1E; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.2s; border: 1px solid transparent; }
+        .nav-btn:active { transform: scale(0.95); background: #F2F2F7; }
+        .pulse-red { width: 12px; height: 12px; background: #FF3B30; border-radius: 50%; position: absolute; top: 15px; right: 15px; border: 2px solid white; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
       `}</style>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C1C1E', margin: 0 }}>YNS Admin</h1>
-        <button onClick={() => {sessionStorage.removeItem("isAdAuthed"); setIsAuthorized(false);}} style={{ border: 'none', background: '#FFF1F0', color: '#FF3B30', padding: '8px 15px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Logout</button>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+        <div>
+          <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0 }}>Dashboard</h1>
+          <p style={{ fontSize: '12px', color: stats.pending > 0 ? '#FF3B30' : '#8E8E93', margin: '5px 0 0 0', fontWeight: '600' }}>
+            {debugMsg}
+          </p>
+        </div>
+        <button onClick={() => {sessionStorage.removeItem("isAdAuthed"); setIsAuthorized(false);}} style={{ border: 'none', background: '#FFE5E5', color: '#FF3B30', padding: '10px 18px', borderRadius: '12px', fontWeight: '700', fontSize: '14px' }}>Logout</button>
       </div>
 
-      {!isAudioReady && (
-        <button onClick={enableAudio} style={{ width: '100%', padding: '15px', background: '#FF9500', color: 'white', border: 'none', borderRadius: '15px', marginBottom: '20px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,149,0,0.3)' }}>
-          🔔 အော်ဒါအသံနှင့် Notification စတင်ရန် နှိပ်ပါ
+      {/* Activation Button */}
+      {!isAudioEnabled && (
+        <button onClick={startService} style={{ width: '100%', padding: '18px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '20px', marginBottom: '25px', fontWeight: '800', fontSize: '16px', boxShadow: '0 8px 20px rgba(0,122,255,0.3)', cursor: 'pointer' }}>
+          <i className="fas fa-bell" style={{marginRight: '10px'}}></i> အော်ဒါအသံနှင့် Notification ဖွင့်ရန်နှိပ်ပါ
         </button>
       )}
 
-      <div className="main-card">
-        <h3 style={{ margin: 0, fontSize: '12px', opacity: 0.8, letterSpacing: '1px' }}>TODAY'S REVENUE</h3>
-        <span style={{ fontSize: '36px', fontWeight: '800', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{ width: '8px', height: '8px', background: '#34C759', borderRadius: '50%' }}></div>
-          <span style={{ fontSize: '11px', opacity: 0.9 }}>Real-time Live Syncing...</span>
+      {/* Main Stats */}
+      <div style={{ background: 'linear-gradient(135deg, #1C1C1E, #3A3A3C)', borderRadius: '28px', padding: '30px', color: 'white', marginBottom: '25px', boxShadow: '0 15px 30px rgba(0,0,0,0.15)' }}>
+        <span style={{ fontSize: '13px', opacity: 0.7, fontWeight: '600' }}>TODAY'S REVENUE</span>
+        <div style={{ fontSize: '38px', fontWeight: '900', margin: '10px 0' }}>{stats.revenue.toLocaleString()} <span style={{fontSize: '20px'}}>Ks</span></div>
+        <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px 15px', borderRadius: '12px', fontSize: '12px' }}>
+                <i className="fas fa-shopping-cart" style={{marginRight: '6px'}}></i> {stats.orders} Orders
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px 15px', borderRadius: '12px', fontSize: '12px' }}>
+                <i className="fas fa-users" style={{marginRight: '6px'}}></i> {stats.customers} Customers
+            </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
-        <div style={{background:'white', padding:20, borderRadius:20, boxShadow: '0 4px 12px rgba(0,0,0,0.03)'}}>
-          <span style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '5px' }}>TODAY ORDERS</span>
-          <span style={{ fontSize: '24px', fontWeight: 800, color: '#1C1C1E' }}>{stats.orders}</span>
+      {/* Pending Highlight */}
+      <div className="card" style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: stats.pending > 0 ? '2px solid #FF3B30' : '2px solid transparent' }}>
+        <div>
+          <span className="stat-label">Pending Orders</span>
+          <span className="stat-value" style={{ color: stats.pending > 0 ? '#FF3B30' : '#1C1C1E' }}>{stats.pending}</span>
         </div>
-        <div style={{background:'white', padding:20, borderRadius:20, boxShadow: '0 4px 12px rgba(0,0,0,0.03)'}}>
-          <span style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '5px' }}>PENDING</span>
-          <span style={{ fontSize: '24px', fontWeight: 800, color: '#FF3B30' }}>{stats.pending}</span>
+        <div style={{ background: stats.pending > 0 ? '#FF3B30' : '#E5E5EA', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+          <i className="fas fa-clock" style={{fontSize: '20px'}}></i>
         </div>
       </div>
 
+      {/* Navigation Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-        <Link href="/admin/orders" className="nav-item">
-            {stats.pending > 0 && <div className="red-dot"></div>}
-            <i className="fas fa-shopping-basket" style={{fontSize: '20px', color: '#007AFF'}}></i>
-            <b style={{ fontSize: '16px' }}>Orders</b>
+        <Link href="/admin/orders" className="nav-btn" style={{position: 'relative'}}>
+          {stats.pending > 0 && <div className="pulse-red"></div>}
+          <div style={{ background: '#E5F1FF', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#007AFF' }}>
+            <i className="fas fa-list-ul" style={{fontSize: '20px'}}></i>
+          </div>
+          <b style={{fontSize: '15px'}}>Orders</b>
         </Link>
-        <Link href="/admin/manage_menu" className="nav-item">
-            <i className="fas fa-utensils" style={{fontSize: '20px', color: '#5856D6'}}></i>
-            <b style={{ fontSize: '16px' }}>Menus</b>
+        
+        <Link href="/admin/manage_menu" className="nav-btn">
+          <div style={{ background: '#F2F2F7', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5856D6' }}>
+            <i className="fas fa-utensils" style={{fontSize: '20px'}}></i>
+          </div>
+          <b style={{fontSize: '15px'}}>Menus</b>
         </Link>
-        <Link href="/admin/history" className="nav-item">
-            <i className="fas fa-history" style={{fontSize: '20px', color: '#34C759'}}></i>
-            <b style={{ fontSize: '16px' }}>History</b>
+
+        <Link href="/admin/history" className="nav-btn">
+          <div style={{ background: '#E8F9EE', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34C759' }}>
+            <i className="fas fa-history" style={{fontSize: '20px'}}></i>
+          </div>
+          <b style={{fontSize: '15px'}}>History</b>
         </Link>
-        <Link href="/admin/settings" className="nav-item">
-            <i className="fas fa-cog" style={{fontSize: '20px', color: '#8E8E93'}}></i>
-            <b style={{ fontSize: '16px' }}>Settings</b>
+
+        <Link href="/admin/settings" className="nav-btn">
+          <div style={{ background: '#F2F2F7', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8E8E93' }}>
+            <i className="fas fa-cog" style={{fontSize: '20px'}}></i>
+          </div>
+          <b style={{fontSize: '15px'}}>Settings</b>
         </Link>
+      </div>
+
+      {/* Footer Debug Info */}
+      <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '10px', color: '#C7C7CC' }}>
+        YNS Admin Panel v2.0 • Real-time Engine Active
       </div>
     </div>
   );
-            }
+    }
