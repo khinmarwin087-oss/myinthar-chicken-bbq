@@ -8,7 +8,7 @@ export default function AdminOrders() {
     const [orders, setOrders] = useState([]);
     const [activeTab, setActiveTab] = useState('New'); 
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(""); // Search အတွက် state
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         const unsub = onSnapshot(query(collection(db, "orders")), (snap) => {
@@ -30,137 +30,146 @@ export default function AdminOrders() {
         return orders.filter(o => o.status?.toLowerCase() === status.toLowerCase()).length;
     };
 
-    // Filter Logic: Tab အလိုက်ရော Search Keyword အလိုက်ရော စစ်ထုတ်မည်
     const filtered = orders.filter(o => {
         const s = o.status?.toLowerCase();
         const matchesTab = activeTab === 'New' 
             ? (s === 'pending' || s === 'new' || !s)
             : s === activeTab.toLowerCase();
-        
-        const matchesSearch = 
-            o.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            o.orderId?.toLowerCase().includes(searchTerm.toLowerCase());
-
+        const matchesSearch = o.name?.toLowerCase().includes(searchTerm.toLowerCase()) || o.orderId?.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesTab && matchesSearch;
     });
 
     return (
-        <div style={{ background: '#F0F2F5', minHeight: '100vh' }}>
+        <div style={{ background: '#F2F2F7', minHeight: '100vh' }}>
             <style>{`
                 .sticky-header { 
                     position: sticky; top: 0; z-index: 100; 
-                    background: rgba(255, 255, 255, 0.9); 
-                    backdrop-filter: blur(15px); padding: 10px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                    background: rgba(255, 255, 255, 0.8); 
+                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                    padding: 12px 16px; border-bottom: 0.5px solid rgba(0,0,0,0.1);
+                }
+                .header-row { display: flex; align-items: center; justify-content: space-between; position: relative; height: 44px; }
+                .apple-back-btn {
+                    width: 32px; height: 44px; display: flex; align-items: center; 
+                    color: #007AFF; text-decoration: none; transition: opacity 0.2s;
+                }
+                .apple-back-btn:active { opacity: 0.3; }
+                .nav-title { 
+                    position: absolute; left: 50%; transform: translateX(-50%);
+                    font-size: 17px; font-weight: 700; color: #000; letter-spacing: -0.4px;
                 }
                 .search-box {
-                    background: #eee; border-radius: 12px; padding: 8px 12px;
-                    display: flex; alignItems: center; margin-top: 10px;
+                    background: rgba(118, 118, 128, 0.12); border-radius: 10px; 
+                    padding: 8px 12px; display: flex; align-items: center; margin-top: 15px;
                 }
                 .search-input {
                     background: transparent; border: none; outline: none;
-                    width: 100%; font-size: 14px; margin-left: 8px; font-weight: 600;
+                    width: 100%; font-size: 16px; margin-left: 8px; color: #000;
+                }
+                .tab-bar { display: flex; background: rgba(118, 118, 128, 0.08); padding: 2px; border-radius: 8px; margin-top: 15px; }
+                .tab-btn { 
+                    flex: 1; padding: 7px; border: none; font-size: 13px; font-weight: 600; 
+                    border-radius: 7px; cursor: pointer; position: relative; transition: 0.2s;
+                }
+                .badge { 
+                    background: #FF3B30; color: #fff; padding: 1px 5px; 
+                    border-radius: 10px; font-size: 10px; position: absolute; top: -5px; right: -2px;
+                    border: 2px solid #fff;
                 }
                 .order-card { 
-                    background: #fff; border-radius: 15px; padding: 12px; 
-                    margin: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
-                    border-left: 4px solid #007AFF; 
+                    background: #fff; border-radius: 14px; padding: 16px; 
+                    margin: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
                 }
-                .compact-item { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; border-bottom: 1px dashed #eee; }
-                .tab-bar { display: flex; background: #eee; padding: 3px; border-radius: 12px; gap: 2px; margin-top: 10px; }
-                .tab-btn { flex: 1; padding: 10px; border: none; font-size: 12px; font-weight: 800; border-radius: 10px; cursor: pointer; position: relative; }
-                .badge { background: #FF3B30; color: #fff; padding: 2px 5px; border-radius: 5px; font-size: 9px; position: absolute; top: 2px; right: 2px; }
+                .compact-item { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; color: #3a3a3c; }
             `}</style>
 
             <div className="sticky-header">
-                {/* Header Row */}
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <Link href="/admin" style={{ 
-                        background: '#f8f8f8', width: '35px', height: '35px', borderRadius: '10px', 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        color: '#000', textDecoration: 'none', border: '1px solid #eee'
-                    }}>
-                        <i className="fas fa-chevron-left"></i>
+                <div className="header-row">
+                    <Link href="/admin" className="apple-back-btn">
+                        <svg width="12" height="21" viewBox="0 0 12 21" fill="none">
+                            <path d="M10.5 19.5L1.5 10.5L10.5 1.5" stroke="#007AFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span style={{marginLeft: 5, fontSize: 17}}>Back</span>
                     </Link>
-                    <h3 style={{ flex: 1, textAlign: 'center', margin: 0, fontSize: '17px', fontWeight: 800 }}>Orders Management</h3>
-                    <div style={{ width: '35px' }}></div>
+                    <span className="nav-title">Orders</span>
+                    <div style={{ width: 60 }}></div> 
                 </div>
 
-                {/* Search Bar */}
                 <div className="search-box">
-                    <i className="fas fa-search" style={{ color: '#999', fontSize: '14px' }}></i>
+                    <i className="fas fa-search" style={{ color: '#8e8e93', fontSize: '15px' }}></i>
                     <input 
                         type="text" 
                         className="search-input" 
-                        placeholder="Search Name or Order ID..." 
+                        placeholder="Search" 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                {/* Tabs */}
                 <div className="tab-bar">
                     {['New', 'Cooking', 'Ready'].map(t => (
                         <button key={t} onClick={() => setActiveTab(t)} className="tab-btn" 
-                            style={{ background: activeTab === t ? '#fff' : 'transparent', color: activeTab === t ? '#000' : '#666' }}>
+                            style={{ 
+                                background: activeTab === t ? '#fff' : 'transparent', 
+                                color: activeTab === t ? '#000' : '#8e8e93',
+                                boxShadow: activeTab === t ? '0 3px 8px rgba(0,0,0,0.12)' : 'none'
+                            }}>
                             {t} {getCount(t) > 0 && <span className="badge">{getCount(t)}</span>}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Orders List */}
-            <div style={{ padding: '5px 0 20px 0' }}>
+            <div style={{ padding: '8px 0 30px 0' }}>
                 {loading ? (
-                    <div style={{textAlign:'center', marginTop: '50px', color: '#666'}}>Loading...</div>
+                    <div style={{textAlign:'center', marginTop: '40px', color: '#8e8e93'}}>Loading...</div>
                 ) : filtered.length === 0 ? (
-                    <div style={{textAlign:'center', color: '#999', marginTop: '50px'}}>
-                        <i className="fas fa-box-open" style={{fontSize: '40px', display: 'block', marginBottom: '10px'}}></i>
-                        အော်ဒါရှာမတွေ့ပါ
+                    <div style={{textAlign:'center', color: '#8e8e93', marginTop: '60px'}}>
+                        <i className="fas fa-magnifying-glass" style={{fontSize: '30px', marginBottom: 15, display: 'block'}}></i>
+                        No Orders Found
                     </div>
                 ) : (
                     filtered.map(order => (
-                        <div key={order.id} className="order-card" style={{ borderLeftColor: activeTab==='Ready' ? '#34C759' : '#007AFF' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
-                                <b style={{ fontSize: '15px' }}>{order.name}</b>
-                                <span style={{ fontSize: '11px', color: '#007AFF', fontWeight: 'bold' }}>
-                                    #{order.orderId || 'N/A'}
-                                </span>
+                        <div key={order.id} className="order-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <b style={{ fontSize: '17px', letterSpacing: '-0.3px' }}>{order.name}</b>
+                                <span style={{ fontSize: '13px', color: '#8e8e93' }}>#{order.orderId?.replace('ORD-', '')}</span>
                             </div>
                             
-                            <div style={{ background: '#F9F9F9', padding: '10px', borderRadius: '10px', marginBottom: '10px' }}>
+                            <div style={{ marginBottom: '15px', borderTop: '0.5px solid #eee', paddingTop: '10px' }}>
                                 {order.items?.map((item, i) => (
                                     <div key={i} className="compact-item">
-                                        <span>{item.name} <span style={{color:'#888'}}>x{item.qty}</span></span>
-                                        <b>{(item.price * item.qty).toLocaleString()} K</b>
+                                        <span>{item.name} <span style={{color:'#8e8e93'}}>× {item.qty}</span></span>
+                                        <span style={{fontWeight: '500'}}>{(item.price * item.qty).toLocaleString()} K</span>
                                     </div>
                                 ))}
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '16px', fontWeight: '900' }}>
+                                <span style={{ fontSize: '18px', fontWeight: '700', color: '#000' }}>
                                     {Number(order.totalPrice).toLocaleString()} K
                                 </span>
-                                <div style={{ display: 'flex', gap: '5px' }}>
+                                <div style={{ display: 'flex', gap: '8px' }}>
                                     {activeTab === 'New' && (
                                         <>
-                                            <button onClick={() => updateStatus(order.id, 'Rejected')} style={{padding:'8px 12px', borderRadius:'10px', border:'none', background:'#FFF0F0', color:'#FF3B30', fontWeight:800, fontSize:12}}>Ignore</button>
-                                            <button onClick={() => updateStatus(order.id, 'Cooking')} style={{padding:'8px 12px', borderRadius:'10px', border:'none', background:'#007AFF', color:'#fff', fontWeight:800, fontSize:12}}>Accept</button>
+                                            <button onClick={() => updateStatus(order.id, 'Rejected')} style={{padding:'8px 16px', borderRadius:'8px', border:'none', background:'#FFE5E5', color:'#FF3B30', fontWeight:600, fontSize:13}}>Decline</button>
+                                            <button onClick={() => updateStatus(order.id, 'Cooking')} style={{padding:'8px 16px', borderRadius:'8px', border:'none', background:'#007AFF', color:'#fff', fontWeight:600, fontSize:13}}>Accept</button>
                                         </>
                                     )}
                                     {activeTab === 'Cooking' && (
-                                        <button onClick={() => updateStatus(order.id, 'Ready')} style={{padding:'8px 15px', borderRadius:'10px', border:'none', background:'#34C759', color:'#fff', fontWeight:800, fontSize:12}}>Ready</button>
+                                        <button onClick={() => updateStatus(order.id, 'Ready')} style={{padding:'8px 20px', borderRadius:'8px', border:'none', background:'#34C759', color:'#fff', fontWeight:600, fontSize:13}}>Ready</button>
                                     )}
                                     {activeTab === 'Ready' && (
-                                        <button onClick={() => updateStatus(order.id, 'Success')} style={{padding:'8px 15px', borderRadius:'10px', border:'none', background:'#1c1c1e', color:'#fff', fontWeight:800, fontSize:12}}>Done</button>
+                                        <button onClick={() => updateStatus(order.id, 'Success')} style={{padding:'8px 20px', borderRadius:'8px', border:'none', background:'#1c1c1e', color:'#fff', fontWeight:600, fontSize:13}}>Done</button>
                                     )}
                                 </div>
                             </div>
-                            {order.note && <div style={{ fontSize: '11px', color: '#f39c12', marginTop: '8px', background:'#FFF9EB', padding:'5px', borderRadius:'5px' }}>📝 {order.note}</div>}
+                            {order.note && <div style={{ fontSize: '13px', color: '#8a8a8e', marginTop: '12px', padding:'8px', background:'#F2F2F7', borderRadius:'8px' }}>💬 {order.note}</div>}
                         </div>
                     ))
                 )}
             </div>
         </div>
     );
-                            }
+                    }
+                                 
