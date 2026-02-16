@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { db } from "../../../lib/firebase";
 import { collection, onSnapshot, updateDoc, doc, query } from "firebase/firestore";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import Link from 'next/link';
 
 export default function AdminOrders() {
@@ -11,14 +12,66 @@ export default function AdminOrders() {
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
+        // --- Notification Setup ---
+        const setupNotifications = async () => {
+            try {
+                const messaging = getMessaging();
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    const token = await getToken(messaging, { 
+                        vapidKey: 'BPcHRWw8jfHdJwMWiFN3v1PGj3pevV4msLVcbLCip-7jG80WY5EORbsFKLBoKuD1el6GchcP8lwpkStdTHXRsPo' 
+                    });
+                    console.log("Admin FCM Token:", token);
+
+                    onMessage(messaging, (payload) => {
+                        new Notification(payload.notification.title, {
+                            body: payload.notification.body,
+                            icon: '/logo.png'
+                        });
+                        // သင့်အသံဖိုင်အသစ်ကို ဒီမှာသုံးထားပါတယ်
+                        const audio = new Audio('/soundreality-notification-3-158189.mp3');
+                        audio.play().catch(e => console.log("Audio play error"));
+                    });
+                }
+            } catch (err) {
+                console.error("Noti Error:", err);
+            }
+        };
+
+        // --- Real-time Firestore Listener ---
         const unsub = onSnapshot(query(collection(db, "orders")), (snap) => {
+            snap.docChanges().forEach((change) => {
+                // အော်ဒါအသစ် ဝင်လာရင် Noti ပေးဖို့
+                if (change.type === "added" && !loading) {
+                    const newOrder = change.doc.data();
+                    if (newOrder.status === 'New' || !newOrder.status || newOrder.status === 'pending') {
+                        
+                        // Browser Notification
+                        new Notification("အော်ဒါအသစ် ရောက်ပြီ! 🍲", {
+                            body: `${newOrder.name} ဆီမှ ${Number(newOrder.totalPrice).toLocaleString()} K ဖိုး အော်ဒါရောက်လာပါတယ်။`,
+                            icon: '/logo.png'
+                        });
+                        
+                        // သင့်အသံဖိုင်အသစ်ကို ဒီမှာလည်း သုံးထားပါတယ်
+                        const audio = new Audio('/soundreality-notification-3-158189.mp3');
+                        audio.play().catch(e => console.log("Audio play error"));
+                        
+                        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    }
+                }
+            });
+
             const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setOrders(list.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)));
             setLoading(false);
         });
-        return () => unsub();
-    }, []);
 
+        setupNotifications();
+        return () => unsub();
+    }, [loading]);
+
+    // အောက်က UI Code တွေက အရင်အတိုင်းပါပဲ...
     const updateStatus = async (id, status) => {
         if (status === 'Rejected' && !confirm("ပယ်ဖျက်မှာ သေချာပါသလား?")) return;
         try { await updateDoc(doc(db, "orders", id), { status }); } 
@@ -50,7 +103,7 @@ export default function AdminOrders() {
                 }
                 .header-row { display: flex; align-items: center; justify-content: space-between; position: relative; height: 44px; }
                 .apple-back-btn {
-                    width: 32px; height: 44px; display: flex; align-items: center; 
+                    width: auto; height: 44px; display: flex; align-items: center; 
                     color: #007AFF; text-decoration: none; transition: opacity 0.2s;
                 }
                 .apple-back-btn:active { opacity: 0.3; }
@@ -171,5 +224,5 @@ export default function AdminOrders() {
             </div>
         </div>
     );
-                    }
+                                                  }
                                  
