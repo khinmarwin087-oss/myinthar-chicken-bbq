@@ -13,54 +13,91 @@ export default function AdminDashboard() {
   const [debugLog, setDebugLog] = useState([]);
   
   const lastPendingCount = useRef(null);
+  const audioContextRef = useRef(null);
 
-  // Debug Log ထည့်ရန် Function
+  // Debug Log
   const addLog = (msg) => {
     setDebugLog(prev => [new Date().toLocaleTimeString() + ": " + msg, ...prev].slice(0, 5));
   };
 
-  // အသံထွက်ပေးမည့် Function (Speech Synthesis - အသံဖိုင်မလိုပါ)
-  const speakNotification = (text) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US'; // မြန်မာစာအတွက် en-US သို့မဟုတ် ရနိုင်သော voice ကိုသုံးပါမည်
-      utterance.rate = 1;
-      window.speechSynthesis.speak(utterance);
-      addLog("🔊 Speaking: " + text);
-    } else {
-      addLog("❌ Speech not supported");
+  // အသံမြည်စေရန် Function (Frequency Beep - အသံဖိုင်မလို၊ စက်ရုပ်အသံမဟုတ်)
+  const playBeep = () => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 1);
+      addLog("🔊 Beep Sound Played");
+    } catch (e) {
+      addLog("❌ Beep Failed: " + e.message);
     }
   };
 
-  // စနစ်စတင်ရန် Function
-  const activateServices = async () => {
-    addLog("Attempting to activate...");
-    
-    // ၁။ Notification Permission
-    if ("Notification" in window) {
-      const perm = await Notification.requestPermission();
-      addLog("Notification Permission: " + perm);
+  // Notification ပြရန် Function (Compatible Method)
+  const showNotification = (title, body) => {
+    if (!("Notification" in window)) {
+      addLog("❌ No Notification Support");
+      return;
     }
 
-    // ၂။ Audio Context & Speech Test
-    setIsServiceActive(true);
-    speakNotification("System Activated. Waiting for orders.");
-    
     if (Notification.permission === "granted") {
-      new Notification("🔔 System Active", { body: "Ready for new orders!" });
+      try {
+        // အချို့ browser များအတွက် Service Worker မလိုသော နည်းလမ်းကို အရင်ကြိုးစားမည်
+        const n = new Notification(title, { body, icon: "/icon-192.png" });
+        addLog("✅ Notification Sent");
+      } catch (e) {
+        addLog("⚠️ Direct Notification Failed, trying fallback...");
+        // Fallback: အကယ်၍ new Notification() မရပါက Service Worker ကို သုံးရပါမည်
+        // သို့သော် client-side တွင် alert ပြခြင်းက ပိုသေချာပါသည်
+        alert(`🔔 ${title}\n${body}`);
+      }
     } else {
-      alert("Notification ပိတ်ထားပါသဖြင့် စာသားပေါ်လာမည်မဟုတ်ပါ။");
+      addLog("❌ Notification Permission Denied");
+      alert(`🔔 ${title}\n${body}`);
     }
+  };
+
+  // စနစ်စတင်ရန်
+  const activateServices = async () => {
+    addLog("Activating...");
+    
+    // Audio Context ကို User နှိပ်လိုက်ချိန်တွင် စတင်ဖွင့်ခြင်း
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    if ("Notification" in window) {
+      await Notification.requestPermission();
+    }
+
+    setIsServiceActive(true);
+    playBeep();
+    addLog("System Ready ✅");
   };
 
   useEffect(() => {
     if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
 
     const q = query(collection(db, "orders"));
-    addLog("Connecting to Firestore...");
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      addLog("Data Received from Firebase");
+      addLog("Data Syncing...");
       
       const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
       let rev = 0, ordToday = 0, pend = 0, customerSet = new Set();
@@ -81,27 +118,16 @@ export default function AdminDashboard() {
         if (status === "pending") pend++;
       });
 
-      // New Order Detection Logic
+      // New Order Detection
       if (lastPendingCount.current !== null && pend > lastPendingCount.current) {
-        addLog("🔥 NEW ORDER DETECTED!");
-        
-        // အသံထွက်ခိုင်းခြင်း
-        speakNotification("New order received. Please check.");
-
-        // Notification ပြခြင်း
-        if (Notification.permission === "granted") {
-          try {
-            new Notification("🔔 New Order!", { body: `You have ${pend} pending orders.` });
-            addLog("✅ Notification Sent");
-          } catch (e) {
-            addLog("❌ Notification Failed: " + e.message);
-          }
-        }
+        addLog("🔥 NEW ORDER!");
+        playBeep();
+        showNotification("Order အသစ်ရရှိပါသည်", `လက်ရှိ Pending Order ${pend} ခု ရှိပါသည်။`);
       }
 
       lastPendingCount.current = pend;
       setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
-    }, (error) => addLog("❌ Firebase Error: " + error.message));
+    }, (error) => addLog("❌ Firebase Error"));
 
     return () => unsubscribe();
   }, []);
@@ -116,7 +142,7 @@ export default function AdminDashboard() {
 
   if (!isAuthorized) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F0F2F5' }}>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC' }}>
         <form onSubmit={handleLogin} style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '300px' }}>
           <h2 style={{textAlign: 'center', marginBottom: 20}}>Admin Login</h2>
           <input type="password" value={inputPass} onChange={(e) => setInputPass(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '10px', border: '1px solid #ddd', textAlign: 'center' }} placeholder="Password" autoFocus />
@@ -142,7 +168,6 @@ export default function AdminDashboard() {
         <button onClick={() => {sessionStorage.removeItem("isAdAuthed"); setIsAuthorized(false);}} style={{ border: 'none', background: '#FFF1F0', color: '#FF3B30', padding: '8px 15px', borderRadius: '10px', fontWeight: 'bold' }}>Logout</button>
       </div>
 
-      {/* Debug Logs - ပြဿနာကို ရှာရန် */}
       <div className="debug-box">
         <div style={{fontWeight: 'bold', marginBottom: 5, color: '#FF9500'}}>SYSTEM LOGS:</div>
         {debugLog.map((log, i) => <div key={i}>{log}</div>)}
@@ -150,7 +175,7 @@ export default function AdminDashboard() {
 
       {!isServiceActive && (
         <button onClick={activateServices} style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '12px', marginBottom: '20px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-          🚀 စနစ်စတင်ရန် နှိပ်ပါ (Activate Now)
+          🔔 အသံနှင့် Notification စတင်ရန် နှိပ်ပါ
         </button>
       )}
 
@@ -192,4 +217,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-    }
+}
