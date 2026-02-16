@@ -27,6 +27,12 @@ export default function Home() {
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' }));
     
+    // Dropdown အပြင်နှိပ်ရင် ပိတ်ရန်
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowProfileMenu(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -36,11 +42,9 @@ export default function Home() {
           const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           list.sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0));
           
-          setRecentOrders(list.slice(0, 3)); // နောက်ဆုံး ၃ ခု
+          setRecentOrders(list.slice(0, 3));
           const active = list.find(o => ['pending', 'New', 'Cooking', 'Ready'].includes(o.status));
           setLastActiveOrder(active || null);
-
-          // ၄ စက္ကန့် Syncing လုပ်မယ်
           setTimeout(() => setIsSyncing(false), 4000);
         });
         return () => unsubOrders();
@@ -48,7 +52,10 @@ export default function Home() {
         setIsSyncing(false);
       }
     });
-    return () => unsubAuth();
+    return () => {
+      unsubAuth();
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const handleTrackOrder = async () => {
@@ -69,6 +76,12 @@ export default function Home() {
     finally { setSearchLoading(false); }
   };
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    setShowLogoutConfirm(false);
+    setShowProfileMenu(false);
+  };
+
   const OrderView = ({ order, title }) => (
     <div className="fade-in">
         <div style={{display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:800, opacity:0.8}}>
@@ -80,15 +93,12 @@ export default function Home() {
              order.status === 'Cooking' ? 'Cooking 👨‍🍳' : 
              order.status === 'Ready' ? 'Ready 🥡' : 'Success ✅'}
         </h2>
-        
         {order.status === 'Ready' && (
             <div style={{background:'#fff', color:'#005BEA', padding:'8px 15px', borderRadius:15, fontSize:12, fontWeight:800, marginBottom:15, textAlign:'center'}}>
                 🎉 ဆိုင်မှာ လာယူလို့ရပါပြီခင်ဗျာ။
             </div>
         )}
-
         <div className="progress-line"><div className="progress-fill" style={{ width: ['New', 'pending'].includes(order.status) ? '25%' : order.status === 'Cooking' ? '55%' : order.status === 'Ready' ? '85%' : '100%' }}></div></div>
-        
         <div className="details-box">
             {order.items?.map((item, i) => (
                 <div key={i} style={{display:'flex', justifyContent:'space-between', fontSize: 13, marginBottom: 4}}>
@@ -96,7 +106,6 @@ export default function Home() {
                     <span>{((item.price || 0) * (item.quantity || item.qty || 1)).toLocaleString()} K</span>
                 </div>
             ))}
-            {/* Total Price ပေါ်အောင် ထည့်ထားသည် */}
             <div style={{textAlign:'right', borderTop:'1px solid rgba(255,255,255,0.2)', marginTop:10, paddingTop:8, fontWeight:800, fontSize:18}}>
                 Total: {Number(order.totalPrice).toLocaleString()} Ks
             </div>
@@ -109,106 +118,58 @@ export default function Home() {
   return (
     <div className="main-wrapper">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
       <style>{`
         :root { --p: #007AFF; --bg: #F8F9FA; }
         body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
         .main-wrapper { padding: 20px; max-width: 500px; margin: 0 auto; }
-        
-        .tracker-card { 
-            background: linear-gradient(135deg, #00C6FB 0%, #005BEA 100%); 
-            border-radius: 35px; padding: 25px; color: #fff; min-height: 250px; margin-bottom: 30px; 
-            box-shadow: 0 20px 40px -10px rgba(0, 91, 234, 0.4);
-        }
-
-        .dropdown-menu {
-            position: absolute; right: 0; top: 55px; background: #fff; border-radius: 20px;
-            width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1000;
-            padding: 8px; border: 1px solid #eee;
-        }
+        .tracker-card { background: linear-gradient(135deg, #00C6FB 0%, #005BEA 100%); border-radius: 35px; padding: 25px; color: #fff; min-height: 250px; margin-bottom: 30px; box-shadow: 0 20px 40px -10px rgba(0, 91, 234, 0.4); }
+        .dropdown-menu { position: absolute; right: 0; top: 55px; background: #fff; border-radius: 20px; width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1000; padding: 8px; border: 1px solid #eee; }
         .dropdown-item { padding: 12px 15px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #444; }
         .dropdown-item:hover { background: #F2F2F7; }
-
         .inner-search { background: rgba(255,255,255,0.2); border-radius: 18px; padding: 10px 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; }
         .inner-search input { background: transparent; border: none; color: #fff; outline: none; width: 100%; font-weight: 700; }
-        
         .history-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; }
         .history-item { background: #fff; padding: 15px 10px; border-radius: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
-
         .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .confirm-card { background: #fff; padding: 25px; border-radius: 28px; width: 100%; max-width: 300px; text-align: center; }
-
         .food-emoji { font-size: 45px; animation: bounce 2s infinite ease-in-out; display: inline-block; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         .fade-in { animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      /* --- LOGIN SECTION (Professional Animated) --- */
-{!user ? (
-  <div className="login-wrap fade-in">
-    <style>{`
-      .login-wrap { height: 95vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #F8F9FA; }
-      .brand-box { text-align: center; margin-bottom: 40px; }
-      
-      /* Walking & Waving Character Animation */
-      .avatar-box { font-size: 60px; margin-bottom: 20px; position: relative; animation: walkIn 3s ease-out forwards; display: inline-block; }
-      @keyframes walkIn { 
-        0% { transform: translateX(-50px) rotate(-10deg); opacity: 0; }
-        30% { transform: translateX(0) rotate(10deg); }
-        60% { transform: rotate(-10deg); }
-        80% { transform: scale(1.1); }
-        100% { transform: translateX(0) rotate(0); opacity: 1; }
-      }
-      .wave { display: inline-block; animation: waveHand 1.5s infinite 3s; transform-origin: 70% 70%; }
-      @keyframes waveHand { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(20deg); } }
-
-      .brand-title { font-size: 30px; font-weight: 800; color: #1c1c1e; margin: 0; }
-      .brand-sub { color: #8e8e93; font-size: 14px; margin-top: 5px; }
-      
-      .login-card { background: #fff; padding: 40px 25px; border-radius: 30px; width: 100%; max-width: 340px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f0f0f0; }
-      .google-btn { width: 100%; background: #1c1c1e; color: #fff; border: none; padding: 16px; border-radius: 18px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.3s; }
-      .google-btn:active { transform: scale(0.98); }
-      .footer-txt { margin-top: 25px; font-size: 11px; color: #aeaeb2; line-height: 1.5; }
-    `}</style>
-
-    <div className="brand-box">
-      <div className="avatar-box">
-        <span style={{display:'inline-block'}}>🚶‍♂️</span>
-        <span className="wave">👋</span>
-      </div>
-      <h1 className="brand-title">YNS Kitchen</h1>
-      <p className="brand-sub">The standard of home-cooked taste</p>
-    </div>
-
-    <div className="login-card">
-      <h2 style={{fontSize:19, fontWeight:700, marginBottom:8}}>Welcome back</h2>
-      <p style={{fontSize:14, color:'#636366', marginBottom:30}}>Please sign in to continue</p>
-      
-      <button className="google-btn" onClick={() => signInWithPopup(auth, provider)}>
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="g" />
-        Continue with Google
-      </button>
-
-      <div className="footer-txt">By continuing, you agree to our <br/> <b>Terms of Service</b> & <b>Privacy Policy</b></div>
-    </div>
-  </div>
-) : (
-  // ... resto del code
-     <>
-          {/* Header */}
+      {!user ? (
+        <div className="login-wrap fade-in">
+          <style>{`
+            .login-wrap { height: 95vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+            .avatar-box { font-size: 60px; margin-bottom: 20px; animation: walkIn 3s ease-out forwards; display: inline-block; }
+            @keyframes walkIn { 0% { transform: translateX(-50px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+            .wave { display: inline-block; animation: waveHand 1.5s infinite 3s; transform-origin: 70% 70%; }
+            @keyframes waveHand { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(20deg); } }
+            .login-card { background: #fff; padding: 40px 25px; border-radius: 30px; width: 100%; max-width: 340px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); text-align: center; }
+            .google-btn { width: 100%; background: #1c1c1e; color: #fff; border: none; padding: 16px; border-radius: 18px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; }
+          `}</style>
+          <div className="avatar-box">🚶‍♂️<span className="wave">👋</span></div>
+          <h1 style={{fontSize:30, fontWeight:800, margin:0}}>YNS Kitchen</h1>
+          <p style={{color:'#8e8e93', fontSize:14, marginBottom:40}}>The standard of home-cooked taste</p>
+          <div className="login-card">
+            <h2 style={{fontSize:19, fontWeight:700, marginBottom:8}}>Welcome back</h2>
+            <p style={{fontSize:14, color:'#636366', marginBottom:30}}>Please sign in to continue</p>
+            <button className="google-btn" onClick={() => signInWithPopup(auth, provider)}>
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="g" />
+              Continue with Google
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, position:'relative'}}>
             <div>
               <span style={{fontSize:11, fontWeight:800, color: 'var(--p)'}}>{currentDate}</span>
-              <h2 style={{margin:0, fontSize:22, fontWeight: 800}}>Hello, {user.displayName.split(' ')[0]}!</h2>
+              <h2 style={{margin:0, fontSize:22, fontWeight: 800}}>Hello, {user.displayName?.split(' ')[0]}!</h2>
             </div>
-            
-            <div style={{position:'relative'}}>
-                <img 
-                    src={user.photoURL} 
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    style={{width:45, height:45, borderRadius:15, border: '2px solid #fff', cursor:'pointer', boxShadow:'0 5px 15px rgba(0,0,0,0.1)'}} 
-                />
+            <div ref={dropdownRef} style={{position:'relative'}}>
+                <img src={user.photoURL} onClick={() => setShowProfileMenu(!showProfileMenu)} style={{width:45, height:45, borderRadius:15, border: '2px solid #fff', cursor:'pointer', boxShadow:'0 5px 15px rgba(0,0,0,0.1)'}} />
                 {showProfileMenu && (
                     <div className="dropdown-menu fade-in">
                         <Link href="/history" style={{textDecoration:'none'}}><div className="dropdown-item"><i className="fas fa-list"></i> My Orders</div></Link>
@@ -218,38 +179,22 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Track Card */}
           <div className="tracker-card">
             <div className="inner-search">
                 <i className="fas fa-search" style={{marginRight: 10, opacity: 0.5}}></i>
-                <input 
-                  type="text" 
-                  placeholder="Track Order ID..." 
-                  value={trackID} 
-                  onChange={(e) => setTrackID(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleTrackOrder()}
-                />
+                <input type="text" placeholder="Track Order ID..." value={trackID} onChange={(e) => setTrackID(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleTrackOrder()}/>
             </div>
-
             {isSyncing ? (
-                <div style={{textAlign:'center', padding:20}}>
-                    <div className="food-emoji">🥡</div>
-                    <p style={{fontWeight: 700, marginTop: 15}}>Syncing Data...</p>
-                </div>
+                <div style={{textAlign:'center', padding:20}}><div className="food-emoji">🥡</div><p style={{fontWeight: 700, marginTop: 15}}>Syncing Data...</p></div>
             ) : hasSearched ? (
                 searchedOrder ? <OrderView order={searchedOrder} title="SEARCH RESULT" /> : <div style={{textAlign:'center', padding:20}}>အော်ဒါရှာမတွေ့ပါ ❌</div>
             ) : lastActiveOrder ? (
                 <OrderView order={lastActiveOrder} title="CURRENT ORDER" />
             ) : (
-                <div className="cartoon-box fade-in" style={{textAlign:'center', padding:10}}>
-                    <div className="food-emoji">🍱</div>
-                    <h3 style={{marginTop: 15, fontSize:18}}>No Active Order</h3>
-                    <p style={{fontSize:12, opacity:0.8}}>စားချင်တာလေးတွေ မှာလိုက်တော့နော်</p>
-                </div>
+                <div style={{textAlign:'center', padding:10}}><div className="food-emoji">🍱</div><h3 style={{marginTop: 15, fontSize:18}}>No Active Order</h3><p style={{fontSize:12, opacity:0.8}}>စားချင်တာလေးတွေ မှာလိုက်တော့နော်</p></div>
             )}
           </div>
 
-          {/* Recent History Grid (Last 3) */}
           {recentOrders.length > 0 && (
               <div className="fade-in">
                   <h4 style={{fontSize: 12, fontWeight: 800, color: '#8E8E93', marginBottom: 12}}>RECENT HISTORY</h4>
@@ -257,8 +202,8 @@ export default function Home() {
                       {recentOrders.map((order, idx) => (
                           <div key={idx} className="history-item">
                               <div style={{fontSize:20, marginBottom:5}}>🍲</div>
-                              <div style={{fontSize:10, fontWeight:800, color:'#8E8E93'}}>#{order.orderId.split('-')[1] || order.orderId}</div>
-                              <div style={{fontSize:11, fontWeight:700, margin:'4px 0'}}>{order.totalPrice.toLocaleString()} K</div>
+                              <div style={{fontSize:10, fontWeight:800, color:'#8E8E93'}}>#{order.orderId?.split('-')[1] || order.orderId}</div>
+                              <div style={{fontSize:11, fontWeight:700, margin:'4px 0'}}>{Number(order.totalPrice).toLocaleString()} K</div>
                               <div style={{fontSize:9, color: order.status === 'Success' ? '#34C759' : '#007AFF', fontWeight:800}}>{order.status}</div>
                           </div>
                       ))}
@@ -266,21 +211,17 @@ export default function Home() {
               </div>
           )}
 
-          {/* Action Buttons */}
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:15}}>
             <Link href="/customer_menu" style={{textDecoration:'none', background:'#fff', padding:22, borderRadius:25, textAlign:'center', boxShadow:'0 5px 15px rgba(0,0,0,0.02)'}}>
-                <div style={{fontSize: 24, marginBottom: 8}}>🛒</div>
-                <b style={{fontSize: 14, color:'#000'}}>Order Now</b>
+                <div style={{fontSize: 24, marginBottom: 8}}>🛒</div><b style={{fontSize: 14, color:'#000'}}>Order Now</b>
             </Link>
             <Link href="/history" style={{textDecoration:'none', background:'#fff', padding:22, borderRadius:25, textAlign:'center', boxShadow:'0 5px 15px rgba(0,0,0,0.02)'}}>
-                <div style={{fontSize: 24, marginBottom: 8}}>📋</div>
-                <b style={{fontSize: 14, color:'#000'}}>All History</b>
+                <div style={{fontSize: 24, marginBottom: 8}}>📋</div><b style={{fontSize: 14, color:'#000'}}>All History</b>
             </Link>
           </div>
         </>
       )}
 
-      {/* Logout Confirm Dialog */}
       {showLogoutConfirm && (
           <div className="confirm-overlay">
               <div className="confirm-card fade-in">
@@ -296,5 +237,5 @@ export default function Home() {
       )}
     </div>
   );
-             }
-        
+          }
+                  
