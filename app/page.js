@@ -144,22 +144,58 @@ export default function Home() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      {/* --- LOGIN SECTION (အလွယ်တကူ ပြင်ရန် နေရာ) --- */}
-      {!user ? (
-        <div className="login-screen fade-in" style={{textAlign:'center', paddingTop:'120px'}}>
-           <div style={{fontSize: 70, marginBottom: 20}}>🍳</div>
-           <h1 style={{fontSize: 30, fontWeight: 800}}>YNS Kitchen</h1>
-           <p style={{color: '#8E8E93', marginBottom: 40}}>အရသာရှိတဲ့ ဟင်းပွဲတွေ မှာယူဖို့ Login ဝင်ပေးပါ</p>
-           <button 
-             onClick={() => signInWithPopup(auth, provider)}
-             style={{background:'#fff', border:'none', padding:'15px 30px', borderRadius:20, fontWeight:800, display:'flex', alignItems:'center', gap:10, margin:'0 auto', boxShadow:'0 10px 20px rgba(0,0,0,0.05)'}}
-           >
-             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" />
-             Google နဲ့ ဝင်မယ်
-           </button>
-        </div>
-      ) : (
-        <>
+      /* --- LOGIN SECTION (Professional Animated) --- */
+{!user ? (
+  <div className="login-wrap fade-in">
+    <style>{`
+      .login-wrap { height: 95vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #F8F9FA; }
+      .brand-box { text-align: center; margin-bottom: 40px; }
+      
+      /* Walking & Waving Character Animation */
+      .avatar-box { font-size: 60px; margin-bottom: 20px; position: relative; animation: walkIn 3s ease-out forwards; display: inline-block; }
+      @keyframes walkIn { 
+        0% { transform: translateX(-50px) rotate(-10deg); opacity: 0; }
+        30% { transform: translateX(0) rotate(10deg); }
+        60% { transform: rotate(-10deg); }
+        80% { transform: scale(1.1); }
+        100% { transform: translateX(0) rotate(0); opacity: 1; }
+      }
+      .wave { display: inline-block; animation: waveHand 1.5s infinite 3s; transform-origin: 70% 70%; }
+      @keyframes waveHand { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(20deg); } }
+
+      .brand-title { font-size: 30px; font-weight: 800; color: #1c1c1e; margin: 0; }
+      .brand-sub { color: #8e8e93; font-size: 14px; margin-top: 5px; }
+      
+      .login-card { background: #fff; padding: 40px 25px; border-radius: 30px; width: 100%; max-width: 340px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f0f0f0; }
+      .google-btn { width: 100%; background: #1c1c1e; color: #fff; border: none; padding: 16px; border-radius: 18px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.3s; }
+      .google-btn:active { transform: scale(0.98); }
+      .footer-txt { margin-top: 25px; font-size: 11px; color: #aeaeb2; line-height: 1.5; }
+    `}</style>
+
+    <div className="brand-box">
+      <div className="avatar-box">
+        <span style={{display:'inline-block'}}>🚶‍♂️</span>
+        <span className="wave">👋</span>
+      </div>
+      <h1 className="brand-title">YNS Kitchen</h1>
+      <p className="brand-sub">The standard of home-cooked taste</p>
+    </div>
+
+    <div className="login-card">
+      <h2 style={{fontSize:19, fontWeight:700, marginBottom:8}}>Welcome back</h2>
+      <p style={{fontSize:14, color:'#636366', marginBottom:30}}>Please sign in to continue</p>
+      
+      <button className="google-btn" onClick={() => signInWithPopup(auth, provider)}>
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="g" />
+        Continue with Google
+      </button>
+
+      <div className="footer-txt">By continuing, you agree to our <br/> <b>Terms of Service</b> & <b>Privacy Policy</b></div>
+    </div>
+  </div>
+) : (
+  // ... resto del code
+  
           {/* Header */}
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, position:'relative'}}>
             <div>
