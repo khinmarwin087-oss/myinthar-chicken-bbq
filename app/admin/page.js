@@ -1,4 +1,9 @@
 "use client";
+
+// Next.js Caching ကို ပိတ်ပြီး အမြဲ Live Data ယူရန်
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { db } from "../../lib/firebase"; 
@@ -40,7 +45,7 @@ export default function AdminDashboard() {
   // ၂။ အသံစနစ် Enable လုပ်ခြင်း
   const enableAudio = () => {
     setIsAudioReady(true);
-    window.isAudioEnabled = true; // Global flag for the listener
+    window.isAudioEnabled = true; 
     if (audioRef.current) {
       audioRef.current.play().then(() => {
         audioRef.current.pause();
@@ -73,11 +78,14 @@ export default function AdminDashboard() {
       audioRef.current.load();
     }
 
-    // Firestore Real-time Listener
+    // Real-time Listener ချိတ်ဆက်ခြင်း
     const q = query(collection(db, "orders"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Listener ထဲမှာတင် Date ကို အသစ်ယူမှ နောက်တစ်နေ့ကူးရင် အမှန်ပြမှာပါ
+    // includeMetadataChanges: true ထည့်ထားခြင်းဖြင့် local cache မဟုတ်ဘဲ server update ကိုပါ စောင့်ကြည့်မည်
+    const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+      
+      console.log("Firestore မှ ဒေတာအသစ်ရောက်ရှိ - ", new Date().toLocaleTimeString());
+
       const todayStr = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Yangon'});
       
       let rev = 0; 
@@ -91,7 +99,6 @@ export default function AdminDashboard() {
         const orderDateStr = rawDate.split('T')[0];
         const status = (data.status || "").toLowerCase();
 
-        // ယနေ့အတွက် စာရင်းတွက်ခြင်း
         if (orderDateStr === todayStr) {
           ordToday++;
           if (["completed", "done", "success", "ready"].includes(status)) {
@@ -102,39 +109,35 @@ export default function AdminDashboard() {
           }
         }
         
-        // Pending status အားလုံးကိုရေတွက် (ယနေ့တင်မက)
         if (status === "pending") {
           pend++;
         }
       });
 
-      // အော်ဒါအသစ်တက်လာလျှင် (Pending အရေအတွက် တိုးလာလျှင်)
+      // အော်ဒါအသစ်တက်လာလျှင် အသိပေးခြင်း
       if (prevPendingRef.current !== -1 && pend > prevPendingRef.current) {
-        // ၁။ အသံမြည်ရန်
         if (window.isAudioEnabled && audioRef.current) {
           audioRef.current.currentTime = 0;
           audioRef.current.play().catch(e => console.log("Audio play failed:", e));
         }
         
-        // ၂။ Push Notification ပြရန်
         if (Notification.permission === "granted") {
           new Notification("🔔 Order အသစ်ရပါပြီ", { 
-            body: `ယခု လက်ရှိ Pending order ${pend} ခု ရှိနေပါသည်။`,
+            body: `Pending အော်ဒါအသစ် ရောက်ရှိလာပါသည်။`,
             icon: "/icon-192.png" 
           });
         }
       }
 
-      // နောက်ဆုံးအခြေအနေကို သိမ်းထား
       prevPendingRef.current = pend;
       setStats({ revenue: rev, orders: ordToday, customers: customerSet.size, pending: pend });
       
     }, (error) => {
-      console.error("Firestore Error:", error);
+      console.error("Firestore Listener Error:", error);
     });
 
     return () => unsubscribe();
-  }, []); // Dependency အလွတ်ထားမှ တစ်ခါပဲ Listener တည်ဆောက်မှာပါ
+  }, []); 
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -184,22 +187,22 @@ export default function AdminDashboard() {
 
       {!isAudioReady && (
         <button onClick={enableAudio} style={{ width: '100%', padding: '15px', background: '#34C759', color: 'white', border: 'none', borderRadius: '12px', marginBottom: '20px', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 12px rgba(52, 199, 89, 0.3)', cursor: 'pointer' }}>
-          🔔 အော်ဒါအသံ စတင်ရန် နှိပ်ပါ
+          🔊 အော်ဒါအသံ စတင်ရန် နှိပ်ပါ
         </button>
       )}
 
       <div className="main-card">
         <h3 style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>TODAY'S REVENUE</h3>
         <span style={{ fontSize: '32px', fontWeight: '800', display: 'block', margin: '10px 0' }}>{stats.revenue.toLocaleString()} Ks</span>
-        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Syncing Active</span>
+        <span style={{ fontSize: '10px', opacity: 0.7 }}>Live Data Syncing...</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
-        <div style={{background:'white', padding:15, borderRadius:18, boxShadow: '0 4px 10px rgba(0,0,0,0.02)'}}>
+        <div style={{background:'white', padding:15, borderRadius:18}}>
           <span style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 700 }}>TODAY ORDERS</span>
           <span style={{ fontSize: '20px', fontWeight: 800, display: 'block' }}>{stats.orders}</span>
         </div>
-        <div style={{background:'white', padding:15, borderRadius:18, boxShadow: '0 4px 10px rgba(0,0,0,0.02)'}}>
+        <div style={{background:'white', padding:15, borderRadius:18}}>
           <span style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 700 }}>PENDING</span>
           <span style={{ fontSize: '20px', fontWeight: 800, color: '#FF3B30', display: 'block' }}>{stats.pending}</span>
         </div>
@@ -226,5 +229,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-        }
-        
+}
