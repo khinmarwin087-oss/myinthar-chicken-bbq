@@ -10,7 +10,7 @@ export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(true); // Syncing state
+  const [isSyncing, setIsSyncing] = useState(true); 
   
   const [trackID, setTrackID] = useState("");
   const [searchedOrder, setSearchedOrder] = useState(null);
@@ -20,35 +20,27 @@ export default function Home() {
   const [searchLoading, setSearchLoading] = useState(false);
   
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef(null);
   const [currentDate, setCurrentDate] = useState("");
 
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' }));
     
-    // Dropdown ပြင်ပကိုနှိပ်ရင် ပိတ်ဖို့
-    const handleClickOutside = (e) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowProfileMenu(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
-      
       if (u) {
         const q = query(collection(db, "orders"), where("email", "==", u.email));
         const unsubOrders = onSnapshot(q, (snap) => {
           const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           list.sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0));
           
-          // Recent Orders for Reorder
-          setRecentOrders(list.slice(0, 3));
-
+          setRecentOrders(list.slice(0, 3)); // နောက်ဆုံး ၃ ခု
           const active = list.find(o => ['pending', 'New', 'Cooking', 'Ready'].includes(o.status));
           setLastActiveOrder(active || null);
 
-          // ၄ စက္ကန့် Animation ပြပြီးမှ Data ပြမည်
+          // ၄ စက္ကန့် Syncing လုပ်မယ်
           setTimeout(() => setIsSyncing(false), 4000);
         });
         return () => unsubOrders();
@@ -56,10 +48,7 @@ export default function Home() {
         setIsSyncing(false);
       }
     });
-    return () => {
-        unsubAuth();
-        document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => unsubAuth();
   }, []);
 
   const handleTrackOrder = async () => {
@@ -80,9 +69,6 @@ export default function Home() {
     finally { setSearchLoading(false); }
   };
 
-  const handleLogin = () => signInWithPopup(auth, provider);
-  const handleLogout = () => { signOut(auth); setShowProfileMenu(false); };
-
   const OrderView = ({ order, title }) => (
     <div className="fade-in">
         <div style={{display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:800, opacity:0.8}}>
@@ -94,8 +80,13 @@ export default function Home() {
              order.status === 'Cooking' ? 'Cooking 👨‍🍳' : 
              order.status === 'Ready' ? 'Ready 🥡' : 'Success ✅'}
         </h2>
-        {order.status === 'Ready' && <p style={{fontSize:12, fontWeight:'bold', color:'#fff', background:'rgba(255,255,255,0.2)', padding:'5px 10px', borderRadius:10, display:'inline-block'}}>ဆိုင်မှာ လာယူလို့ရပါပြီခင်ဗျာ!</p>}
         
+        {order.status === 'Ready' && (
+            <div style={{background:'#fff', color:'#005BEA', padding:'8px 15px', borderRadius:15, fontSize:12, fontWeight:800, marginBottom:15, textAlign:'center'}}>
+                🎉 ဆိုင်မှာ လာယူလို့ရပါပြီခင်ဗျာ။
+            </div>
+        )}
+
         <div className="progress-line"><div className="progress-fill" style={{ width: ['New', 'pending'].includes(order.status) ? '25%' : order.status === 'Cooking' ? '55%' : order.status === 'Ready' ? '85%' : '100%' }}></div></div>
         
         <div className="details-box">
@@ -105,11 +96,15 @@ export default function Home() {
                     <span>{((item.price || 0) * (item.quantity || item.qty || 1)).toLocaleString()} K</span>
                 </div>
             ))}
+            {/* Total Price ပေါ်အောင် ထည့်ထားသည် */}
+            <div style={{textAlign:'right', borderTop:'1px solid rgba(255,255,255,0.2)', marginTop:10, paddingTop:8, fontWeight:800, fontSize:18}}>
+                Total: {Number(order.totalPrice).toLocaleString()} Ks
+            </div>
         </div>
     </div>
   );
 
-  if (loading) return <div className="loader">YNS Kitchen...</div>;
+  if (loading) return <div className="loader">YNS Kitchen Loading...</div>;
 
   return (
     <div className="main-wrapper">
@@ -118,53 +113,50 @@ export default function Home() {
       <style>{`
         :root { --p: #007AFF; --bg: #F8F9FA; }
         body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
-        .main-wrapper { padding: 20px; max-width: 500px; margin: 0 auto; position: relative; }
+        .main-wrapper { padding: 20px; max-width: 500px; margin: 0 auto; }
         
         .tracker-card { 
             background: linear-gradient(135deg, #00C6FB 0%, #005BEA 100%); 
-            border-radius: 35px; padding: 25px; color: #fff; min-height: 250px; margin-bottom: 25px; 
-            box-shadow: 0 20px 40px -10px rgba(0, 91, 234, 0.3); position: relative;
+            border-radius: 35px; padding: 25px; color: #fff; min-height: 250px; margin-bottom: 30px; 
+            box-shadow: 0 20px 40px -10px rgba(0, 91, 234, 0.4);
         }
 
         .dropdown-menu {
             position: absolute; right: 0; top: 55px; background: #fff; border-radius: 20px;
-            width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100;
-            padding: 10px; border: 1px solid #eee; overflow: hidden;
+            width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1000;
+            padding: 8px; border: 1px solid #eee;
         }
-        .dropdown-item { padding: 12px 15px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #444; transition: 0.2s; }
+        .dropdown-item { padding: 12px 15px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #444; }
         .dropdown-item:hover { background: #F2F2F7; }
 
-        .inner-search { background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); display: flex; border-radius: 18px; padding: 10px 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); }
-        .inner-search input { background: transparent; border: none; color: #fff; outline: none; width: 100%; font-weight: 700; font-size: 14px; }
-        .inner-search input::placeholder { color: rgba(255,255,255,0.5); }
+        .inner-search { background: rgba(255,255,255,0.2); border-radius: 18px; padding: 10px 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; }
+        .inner-search input { background: transparent; border: none; color: #fff; outline: none; width: 100%; font-weight: 700; }
+        
+        .history-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; }
+        .history-item { background: #fff; padding: 15px 10px; border-radius: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
 
-        .details-box { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 18px; margin-top: 10px; }
-        .progress-line { height: 6px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 15px 0; overflow: hidden; }
-        .progress-fill { height: 100%; background: #fff; box-shadow: 0 0 10px #fff; transition: 1s ease; }
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .confirm-card { background: #fff; padding: 25px; border-radius: 28px; width: 100%; max-width: 300px; text-align: center; }
 
-        .food-emoji { font-size: 50px; display: inline-block; animation: bounce 2s infinite ease-in-out; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-15px) rotate(8deg); } }
-        
-        .recent-card { background: #fff; padding: 15px; border-radius: 22px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
-        .reorder-btn { background: var(--p); color: #fff; border: none; padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer; }
-        
-        .loader-dots { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
-        .dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: blink 1.4s infinite both; }
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-        
-        .fade-in { animation: fadeIn 0.6s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .food-emoji { font-size: 45px; animation: bounce 2s infinite ease-in-out; display: inline-block; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
+      {/* --- LOGIN SECTION (အလွယ်တကူ ပြင်ရန် နေရာ) --- */}
       {!user ? (
-        <div className="login-screen fade-in" style={{textAlign:'center', paddingTop:'100px'}}>
-          <div style={{fontSize: 70, marginBottom: 20}}>🥘</div>
-          <h1 style={{fontSize: 32, fontWeight: 800, margin: 0}}>YNS Kitchen</h1>
-          <p style={{color: '#8E8E93', marginBottom: 30}}>အိမ်ပြန်ရောက်သလို နွေးထွေးတဲ့လက်ရာများ</p>
-          <button className="btn-login" onClick={handleLogin}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" />
-            Sign in with Google
-          </button>
+        <div className="login-screen fade-in" style={{textAlign:'center', paddingTop:'120px'}}>
+           <div style={{fontSize: 70, marginBottom: 20}}>🍳</div>
+           <h1 style={{fontSize: 30, fontWeight: 800}}>YNS Kitchen</h1>
+           <p style={{color: '#8E8E93', marginBottom: 40}}>အရသာရှိတဲ့ ဟင်းပွဲတွေ မှာယူဖို့ Login ဝင်ပေးပါ</p>
+           <button 
+             onClick={() => signInWithPopup(auth, provider)}
+             style={{background:'#fff', border:'none', padding:'15px 30px', borderRadius:20, fontWeight:800, display:'flex', alignItems:'center', gap:10, margin:'0 auto', boxShadow:'0 10px 20px rgba(0,0,0,0.05)'}}
+           >
+             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" />
+             Google နဲ့ ဝင်မယ်
+           </button>
         </div>
       ) : (
         <>
@@ -172,10 +164,10 @@ export default function Home() {
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, position:'relative'}}>
             <div>
               <span style={{fontSize:11, fontWeight:800, color: 'var(--p)'}}>{currentDate}</span>
-              <h2 style={{margin:0, fontSize:22, fontWeight: 800}}>Hi, {user.displayName.split(' ')[0]}!</h2>
+              <h2 style={{margin:0, fontSize:22, fontWeight: 800}}>Hello, {user.displayName.split(' ')[0]}!</h2>
             </div>
             
-            <div ref={dropdownRef}>
+            <div style={{position:'relative'}}>
                 <img 
                     src={user.photoURL} 
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -183,8 +175,8 @@ export default function Home() {
                 />
                 {showProfileMenu && (
                     <div className="dropdown-menu fade-in">
-                        <Link href="/history" style={{textDecoration:'none'}}><div className="dropdown-item"><i className="fas fa-history"></i> My Orders</div></Link>
-                        <div className="dropdown-item" onClick={handleLogout} style={{color:'#FF3B30'}}><i className="fas fa-sign-out-alt"></i> Logout</div>
+                        <Link href="/history" style={{textDecoration:'none'}}><div className="dropdown-item"><i className="fas fa-list"></i> My Orders</div></Link>
+                        <div className="dropdown-item" onClick={() => setShowLogoutConfirm(true)} style={{color:'#FF3B30'}}><i className="fas fa-sign-out-alt"></i> Logout</div>
                     </div>
                 )}
             </div>
@@ -196,81 +188,77 @@ export default function Home() {
                 <i className="fas fa-search" style={{marginRight: 10, opacity: 0.5}}></i>
                 <input 
                   type="text" 
-                  placeholder="Order ID ရိုက်ရှာပါ..." 
+                  placeholder="Track Order ID..." 
                   value={trackID} 
                   onChange={(e) => setTrackID(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleTrackOrder()}
                 />
-                {trackID && <i className="fas fa-times-circle" onClick={() => { setTrackID(""); setHasSearched(false); }} style={{cursor:'pointer'}}></i>}
             </div>
 
             {isSyncing ? (
-                /* ၄ စက္ကန့်ပြမည့် Syncing Animation */
-                <div className="cartoon-box fade-in" style={{paddingTop: 10}}>
-                    <div className="food-emoji">🍱</div>
-                    <p style={{marginTop: 15, fontWeight: 700, fontSize: 14}}>Syncing your orders...</p>
-                    <div className="loader-dots">
-                        <div className="dot" style={{animationDelay:'0s'}}></div>
-                        <div className="dot" style={{animationDelay:'0.2s'}}></div>
-                        <div className="dot" style={{animationDelay:'0.4s'}}></div>
-                    </div>
+                <div style={{textAlign:'center', padding:20}}>
+                    <div className="food-emoji">🥡</div>
+                    <p style={{fontWeight: 700, marginTop: 15}}>Syncing Data...</p>
                 </div>
-            ) : searchLoading ? (
-                <div style={{textAlign:'center', padding:40}}><i className="fas fa-spinner fa-spin"></i> ရှာဖွေနေသည်...</div>
             ) : hasSearched ? (
-                searchedOrder ? <OrderView order={searchedOrder} title="ORDER SEARCH" /> : 
-                <div style={{textAlign:'center', padding:20}}>အော်ဒါရှာမတွေ့ပါ ❌</div>
+                searchedOrder ? <OrderView order={searchedOrder} title="SEARCH RESULT" /> : <div style={{textAlign:'center', padding:20}}>အော်ဒါရှာမတွေ့ပါ ❌</div>
             ) : lastActiveOrder ? (
-                <OrderView order={lastActiveOrder} title="LIVE TRACKING" />
+                <OrderView order={lastActiveOrder} title="CURRENT ORDER" />
             ) : (
-                <div className="cartoon-box fade-in">
-                    <div className="food-emoji" style={{animationDelay:'0s'}}>🍕</div>
-                    <div className="food-emoji" style={{animationDelay:'0.3s'}}>🥤</div>
-                    <h3 style={{marginTop: 15, fontSize:18}}>ဗိုက်ဆာနေပြီလား?</h3>
-                    <p style={{fontSize:12, opacity:0.8}}>အခုပဲ တစ်ခုခု မှာလိုက်ရအောင်။</p>
+                <div className="cartoon-box fade-in" style={{textAlign:'center', padding:10}}>
+                    <div className="food-emoji">🍱</div>
+                    <h3 style={{marginTop: 15, fontSize:18}}>No Active Order</h3>
+                    <p style={{fontSize:12, opacity:0.8}}>စားချင်တာလေးတွေ မှာလိုက်တော့နော်</p>
                 </div>
             )}
           </div>
 
-          {/* Recent Orders Section */}
+          {/* Recent History Grid (Last 3) */}
           {recentOrders.length > 0 && (
-              <div className="fade-in" style={{marginBottom: 30}}>
-                  <h4 style={{fontSize: 14, fontWeight: 800, color: '#8E8E93', marginBottom: 15, display:'flex', alignItems:'center', gap:8}}>
-                      <i className="fas fa-clock-rotate-left"></i> RECENT ORDERS
-                  </h4>
-                  {recentOrders.map((order) => (
-                      <div key={order.id} className="recent-card">
-                          <div style={{display:'flex', alignItems:'center', gap:12}}>
-                              <div style={{width:40, height:40, background:'#F2F2F7', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18}}>🍲</div>
-                              <div>
-                                  <div style={{fontSize:14, fontWeight:700}}>{order.items?.[0]?.name || "Special Dish"}</div>
-                                  <div style={{fontSize:11, color:'#8E8E93'}}>{order.totalPrice.toLocaleString()} Ks • {order.status}</div>
-                              </div>
+              <div className="fade-in">
+                  <h4 style={{fontSize: 12, fontWeight: 800, color: '#8E8E93', marginBottom: 12}}>RECENT HISTORY</h4>
+                  <div className="history-grid">
+                      {recentOrders.map((order, idx) => (
+                          <div key={idx} className="history-item">
+                              <div style={{fontSize:20, marginBottom:5}}>🍲</div>
+                              <div style={{fontSize:10, fontWeight:800, color:'#8E8E93'}}>#{order.orderId.split('-')[1] || order.orderId}</div>
+                              <div style={{fontSize:11, fontWeight:700, margin:'4px 0'}}>{order.totalPrice.toLocaleString()} K</div>
+                              <div style={{fontSize:9, color: order.status === 'Success' ? '#34C759' : '#007AFF', fontWeight:800}}>{order.status}</div>
                           </div>
-                          <button onClick={() => router.push('/customer_menu')} className="reorder-btn">Reorder</button>
-                      </div>
-                  ))}
+                      ))}
+                  </div>
               </div>
           )}
 
-          {/* Action Grid */}
+          {/* Action Buttons */}
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:15}}>
-            <Link href="/customer_menu" style={{textDecoration:'none'}}>
-                <div className="action-card" style={{background:'#fff', padding:20, borderRadius:25, textAlign:'center', boxShadow:'0 5px 15px rgba(0,0,0,0.02)'}}>
-                    <div style={{fontSize: 24, marginBottom: 8}}>🍱</div>
-                    <b style={{fontSize: 14, color:'#000'}}>Go to Menu</b>
-                </div>
+            <Link href="/customer_menu" style={{textDecoration:'none', background:'#fff', padding:22, borderRadius:25, textAlign:'center', boxShadow:'0 5px 15px rgba(0,0,0,0.02)'}}>
+                <div style={{fontSize: 24, marginBottom: 8}}>🛒</div>
+                <b style={{fontSize: 14, color:'#000'}}>Order Now</b>
             </Link>
-            <Link href="/history" style={{textDecoration:'none'}}>
-                <div className="action-card" style={{background:'#fff', padding:20, borderRadius:25, textAlign:'center', boxShadow:'0 5px 15px rgba(0,0,0,0.02)'}}>
-                    <div style={{fontSize: 24, marginBottom: 8}}>📜</div>
-                    <b style={{fontSize: 14, color:'#000'}}>View History</b>
-                </div>
+            <Link href="/history" style={{textDecoration:'none', background:'#fff', padding:22, borderRadius:25, textAlign:'center', boxShadow:'0 5px 15px rgba(0,0,0,0.02)'}}>
+                <div style={{fontSize: 24, marginBottom: 8}}>📋</div>
+                <b style={{fontSize: 14, color:'#000'}}>All History</b>
             </Link>
           </div>
         </>
       )}
+
+      {/* Logout Confirm Dialog */}
+      {showLogoutConfirm && (
+          <div className="confirm-overlay">
+              <div className="confirm-card fade-in">
+                  <div style={{fontSize:40, marginBottom:15}}>👋</div>
+                  <h3>Logout?</h3>
+                  <p style={{fontSize:13, color:'#8E8E93', marginBottom:20}}>အကောင့်ထဲမှ ထွက်ခွာမှာ သေချာပါသလား။</p>
+                  <div style={{display:'flex', gap:10}}>
+                      <button onClick={() => setShowLogoutConfirm(false)} style={{flex:1, padding:15, borderRadius:15, border:'none', background:'#F2F2F7', fontWeight:700}}>မထွက်ဘူး</button>
+                      <button onClick={handleLogout} style={{flex:1, padding:15, borderRadius:15, border:'none', background:'#FF3B30', color:'#fff', fontWeight:700}}>ထွက်မယ်</button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
-    }
-  
+             }
+        
