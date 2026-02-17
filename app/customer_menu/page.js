@@ -146,8 +146,14 @@ export default function CustomerMenu() {
             <i className="fas fa-arrow-left"></i> Back
         </Link>
         <div style={{ fontWeight: '800', fontSize: '16px' }}>YNS Kitchen</div>
-        {user ? <img src={user.photoURL} onClick={handleLogout} style={{ width: '28px', borderRadius: '50%' }} /> : <i className="fas fa-user-circle" onClick={handleLogin} style={{ fontSize: '24px', color: '#CCC' }}></i>}
-    </div>
+         {user ? (
+        <div style={{ width: '28px', height: '28px', borderRadius: '50%', overflow: 'hidden', border: '1px solid #E5E5EA' }}>
+            <img src={user.photoURL} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+    ) : (
+        <i className="fas fa-user-circle" onClick={handleLogin} style={{ fontSize: '24px', color: '#CCC', cursor: 'pointer' }}></i>
+    )}
+</div>
     
     {/* Search Input */}
     <div style={{ position: 'relative', marginBottom: '10px' }}>
