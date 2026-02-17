@@ -13,62 +13,53 @@ export default function AdminDashboard() {
   const [debugLog, setDebugLog] = useState([]);
   
   const lastPendingCount = useRef(null);
-  const audioRef = useRef(null);
+  const audioContextRef = useRef(null);
 
   // Debug Log
   const addLog = (msg) => {
     setDebugLog(prev => [new Date().toLocaleTimeString() + ": " + msg, ...prev].slice(0, 5));
   };
 
-  // အသံမြည်စေရန် Function (အမြဲတမ်း အလုပ်လုပ်စေရန် Reset logic ပါဝင်သည်)
-  const playNotificationSound = () => {
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0; // အစကနေ ပြန်စရန်
-        audioRef.current.volume = 1.0;
-        
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            addLog("🔊 Sound Played Successfully");
-          }).catch(err => {
-            addLog("❌ Audio Play Blocked: " + err.message);
-            // Fallback: အသံဖိုင်ဖွင့်မရပါက Beep သံထုတ်ရန်
-            playBeepFallback();
-          });
-        }
-      } catch (e) {
-        addLog("❌ Audio Error: " + e.message);
-      }
-    }
-  };
-
-  // Beep Fallback
-  const playBeepFallback = () => {
+  // အသံမြည်စေရန် Function (အသံဖိုင်မလိုဘဲ Browser ကနေ တိုက်ရိုက်ထုတ်ပေးသော အသံ)
+  const playPerfectSound = () => {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      osc.start();
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) { console.log("Beep failed"); }
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const playTone = (freq, startTime, duration) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.1, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      // Ding-Dong သံကဲ့သို့ အသံနှစ်ဆင့်ထုတ်ခြင်း
+      const now = ctx.currentTime;
+      playTone(880, now, 0.5); // Ding
+      playTone(660, now + 0.3, 0.8); // Dong
+      
+      addLog("🔊 Notification Sound Played");
+    } catch (e) {
+      addLog("❌ Sound Error: " + e.message);
+    }
   };
 
   // Notification ပြရန် Function
   const showNotification = (title, body) => {
-    if (!("Notification" in window)) return;
-
     if (Notification.permission === "granted") {
       try {
-        new Notification(title, { body, icon: "/icon-192.png", tag: 'order-update' });
+        new Notification(title, { body, icon: "/icon-192.png" });
         addLog("✅ Notification Sent");
       } catch (e) {
-        addLog("⚠️ Notification Fallback (Alert)");
         alert(`🔔 ${title}\n${body}`);
       }
     } else {
@@ -78,31 +69,24 @@ export default function AdminDashboard() {
 
   // စနစ်စတင်ရန်
   const activateServices = async () => {
-    addLog("Activating Services...");
+    addLog("Activating...");
     if ("Notification" in window) {
       await Notification.requestPermission();
     }
     
-    if (audioRef.current) {
-      audioRef.current.play().then(() => {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        setIsServiceActive(true);
-        addLog("System Ready ✅");
-        showNotification("စနစ်စတင်ပါပြီ", "အော်ဒါအသစ်များကို စောင့်ကြည့်နေပါသည်။");
-      }).catch(err => {
-        addLog("❌ Activation Failed: " + err.message);
-        alert("အသံဖွင့်ရန် ခွင့်ပြုချက်မရပါ။ Browser settings တွင် အသံဖွင့်ပေးပါ။");
-      });
+    // Audio Context ကို User နှိပ်လိုက်ချိန်တွင် စတင်ဖွင့်ခြင်း
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
+    await audioContextRef.current.resume();
+    
+    setIsServiceActive(true);
+    playPerfectSound();
+    addLog("System Ready ✅");
   };
 
   useEffect(() => {
     if (sessionStorage.getItem("isAdAuthed") === "true") setIsAuthorized(true);
-
-    // Audio Setup
-    audioRef.current = new Audio('/soundreality-အသိပေးချက်-၃-၁၅၈၁၈၉.mp3');
-    audioRef.current.load();
 
     const q = query(collection(db, "orders"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -127,10 +111,10 @@ export default function AdminDashboard() {
         if (status === "pending") pend++;
       });
 
-      // New Order Detection (အမြဲတမ်း အလုပ်လုပ်စေရန်)
+      // New Order Detection
       if (lastPendingCount.current !== null && pend > lastPendingCount.current) {
-        addLog("🔥 NEW ORDER DETECTED!");
-        playNotificationSound();
+        addLog("🔥 NEW ORDER!");
+        playPerfectSound();
         showNotification("Order အသစ်ရရှိပါသည်", `လက်ရှိ Pending Order ${pend} ခု ရှိပါသည်။`);
       }
 
@@ -230,4 +214,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-        }
+    }
