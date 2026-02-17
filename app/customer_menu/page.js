@@ -47,11 +47,7 @@ export default function CustomerMenu() {
     };
 
     const handleLogout = async () => {
-        try {
-            await signOut(auth);
-        } catch (e) {
-            console.error(e);
-        }
+        try { await signOut(auth); } catch (e) { console.error(e); }
     };
 
     useEffect(() => {
@@ -83,19 +79,10 @@ export default function CustomerMenu() {
             setShowAlert(true);
             return;
         }
-
         setCart(prev => {
             const existing = prev.find(c => c.id === item.id);
             if (existing) return prev.map(c => c.id === item.id ? { ...c, qty: c.qty + 1 } : c);
-            
-            // Price ကို Number ဖြစ်အောင် သေချာပြောင်းလဲခြင်း
-            let price = 0;
-            if (typeof item.price === "string") {
-                price = parseInt(item.price.replace(/,/g, "")) || 0;
-            } else {
-                price = Number(item.price) || 0;
-            }
-            
+            let price = typeof item.price === "string" ? parseInt(item.price.replace(/,/g, "")) || 0 : Number(item.price) || 0;
             return [...prev, { ...item, price, qty: 1 }];
         });
     };
@@ -109,8 +96,11 @@ export default function CustomerMenu() {
     };
 
     const updateQty = (id, val) => {
-        const newQty = parseInt(val) || 0;
-        if (newQty <= 0) return deleteItem(id);
+        const newQty = parseInt(val);
+        if (isNaN(newQty) || newQty <= 0) {
+            // value မရှိလျှင် သို့မဟုတ် 0 ဖြစ်လျှင် မပြောင်းလဲသေးဘဲ ထားမည် (သို့မဟုတ် delete လုပ်မည်)
+            return; 
+        }
         setCart(prev => prev.map(c => c.id === id ? { ...c, qty: newQty } : c));
     };
 
@@ -122,276 +112,158 @@ export default function CustomerMenu() {
     const cartTotal = cart.reduce((s, i) => s + (i.qty * i.price), 0);
 
     const handleOrder = async () => {
-        if (!user) {
-            setAlertMessage("ကျေးဇူးပြု၍ အရင်ဆုံး Login ဝင်ပါ");
+        if (!user || cart.length === 0 || !customerInfo.name || !customerInfo.phone) {
+            setAlertMessage("အချက်အလက်များ ပြည့်စုံစွာ ဖြည့်ပေးပါ");
             setShowAlert(true);
             return;
         }
-
-        if (cart.length === 0) {
-            setAlertMessage("ဟင်းပွဲအရင်ရွေးပါ");
-            setShowAlert(true);
-            return;
-        }
-        if (!customerInfo.name || !customerInfo.phone) {
-            setAlertMessage("နာမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ");
-            setShowAlert(true);
-            return;
-        }
-
         setIsProcessing(true);
-        const orderDetails = { 
-            ...customerInfo, 
-            email: user ? user.email : "guest",
-            items: cart, 
-            totalPrice: cartTotal, 
-            status: "New",
-            orderDate: new Date().toISOString(),
-            orderId: "ORD-" + Math.floor(1000 + Math.random() * 9000)
-        };
-
+        const orderDetails = { ...customerInfo, email: user.email, items: cart, totalPrice: cartTotal, status: "New", orderDate: new Date().toISOString(), orderId: "ORD-" + Math.floor(1000 + Math.random() * 9000) };
         try {
-            const res = await fetch('/api/orders', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderDetails) 
-            });
+            const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderDetails) });
             const data = await res.json();
-            if (data.success) {
-                setOrderSuccess({...orderDetails, id: data.id});
-                setCart([]);
-                setShowCart(false);
-            } else {
-                throw new Error(data.error);
-            }
-        } catch (e) { 
-            setAlertMessage("Order တင်ရတာ အဆင်မပြေဖြစ်သွားပါသည်: " + e.message);
-            setShowAlert(true);
-        }
+            if (data.success) { setOrderSuccess({...orderDetails, id: data.id}); setCart([]); setShowCart(false); }
+        } catch (e) { setAlertMessage("Error: " + e.message); setShowAlert(true); }
         setIsProcessing(false);
     };
 
-    if (loading) return <div style={{textAlign:'center', padding:'100px', color: '#007AFF', fontWeight: 'bold'}}>Loading Premium Menu...</div>;
-
     return (
-        <div style={{ background: '#F2F2F7', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+        <div style={{ background: '#F2F2F7', minHeight: '100vh', width: '100%', fontFamily: 'sans-serif' }}>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             
             <style jsx global>{`
-                .category-item { padding: 8px 20px; border-radius: 20px; background: white; color: #8E8E93; font-weight: 600; font-size: 14px; white-space: nowrap; cursor: pointer; transition: all 0.3s; border: 1px solid transparent; }
-                .category-item.active { background: #007AFF; color: white; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
-                .menu-card { background: white; border-radius: 24px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.2s; }
-                .menu-card:active { transform: scale(0.96); }
-                .cart-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(28, 28, 30, 0.9); backdrop-filter: blur(15px); padding: 18px 25px; display: flex; justifyContent: space-between; alignItems: center; z-index: 1000; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); animation: slideUp 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-                @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-                .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); width: 100%; border-top-left-radius: 35px; border-top-right-radius: 35px; padding: 30px 25px; maxHeight: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+                .category-item { padding: 8px 20px; border-radius: 20px; background: white; color: #8E8E93; font-weight: 600; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
+                .category-item.active { background: #007AFF; color: white; }
+                .menu-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+                .cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #1C1C1E; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-radius: 20px; color: white; cursor: pointer; }
+                .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: flex-end; }
+                .glass-modal { background: white; width: 100%; border-top-left-radius: 30px; border-top-right-radius: 30px; padding: 25px; max-height: 95vh; overflow-y: auto; }
+                .qty-input { width: 45px; border: 1px solid #E5E5EA; text-align: center; border-radius: 8px; padding: 5px 0; font-weight: bold; font-size: 14px; -moz-appearance: textfield; }
+                .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
             `}</style>
 
-            {/* Header */}
-            <div style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', padding: '15px 20px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            {/* Header, Search, Categories (ဒီအတိုင်းထားပါသည်) */}
+            <div style={{ background: 'white', padding: '15px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <Link href="/" style={{color:'#1C1C1E', textDecoration:'none', fontWeight:'800', fontSize:'20px'}}>
-                       <i className="fas fa-chevron-left" style={{marginRight: '10px', fontSize: '16px'}}></i> Menu
-                    </Link>
-
-                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                        {user ? (
-                            <div style={{display: 'flex', alignItems: 'center', gap: '12px', background: '#fff', padding: '5px 12px', borderRadius: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)'}}>
-                                <Link href="/history" style={{ color: '#1C1C1E', fontSize: '18px' }}>
-                                    <i className="fas fa-receipt"></i>
-                                </Link>
-                                <img 
-                                    src={user.photoURL} 
-                                    onClick={handleLogout}
-                                    alt="profile"
-                                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #007AFF', cursor: 'pointer' }} 
-                                />
-                            </div>
-                        ) : (
-                            <button onClick={handleLogin} style={{ 
-                                background: '#007AFF', color: '#fff', border: 'none', padding: '8px 18px', 
-                                borderRadius: '20px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(0,122,255,0.2)'
-                            }}>
-                                <i className="fab fa-google"></i> Login
-                            </button>
-                        )}
-                    </div>
+                    <div style={{fontWeight:'800', fontSize:'20px'}}>YNS Kitchen Menu</div>
+                    {user ? <img src={user.photoURL} onClick={handleLogout} style={{ width: '35px', borderRadius: '50%', cursor: 'pointer' }} /> : <button onClick={handleLogin} style={{ background: '#007AFF', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '15px' }}>Login</button>}
                 </div>
-
-                {/* Search Bar */}
-                <div style={{position:'relative'}}>
-                    <i className="fas fa-search" style={{position:'absolute', left:'18px', top:'50%', transform:'translateY(-50%)', color:'#AEAEB2' }}></i>
-                    <input 
-                        type="text" placeholder="Search delicious food..." 
-                        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{width:'100%', padding:'14px 14px 14px 48px', borderRadius:'18px', border:'none', background:'#F2F2F7', boxSizing:'border-box', outline: 'none', fontSize: '15px', fontWeight: '500' }}
-                    />
-                </div>
-
-                {/* Categories */}
-                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '15px', paddingBottom: '5px', scrollbarWidth: 'none' }}>
-                    {categories.map(cat => (
-                        <div 
-                            key={cat} 
-                            className={`category-item ${activeCat === cat ? 'active' : ''}`}
-                            onClick={() => setActiveCat(cat)}
-                        >
-                            {cat}
-                        </div>
-                    ))}
+                <input type="text" placeholder="Search food..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{width:'100%', padding:'12px', borderRadius:'12px', border:'none', background:'#F2F2F7', outline: 'none' }} />
+                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '10px', paddingBottom: '5px' }}>
+                    {categories.map(cat => <div key={cat} className={`category-item ${activeCat === cat ? 'active' : ''}`} onClick={() => setActiveCat(cat)}>{cat}</div>)}
                 </div>
             </div>
 
             {/* Menu Grid */}
-            <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '18px', boxSizing: 'border-box', paddingBottom: cartQty > 0 ? '120px' : '40px' }}>
+            <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', paddingBottom: '100px' }}>
                 {filteredMenu.map(item => (
                     <div key={item.id} className="menu-card">
-                        <div style={{position:'relative', width:'100%', height:'120px', borderRadius:'18px', overflow:'hidden', background: '#F2F2F7'}}>
-                            <img 
-                                src={item.image || 'https://via.placeholder.com/150'} 
-                                style={{width: '100%', height: '100%', objectFit: 'cover'}} 
-                                alt={item.name} 
-                                onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }}
-                            />
-                        </div>
-                        <div style={{fontWeight: '800', fontSize: '15px', marginTop: '12px', color: '#1C1C1E', height:'38px', overflow:'hidden', lineHeight: '1.2'}}>{item.name}</div>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px'}}>
-                            <div style={{color:'#007AFF', fontWeight:'900', fontSize:'16px'}}>{(Number(item.price) || 0).toLocaleString()} <span style={{fontSize: '10px'}}>Ks</span></div>
-                            <button 
-                                onClick={() => addToCart(item)} 
-                                style={{ background: '#007AFF', color: '#fff', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,122,255,0.2)' }}
-                            >
-                                <i className="fas fa-plus"></i>
-                            </button>
+                        <img src={item.image || 'https://via.placeholder.com/150'} style={{width: '100%', height: '110px', objectFit: 'cover', borderRadius:'15px'}} alt={item.name} />
+                        <div style={{fontWeight: '700', fontSize: '14px', margin: '8px 0'}}>{item.name}</div>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <div style={{color:'#007AFF', fontWeight:'700'}}>{Number(item.price).toLocaleString()} Ks</div>
+                            <button onClick={() => addToCart(item)} style={{ background: '#007AFF', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '8px' }}><i className="fas fa-plus"></i></button>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Floating Cart Bar */}
+            {/* Bottom Cart Bar */}
             {cartQty > 0 && !showCart && (
                 <div className="cart-bar" onClick={() => setShowCart(true)}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                        <div style={{background: '#007AFF', width: '45px', height: '45px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', position: 'relative'}}>
-                            <i className="fas fa-shopping-basket" style={{fontSize: '20px'}}></i>
-                            <span style={{position: 'absolute', top: '-5px', right: '-5px', background: '#FF3B30', color: 'white', fontSize: '10px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '10px', border: '2px solid #1A1A1A'}}>{cartQty}</span>
-                        </div>
-                        <div>
-                            <div style={{color:'#fff', fontWeight:'900', fontSize: '18px'}}>{cartTotal.toLocaleString()} Ks</div>
-                            <div style={{fontSize:'11px', color:'#8E8E93', fontWeight: '600'}}>View your cart</div>
-                        </div>
+                    <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                        <div style={{background:'#007AFF', padding:'8px 12px', borderRadius:'12px'}}>{cartQty}</div>
+                        <div style={{fontWeight:'bold'}}>{cartTotal.toLocaleString()} Ks</div>
                     </div>
-                    <i className="fas fa-chevron-right" style={{color: '#fff', opacity: 0.5}}></i>
+                    <div>View Cart <i className="fas fa-chevron-right" style={{marginLeft:'5px'}}></i></div>
                 </div>
             )}
 
-            {/* Cart Modal */}
+            {/* Cart Modal - UI Fixes */}
             {showCart && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'flex-end', backdropFilter: 'blur(5px)' }}>
+                <div className="modal-overlay">
                     <div className="glass-modal">
-                        <div style={{display:'flex', justifyContent:'space-between', marginBottom:'25px', alignItems: 'center'}}>
-                            <h2 style={{margin:0, fontWeight: '900'}}>My Order</h2>
-                            <div onClick={() => setShowCart(false)} style={{background: '#F2F2F7', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}>
-                                <i className="fas fa-times" style={{fontSize:'18px', color: '#8E8E93'}}></i>
-                            </div>
+                        <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
+                            <h3 style={{margin:0}}>My Selection</h3>
+                            <i className="fas fa-times" onClick={() => setShowCart(false)} style={{fontSize:'20px', color:'#8E8E93'}}></i>
                         </div>
 
-                        <div style={{maxHeight: '300px', overflowY: 'auto', marginBottom: '20px', paddingRight: '5px'}}>
+                        {/* Cart Items List */}
+                        <div style={{ maxHeight: '350px', overflowY: 'auto', marginBottom: '20px' }}>
                             {cart.map(item => (
-                                <div key={item.id} style={{ display: 'flex', gap: '15px', marginBottom: '18px', alignItems: 'center', background: '#F8F9FA', padding: '12px', borderRadius: '18px' }}>
-                                    <img src={item.image || 'https://via.placeholder.com/150'} style={{width: '50px', height: '50px', borderRadius: '12px', objectFit: 'cover'}} alt="item" />
+                                <div key={item.id} style={{ display: 'flex', gap: '12px', marginBottom: '15px', alignItems: 'center', background: '#F8F9FA', padding: '10px', borderRadius: '15px' }}>
+                                    <img src={item.image || 'https://via.placeholder.com/150'} style={{width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover'}} alt="item" />
                                     <div style={{flex:1}}>
-                                        <div style={{fontSize:'14px', fontWeight:'800', color: '#1C1C1E'}}>{item.name}</div>
-                                        <div style={{fontSize:'13px', color: '#007AFF', fontWeight: '700'}}>{(item.price).toLocaleString()} Ks</div>
+                                        <div style={{fontSize:'14px', fontWeight:'700'}}>{item.name}</div>
+                                        <div style={{fontSize:'13px', color: '#007AFF'}}>{item.price.toLocaleString()} Ks</div>
                                     </div>
-                                    <div style={{display:'flex', alignItems:'center', background:'#fff', borderRadius:'12px', padding:'4px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)'}}>
-                                        <button onClick={() => removeFromCart(item.id)} style={{border:'none', background:'none', width: '28px', height: '28px', fontSize: '14px', fontWeight: 'bold'}}>-</button>
-                                        <span style={{width:'30px', textAlign:'center', fontWeight:'800', fontSize: '14px'}}>{item.qty}</span>
-                                        <button onClick={() => addToCart(item)} style={{border:'none', background:'none', width: '28px', height: '28px', fontSize: '14px', fontWeight: 'bold'}}>+</button>
+                                    
+                                    {/* +/- and Input Control */}
+                                    <div style={{display:'flex', alignItems:'center', background:'white', borderRadius:'10px', padding:'3px', border:'1px solid #E5E5EA'}}>
+                                        <button onClick={() => removeFromCart(item.id)} style={{border:'none', background:'none', padding:'0 8px', fontWeight:'bold'}}>-</button>
+                                        <input 
+                                            type="number" 
+                                            className="qty-input"
+                                            value={item.qty} 
+                                            onChange={(e) => updateQty(item.id, e.target.value)}
+                                            onBlur={(e) => { if(!e.target.value || e.target.value <= 0) deleteItem(item.id) }} 
+                                        />
+                                        <button onClick={() => addToCart(item)} style={{border:'none', background:'none', padding:'0 8px', fontWeight:'bold'}}>+</button>
                                     </div>
+
+                                    {/* Delete Button */}
+                                    <button onClick={() => deleteItem(item.id)} style={{border:'none', background:'#FFF1F0', color:'#FF3B30', padding:'8px 10px', borderRadius:'10px'}}>
+                                        <i className="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             ))}
                         </div>
                         
-                        <div style={{background: '#F2F2F7', padding: '20px', borderRadius: '24px'}}>
-                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '15px'}}>
-                                <span style={{fontWeight: '700', color: '#8E8E93'}}>Total Amount</span>
-                                <span style={{fontWeight: '900', color: '#007AFF', fontSize: '20px'}}>{cartTotal.toLocaleString()} Ks</span>
+                        {/* Order Form */}
+                        <div style={{ background: '#F2F2F7', padding: '15px', borderRadius: '20px' }}>
+                            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px', fontWeight:'bold'}}>
+                                <span>Total:</span>
+                                <span style={{color:'#007AFF', fontSize:'18px'}}>{cartTotal.toLocaleString()} Ks</span>
                             </div>
 
-                            <label style={labelStyle}>Customer Name</label>
-                            <input style={inputStyle} value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} placeholder="Enter your name" />
+                            <input style={inputStyle} value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} placeholder="Name" />
+                            <input style={inputStyle} value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} placeholder="Phone (09...)" />
                             
-                            <label style={labelStyle}>Phone Number</label>
-                            <input style={inputStyle} value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} placeholder="09xxxxxxx" />
-                            
-                            <div style={{display:'flex', gap:'15px'}}>
-                                <div style={{flex:1}}>
-                                    <label style={labelStyle}>Date</label>
-                                    <input type="date" style={inputStyle} value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
-                                </div>
-                                <div style={{flex:1}}>
-                                    <label style={labelStyle}>Time</label>
-                                    <input type="time" style={inputStyle} value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
-                                </div>
+                            <div style={{display:'flex', gap:'10px'}}>
+                                <input type="date" style={inputStyle} value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
+                                <input type="time" style={inputStyle} value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
                             </div>
                             
-                            <label style={labelStyle}>Note (Optional)</label>
-                            <textarea style={{...inputStyle, height:'60px', paddingTop: '12px'}} value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} placeholder="Any special requests?" />
+                            <textarea style={{...inputStyle, height:'60px'}} value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} placeholder="Special Note..." />
                             
-                            <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', background: '#007AFF', color: '#fff', border: 'none', padding: '18px', borderRadius: '18px', fontWeight: '900', fontSize: '16px', marginTop: '15px', boxShadow: '0 10px 25px rgba(0,122,255,0.3)' }}>
-                                {isProcessing ? "Processing..." : "Confirm Order"}
+                            <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', background: '#007AFF', color: '#fff', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }}>
+                                {isProcessing ? "Sending..." : "Confirm Order"}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Success Voucher Modal */}
+            {/* Success and Alert Modals (ဒီအတိုင်းထားပါသည်) */}
             {orderSuccess && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(10px)' }}>
-                    <div style={{ background: '#fff', width: '100%', maxWidth: '380px', borderRadius: '30px', padding: '30px', textAlign: 'center', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
-                        <div style={{background: '#E8F9EE', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px'}}>
-                            <i className="fas fa-check" style={{color:'#34C759', fontSize:'40px'}}></i>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#fff', width: '100%', maxWidth: '350px', borderRadius: '25px', padding: '25px', textAlign: 'center' }}>
+                        <i className="fas fa-check-circle" style={{color:'#34C759', fontSize:'50px', marginBottom:'15px'}}></i>
+                        <h3>Ordered Successfully!</h3>
+                        <div style={{textAlign:'left', background:'#F2F2F7', padding:'15px', borderRadius:'15px', fontSize:'13px', margin:'15px 0'}}>
+                            <div><b>ID:</b> {orderSuccess.orderId}</div>
+                            <div><b>Total:</b> {orderSuccess.totalPrice.toLocaleString()} Ks</div>
                         </div>
-                        <h2 style={{margin:0, fontWeight: '900'}}>Order Placed!</h2>
-                        <p style={{color: '#8E8E93', fontSize: '14px', marginTop: '5px'}}>Your order has been sent successfully.</p>
-                        
-                        <div style={{textAlign:'left', background:'#F2F2F7', padding:'20px', borderRadius:'20px', fontSize:'14px', marginTop: '25px'}}>
-                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
-                                <span style={{color: '#8E8E93'}}>Order ID</span>
-                                <span style={{fontWeight: '800'}}>{orderSuccess.orderId}</span>
-                            </div>
-                            <div style={{borderTop: '1px dashed #D1D1D6', margin: '10px 0'}}></div>
-                            {orderSuccess.items.map((item, i) => (
-                                <div key={i} style={{display:'flex', justifyContent:'space-between', marginBottom: '5px'}}>
-                                    <span>{item.name} x {item.qty}</span>
-                                    <span style={{fontWeight: '700'}}>{(item.price * item.qty).toLocaleString()} Ks</span>
-                                </div>
-                            ))}
-                            <div style={{borderTop: '1px solid #D1D1D6', marginTop: '15px', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                <span style={{fontWeight: 'bold'}}>Total Amount</span>
-                                <span style={{fontWeight: '900', color: '#007AFF', fontSize: '18px'}}>{orderSuccess.totalPrice.toLocaleString()} Ks</span>
-                            </div>
-                        </div>
-                        
-                        <div style={{marginTop:'30px', display:'flex', gap:'12px'}}>
-                            <button onClick={() => setOrderSuccess(null)} style={{flex:1, padding:'15px', borderRadius:'15px', border:'none', background: '#F2F2F7', fontWeight: '700', color: '#1C1C1E'}}>Close</button>
-                            <button onClick={() => window.print()} style={{flex:1, padding:'15px', borderRadius:'15px', background:'#007AFF', color:'#fff', border: 'none', fontWeight: '700', boxShadow: '0 8px 20px rgba(0,122,255,0.2)'}}>Print</button>
-                        </div>
+                        <button onClick={() => setOrderSuccess(null)} style={{ width:'100%', padding:'12px', borderRadius:'12px', border:'none', background:'#007AFF', color:'white', fontWeight:'bold' }}>Done</button>
                     </div>
                 </div>
             )}
 
-            {/* Custom Alert Box */}
             {showAlert && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(3px)' }}>
-                    <div style={{ background: '#fff', padding: '30px', borderRadius: '25px', textAlign: 'center', width: '100%', maxWidth: '320px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                        <div style={{background: '#FFF1F0', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px'}}>
-                            <i className="fas fa-exclamation-triangle" style={{ color: '#FF3B30', fontSize: '28px' }}></i>
-                        </div>
-                        <p style={{ fontSize: '16px', fontWeight: '800', color: '#1C1C1E', marginBottom: '25px', lineHeight: '1.4' }}>{alertMessage}</p>
-                        <button onClick={() => setShowAlert(false)} style={{ width: '100%', padding: '15px', background: '#1C1C1E', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: 'bold' }}>Got it</button>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ background: 'white', padding: '25px', borderRadius: '20px', textAlign: 'center', width: '80%' }}>
+                        <p style={{ fontWeight: 'bold' }}>{alertMessage}</p>
+                        <button onClick={() => setShowAlert(false)} style={{ padding: '10px 30px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px' }}>OK</button>
                     </div>
                 </div>
             )}
@@ -399,5 +271,5 @@ export default function CustomerMenu() {
     );
 }
 
-const labelStyle = { display: 'block', fontSize: '12px', fontWeight: '800', color: '#8E8E93', marginBottom: '8px', marginTop: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' };
-const inputStyle = { width: '100%', padding: '14px', borderRadius: '15px', border: '1px solid #E5E5EA', fontSize: '15px', background: '#fff', boxSizing:'border-box', outline:'none', marginBottom: '5px', fontWeight: '600' };
+const inputStyle = { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '10px', fontSize: '14px', outline: 'none' };
+                    
