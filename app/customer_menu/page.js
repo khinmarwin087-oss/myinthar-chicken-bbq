@@ -230,25 +230,40 @@ export default function CustomerMenu() {
                                 <i className="fas fa-trash" onClick={() => deleteItem(item.id)} style={{ color: '#FF3B30', padding: '5px' }}></i>
                             </div>
                         ))}
-                        <div style={{ marginTop: '20px', background: '#F9F9F9', padding: '15px', borderRadius: '15px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '10px' }}>
-                                <span>Total:</span>
-                                <span style={{ color: '#007AFF' }}>{cartTotal.toLocaleString()} Ks</span>
-                            </div>
-                            <input className="form-input" placeholder="Name" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} />
-                            <input className="form-input" placeholder="Phone" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} />
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                            <input type="date" className="form-input" placeholder="Date" value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
-                            <input type="time" className="form-input" placeholder="Time" value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
-                            </div>
-                            <textarea className="form-input" placeholder="Note (Special request...)" value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} />
-                            <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>
-                                {isProcessing ? "Sending..." : "Confirm Order"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
+                          <div style={{ marginTop: '20px', background: '#F9F9F9', padding: '15px', borderRadius: '15px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '15px' }}>
+        <span>Total:</span>
+        <span style={{ color: '#007AFF' }}>{cartTotal.toLocaleString()} Ks</span>
+    </div>
+
+    {/* Name & Phone */}
+    <input className="form-input" placeholder="Customer Name" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} />
+    <input className="form-input" placeholder="Phone Number" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} />
+
+    {/* Date & Time with Labels */}
+    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '11px', color: '#8E8E93', marginLeft: '5px', fontWeight: '600' }}>PICK UP DATE</label>
+            <input type="date" className="form-input" style={{ marginTop: '3px' }} value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
+        </div>
+        <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '11px', color: '#8E8E93', marginLeft: '5px', fontWeight: '600' }}>PICK UP TIME</label>
+            <input type="time" className="form-input" style={{ marginTop: '3px' }} value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
+        </div>
+    </div>
+
+    {/* Note */}
+    <textarea className="form-input" placeholder="Note (Special request...)" value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} />
+
+    {/* Submit Button */}
+    <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold', marginTop: '5px' }}>
+        {isProcessing ? "Sending..." : "Confirm Order"}
+    </button>
+           </div>
+    </div>
+</div>
+      )}
 
             {/* ၂။ Success Voucher Section */}
             {orderSuccess && (
