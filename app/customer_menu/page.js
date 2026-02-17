@@ -25,30 +25,17 @@ export default function CustomerMenu() {
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((u) => {
             setUser(u);
-            if (u) {
-                setCustomerInfo(prev => ({ ...prev, name: u.displayName }));
-            } else {
-                setCustomerInfo({ name: '', phone: '', note: '', date: '', time: '' });
-                setCart([]);
-            }
+            if (u) setCustomerInfo(prev => ({ ...prev, name: u.displayName }));
         });
         return () => unsubscribe();
     }, []);
 
     const handleLogin = async () => {
         const provider = new GoogleAuthProvider();
-        try { 
-            await signInWithPopup(auth, provider); 
-        } catch (e) { 
-            console.error(e);
-            setAlertMessage("Login ဝင်မရဖြစ်နေပါသည်");
-            setShowAlert(true);
-        }
+        try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
     };
 
-    const handleLogout = async () => {
-        try { await signOut(auth); } catch (e) { console.error(e); }
-    };
+    const handleLogout = async () => { try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } };
 
     useEffect(() => {
         const fetchMenus = async () => {
@@ -74,11 +61,7 @@ export default function CustomerMenu() {
     }, [searchTerm, activeCat, menuData]);
 
     const addToCart = (item) => {
-        if (!user) {
-            setAlertMessage("ဟင်းပွဲမှာယူရန် အရင်ဆုံး Google ဖြင့် Login ဝင်ပေးပါ");
-            setShowAlert(true);
-            return;
-        }
+        if (!user) return;
         setCart(prev => {
             const existing = prev.find(c => c.id === item.id);
             if (existing) return prev.map(c => c.id === item.id ? { ...c, qty: c.qty + 1 } : c);
@@ -96,147 +79,156 @@ export default function CustomerMenu() {
     };
 
     const updateQty = (id, val) => {
-        const newQty = parseInt(val);
-        if (isNaN(newQty) || newQty <= 0) {
-            // value မရှိလျှင် သို့မဟုတ် 0 ဖြစ်လျှင် မပြောင်းလဲသေးဘဲ ထားမည် (သို့မဟုတ် delete လုပ်မည်)
-            return; 
-        }
-        setCart(prev => prev.map(c => c.id === id ? { ...c, qty: newQty } : c));
-    };
-
-    const deleteItem = (id) => {
-        setCart(prev => prev.filter(c => c.id !== id));
-    };
-
-    const cartQty = cart.reduce((s, i) => s + i.qty, 0);
-    const cartTotal = cart.reduce((s, i) => s + (i.qty * i.price), 0);
-
-    const handleOrder = async () => {
-        if (!user || cart.length === 0 || !customerInfo.name || !customerInfo.phone) {
-            setAlertMessage("အချက်အလက်များ ပြည့်စုံစွာ ဖြည့်ပေးပါ");
-            setShowAlert(true);
+        if (val === "") {
+            setCart(prev => prev.map(c => c.id === id ? { ...c, qty: "" } : c));
             return;
         }
+        const newQty = parseInt(val);
+        if (newQty >= 0) {
+            setCart(prev => prev.map(c => c.id === id ? { ...c, qty: newQty } : c));
+        }
+    };
+
+    const handleQtyBlur = (id, val) => {
+        if (val === "" || parseInt(val) <= 0) {
+            deleteItem(id);
+        }
+    };
+
+    const deleteItem = (id) => setCart(prev => prev.filter(c => c.id !== id));
+    const cartQty = cart.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+    const cartTotal = cart.reduce((s, i) => s + ((Number(i.qty) || 0) * i.price), 0);
+
+    const handleOrder = async () => {
+        if (!customerInfo.name || !customerInfo.phone) { setAlertMessage("အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ"); setShowAlert(true); return; }
         setIsProcessing(true);
-        const orderDetails = { ...customerInfo, email: user.email, items: cart, totalPrice: cartTotal, status: "New", orderDate: new Date().toISOString(), orderId: "ORD-" + Math.floor(1000 + Math.random() * 9000) };
+        const orderDetails = { 
+            ...customerInfo, 
+            email: user.email, 
+            items: cart, 
+            totalPrice: cartTotal, 
+            status: "Pending", 
+            orderDate: new Date().toISOString(), 
+            orderId: "ORD-" + Date.now().toString().slice(-6) 
+        };
         try {
             const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderDetails) });
-            const data = await res.json();
-            if (data.success) { setOrderSuccess({...orderDetails, id: data.id}); setCart([]); setShowCart(false); }
-        } catch (e) { setAlertMessage("Error: " + e.message); setShowAlert(true); }
+            if (res.ok) { setOrderSuccess(orderDetails); setCart([]); setShowCart(false); }
+        } catch (e) { console.error(e); }
         setIsProcessing(false);
     };
 
     return (
-        <div style={{ background: '#F2F2F7', minHeight: '100vh', width: '100%', fontFamily: 'sans-serif' }}>
+        <div style={{ background: '#F2F2F7', minHeight: '100vh', width: '100%', boxSizing: 'border-box' }}>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             
             <style jsx global>{`
-                .category-item { padding: 8px 20px; border-radius: 20px; background: white; color: #8E8E93; font-weight: 600; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
-                .category-item.active { background: #007AFF; color: white; }
-                .menu-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-                .cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #1C1C1E; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-radius: 20px; color: white; cursor: pointer; }
+                .sticky-header { position: fixed; top: 0; left: 0; right: 0; background: white; z-index: 1000; padding: 10px 15px; border-bottom: 1px solid #E5E5EA; }
+                .category-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+                .cat-btn { padding: 6px 15px; border-radius: 15px; background: #F2F2F7; color: #8E8E93; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: none; }
+                .cat-btn.active { background: #007AFF; color: white; }
+                .content-area { padding: 130px 15px 100px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+                .menu-card { background: white; border-radius: 15px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                .cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #1C1C1E; padding: 15px; border-radius: 15px; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
                 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: flex-end; }
-                .glass-modal { background: white; width: 100%; border-top-left-radius: 30px; border-top-right-radius: 30px; padding: 25px; max-height: 95vh; overflow-y: auto; }
-                .qty-input { width: 45px; border: 1px solid #E5E5EA; text-align: center; border-radius: 8px; padding: 5px 0; font-weight: bold; font-size: 14px; -moz-appearance: textfield; }
-                .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                .cart-modal { background: white; width: 100%; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+                .qty-input { width: 40px; border: 1px solid #DDD; text-align: center; border-radius: 5px; padding: 3px; font-size: 14px; }
+                .form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #DDD; margin-bottom: 10px; box-sizing: border-box; font-size: 14px; }
             `}</style>
 
-            {/* Header, Search, Categories (ဒီအတိုင်းထားပါသည်) */}
-            <div style={{ background: 'white', padding: '15px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <div style={{fontWeight:'800', fontSize:'20px'}}>YNS Kitchen Menu</div>
-                    {user ? <img src={user.photoURL} onClick={handleLogout} style={{ width: '35px', borderRadius: '50%', cursor: 'pointer' }} /> : <button onClick={handleLogin} style={{ background: '#007AFF', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '15px' }}>Login</button>}
+            {/* Fixed Header */}
+            <div className="sticky-header">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Link href="/" style={{ textDecoration: 'none', color: '#007AFF', fontWeight: 'bold' }}>
+                        <i className="fas fa-arrow-left"></i> Back
+                    </Link>
+                    <div style={{ fontWeight: '800', fontSize: '18px' }}>YNS Kitchen</div>
+                    {user ? (
+                        <img src={user.photoURL} onClick={handleLogout} style={{ width: '30px', borderRadius: '50%' }} />
+                    ) : (
+                        <i className="fas fa-user-circle" onClick={handleLogin} style={{ fontSize: '24px', color: '#8E8E93' }}></i>
+                    )}
                 </div>
-                <input type="text" placeholder="Search food..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{width:'100%', padding:'12px', borderRadius:'12px', border:'none', background:'#F2F2F7', outline: 'none' }} />
-                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '10px', paddingBottom: '5px' }}>
-                    {categories.map(cat => <div key={cat} className={`category-item ${activeCat === cat ? 'active' : ''}`} onClick={() => setActiveCat(cat)}>{cat}</div>)}
+                <div className="category-bar">
+                    {categories.map(cat => (
+                        <button key={cat} className={`cat-btn ${activeCat === cat ? 'active' : ''}`} onClick={() => setActiveCat(cat)}>{cat}</button>
+                    ))}
                 </div>
             </div>
 
             {/* Menu Grid */}
-            <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', paddingBottom: '100px' }}>
+            <div className="content-area">
                 {filteredMenu.map(item => (
                     <div key={item.id} className="menu-card">
-                        <img src={item.image || 'https://via.placeholder.com/150'} style={{width: '100%', height: '110px', objectFit: 'cover', borderRadius:'15px'}} alt={item.name} />
-                        <div style={{fontWeight: '700', fontSize: '14px', margin: '8px 0'}}>{item.name}</div>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                            <div style={{color:'#007AFF', fontWeight:'700'}}>{Number(item.price).toLocaleString()} Ks</div>
-                            <button onClick={() => addToCart(item)} style={{ background: '#007AFF', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '8px' }}><i className="fas fa-plus"></i></button>
+                        <img src={item.image} style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '10px' }} />
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '8px 0', height: '34px', overflow: 'hidden' }}>{item.name}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#007AFF', fontWeight: 'bold' }}>{Number(item.price).toLocaleString()}K</span>
+                            <button 
+                                onClick={() => addToCart(item)} 
+                                disabled={!user}
+                                style={{ background: user ? '#007AFF' : '#CCC', color: 'white', border: 'none', width: '28px', height: '28px', borderRadius: '5px' }}
+                            >
+                                <i className="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Bottom Cart Bar */}
-            {cartQty > 0 && !showCart && (
+            {/* Cart Bar */}
+            {cartQty > 0 && (
                 <div className="cart-bar" onClick={() => setShowCart(true)}>
-                    <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
-                        <div style={{background:'#007AFF', padding:'8px 12px', borderRadius:'12px'}}>{cartQty}</div>
-                        <div style={{fontWeight:'bold'}}>{cartTotal.toLocaleString()} Ks</div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <span style={{ background: '#007AFF', padding: '2px 8px', borderRadius: '5px' }}>{cartQty}</span>
+                        <b>{cartTotal.toLocaleString()} Ks</b>
                     </div>
-                    <div>View Cart <i className="fas fa-chevron-right" style={{marginLeft:'5px'}}></i></div>
+                    <span>View Cart <i className="fas fa-shopping-cart"></i></span>
                 </div>
             )}
 
-            {/* Cart Modal - UI Fixes */}
+            {/* Cart Modal */}
             {showCart && (
                 <div className="modal-overlay">
-                    <div className="glass-modal">
-                        <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
-                            <h3 style={{margin:0}}>My Selection</h3>
-                            <i className="fas fa-times" onClick={() => setShowCart(false)} style={{fontSize:'20px', color:'#8E8E93'}}></i>
+                    <div className="cart-modal">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <h3 style={{ margin: 0 }}>My Selection</h3>
+                            <i className="fas fa-times" onClick={() => setShowCart(false)}></i>
                         </div>
-
-                        {/* Cart Items List */}
-                        <div style={{ maxHeight: '350px', overflowY: 'auto', marginBottom: '20px' }}>
-                            {cart.map(item => (
-                                <div key={item.id} style={{ display: 'flex', gap: '12px', marginBottom: '15px', alignItems: 'center', background: '#F8F9FA', padding: '10px', borderRadius: '15px' }}>
-                                    <img src={item.image || 'https://via.placeholder.com/150'} style={{width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover'}} alt="item" />
-                                    <div style={{flex:1}}>
-                                        <div style={{fontSize:'14px', fontWeight:'700'}}>{item.name}</div>
-                                        <div style={{fontSize:'13px', color: '#007AFF'}}>{item.price.toLocaleString()} Ks</div>
-                                    </div>
-                                    
-                                    {/* +/- and Input Control */}
-                                    <div style={{display:'flex', alignItems:'center', background:'white', borderRadius:'10px', padding:'3px', border:'1px solid #E5E5EA'}}>
-                                        <button onClick={() => removeFromCart(item.id)} style={{border:'none', background:'none', padding:'0 8px', fontWeight:'bold'}}>-</button>
-                                        <input 
-                                            type="number" 
-                                            className="qty-input"
-                                            value={item.qty} 
-                                            onChange={(e) => updateQty(item.id, e.target.value)}
-                                            onBlur={(e) => { if(!e.target.value || e.target.value <= 0) deleteItem(item.id) }} 
-                                        />
-                                        <button onClick={() => addToCart(item)} style={{border:'none', background:'none', padding:'0 8px', fontWeight:'bold'}}>+</button>
-                                    </div>
-
-                                    {/* Delete Button */}
-                                    <button onClick={() => deleteItem(item.id)} style={{border:'none', background:'#FFF1F0', color:'#FF3B30', padding:'8px 10px', borderRadius:'10px'}}>
-                                        <i className="fas fa-trash"></i>
-                                    </button>
+                        {cart.map(item => (
+                            <div key={item.id} style={{ display: 'flex', gap: '10px', marginBottom: '12px', alignItems: 'center', borderBottom: '1px solid #F2F2F7', paddingBottom: '10px' }}>
+                                <img src={item.image} style={{ width: '40px', height: '40px', borderRadius: '5px' }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{item.name}</div>
+                                    <div style={{ fontSize: '12px', color: '#007AFF' }}>{item.price.toLocaleString()} Ks</div>
                                 </div>
-                            ))}
-                        </div>
-                        
-                        {/* Order Form */}
-                        <div style={{ background: '#F2F2F7', padding: '15px', borderRadius: '20px' }}>
-                            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px', fontWeight:'bold'}}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <button onClick={() => removeFromCart(item.id)} style={{ border: 'none', background: '#F2F2F7', width: '25px', height: '25px' }}>-</button>
+                                    <input 
+                                        type="number" 
+                                        className="qty-input" 
+                                        value={item.qty} 
+                                        onChange={(e) => updateQty(item.id, e.target.value)}
+                                        onBlur={(e) => handleQtyBlur(item.id, e.target.value)}
+                                    />
+                                    <button onClick={() => addToCart(item)} style={{ border: 'none', background: '#F2F2F7', width: '25px', height: '25px' }}>+</button>
+                                </div>
+                                <i className="fas fa-trash" onClick={() => deleteItem(item.id)} style={{ color: '#FF3B30', padding: '5px' }}></i>
+                            </div>
+                        ))}
+                        <div style={{ marginTop: '20px', background: '#F9F9F9', padding: '15px', borderRadius: '15px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '10px' }}>
                                 <span>Total:</span>
-                                <span style={{color:'#007AFF', fontSize:'18px'}}>{cartTotal.toLocaleString()} Ks</span>
+                                <span style={{ color: '#007AFF' }}>{cartTotal.toLocaleString()} Ks</span>
                             </div>
-
-                            <input style={inputStyle} value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} placeholder="Name" />
-                            <input style={inputStyle} value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} placeholder="Phone (09...)" />
-                            
-                            <div style={{display:'flex', gap:'10px'}}>
-                                <input type="date" style={inputStyle} value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
-                                <input type="time" style={inputStyle} value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
+                            <input className="form-input" placeholder="Name" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} />
+                            <input className="form-input" placeholder="Phone" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} />
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <input type="date" className="form-input" value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
+                                <input type="time" className="form-input" value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
                             </div>
-                            
-                            <textarea style={{...inputStyle, height:'60px'}} value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} placeholder="Special Note..." />
-                            
-                            <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', background: '#007AFF', color: '#fff', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }}>
+                            <textarea className="form-input" placeholder="Note (Special request...)" value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} />
+                            <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>
                                 {isProcessing ? "Sending..." : "Confirm Order"}
                             </button>
                         </div>
@@ -244,32 +236,40 @@ export default function CustomerMenu() {
                 </div>
             )}
 
-            {/* Success and Alert Modals (ဒီအတိုင်းထားပါသည်) */}
+            {/* Success Voucher */}
             {orderSuccess && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#fff', width: '100%', maxWidth: '350px', borderRadius: '25px', padding: '25px', textAlign: 'center' }}>
-                        <i className="fas fa-check-circle" style={{color:'#34C759', fontSize:'50px', marginBottom:'15px'}}></i>
-                        <h3>Ordered Successfully!</h3>
-                        <div style={{textAlign:'left', background:'#F2F2F7', padding:'15px', borderRadius:'15px', fontSize:'13px', margin:'15px 0'}}>
-                            <div><b>ID:</b> {orderSuccess.orderId}</div>
-                            <div><b>Total:</b> {orderSuccess.totalPrice.toLocaleString()} Ks</div>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
+                    <div style={{ background: 'white', width: '100%', maxWidth: '400px', borderRadius: '20px', padding: '20px', boxSizing: 'border-box' }}>
+                        <div style={{ textAlign: 'center', color: '#34C759' }}>
+                            <i className="fas fa-check-circle" style={{ fontSize: '50px' }}></i>
+                            <h2 style={{ margin: '10px 0' }}>Order Success!</h2>
                         </div>
-                        <button onClick={() => setOrderSuccess(null)} style={{ width:'100%', padding:'12px', borderRadius:'12px', border:'none', background:'#007AFF', color:'white', fontWeight:'bold' }}>Done</button>
-                    </div>
-                </div>
-            )}
-
-            {showAlert && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ background: 'white', padding: '25px', borderRadius: '20px', textAlign: 'center', width: '80%' }}>
-                        <p style={{ fontWeight: 'bold' }}>{alertMessage}</p>
-                        <button onClick={() => setShowAlert(false)} style={{ padding: '10px 30px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px' }}>OK</button>
+                        <div style={{ fontSize: '13px', lineHeight: '1.8', borderTop: '1px dashed #DDD', paddingTop: '15px' }}>
+                            <div><b>Order ID:</b> {orderSuccess.orderId}</div>
+                            <div><b>Name:</b> {orderSuccess.name}</div>
+                            <div><b>Phone:</b> {orderSuccess.phone}</div>
+                            <div><b>Date/Time:</b> {orderSuccess.date} | {orderSuccess.time}</div>
+                            {orderSuccess.note && <div><b>Note:</b> {orderSuccess.note}</div>}
+                            <div style={{ borderTop: '1px solid #F2F2F7', margin: '10px 0' }}></div>
+                            {orderSuccess.items.map((it, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>{it.name} x {it.qty}</span>
+                                    <span>{(it.price * it.qty).toLocaleString()} Ks</span>
+                                </div>
+                            ))}
+                            <div style={{ borderTop: '2px solid #007AFF', marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
+                                <span>Total Amount:</span>
+                                <span style={{ color: '#007AFF' }}>{orderSuccess.totalPrice.toLocaleString()} Ks</span>
+                            </div>
+                        </div>
+                        <p style={{ textAlign: 'center', fontSize: '12px', color: '#8E8E93', marginTop: '20px' }}>Thank you for choosing YNS Kitchen!</p>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                            <Link href="/history" style={{ flex: 1, padding: '12px', background: '#F2F2F7', textAlign: 'center', borderRadius: '10px', textDecoration: 'none', color: '#1C1C1E', fontWeight: 'bold' }}>History</Link>
+                            <button onClick={() => setOrderSuccess(null)} style={{ flex: 1, padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Home</button>
+                        </div>
                     </div>
                 </div>
             )}
         </div>
     );
 }
-
-const inputStyle = { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '10px', fontSize: '14px', outline: 'none' };
-                    
