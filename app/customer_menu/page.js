@@ -238,8 +238,8 @@ export default function CustomerMenu() {
                             <input className="form-input" placeholder="Name" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} />
                             <input className="form-input" placeholder="Phone" value={customerInfo.phone} onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})} />
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <input type="date" className="form-input" value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
-                                <input type="time" className="form-input" value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
+                            <input type="date" className="form-input" placeholder="Date" value={customerInfo.date} onChange={e => setCustomerInfo({...customerInfo, date: e.target.value})} />
+                            <input type="time" className="form-input" placeholder="Time" value={customerInfo.time} onChange={e => setCustomerInfo({...customerInfo, time: e.target.value})} />
                             </div>
                             <textarea className="form-input" placeholder="Note (Special request...)" value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} />
                             <button onClick={handleOrder} disabled={isProcessing} style={{ width: '100%', padding: '15px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>
