@@ -5,7 +5,28 @@ import Link from 'next/link';
 import { db, auth } from "../../lib/firebase"; 
 import { collection, getDocs } from "firebase/firestore";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth"; 
+// ၁။ Style Constants တွေကို Function ရဲ့ အပြင်မှာ ထားပါ
+const detailRowStyle = { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    fontSize: '13px', 
+    marginBottom: '8px', 
+    color: '#1C1C1E' 
+};
 
+const footerBtnStyle = (bg, color) => ({
+    flex: 1,
+    padding: '16px',
+    borderRadius: '12px',
+    border: 'none',
+    background: bg,
+    color: color,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    textDecoration: 'none',
+    fontSize: '15px',
+    cursor: 'pointer'
+});
 export default function CustomerMenu() {
     const [menuData, setMenuData] = useState([]);
     const [filteredMenu, setFilteredMenu] = useState([]);
@@ -138,23 +159,28 @@ export default function CustomerMenu() {
 
             {/* Fixed Header */}
             <div className="sticky-header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Link href="/" style={{ textDecoration: 'none', color: '#007AFF', fontWeight: 'bold' }}>
-                        <i className="fas fa-arrow-left"></i> Back
-                    </Link>
-                    <div style={{ fontWeight: '800', fontSize: '18px' }}>YNS Kitchen</div>
-                    {user ? (
-                        <img src={user.photoURL} onClick={handleLogout} style={{ width: '30px', borderRadius: '50%' }} />
-                    ) : (
-                        <i className="fas fa-user-circle" onClick={handleLogin} style={{ fontSize: '24px', color: '#8E8E93' }}></i>
-                    )}
-                </div>
-                <div className="category-bar">
-                    {categories.map(cat => (
-                        <button key={cat} className={`cat-btn ${activeCat === cat ? 'active' : ''}`} onClick={() => setActiveCat(cat)}>{cat}</button>
-                    ))}
-                </div>
-            </div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <Link href="/" style={{ textDecoration: 'none', color: '#007AFF', fontWeight: 'bold', fontSize: '14px' }}>
+            <i className="fas fa-arrow-left"></i> Back
+        </Link>
+        <div style={{ fontWeight: '800', fontSize: '16px' }}>YNS Kitchen</div>
+        {user ? <img src={user.photoURL} onClick={handleLogout} style={{ width: '28px', borderRadius: '50%' }} /> : <i className="fas fa-user-circle" onClick={handleLogin} style={{ fontSize: '24px', color: '#CCC' }}></i>}
+    </div>
+    
+    {/* Search Input */}
+    <div style={{ position: 'relative', marginBottom: '10px' }}>
+        <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#AEAEB2', fontSize: '12px' }}></i>
+        <input type="text" placeholder="Search food..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '12px', border: 'none', background: '#F2F2F7', boxSizing: 'border-box', outline: 'none', fontSize: '14px' }} />
+    </div>
+
+    {/* Category Bar (ဘေးဆွဲလို့ရအောင် ပြင်ထားသည်) */}
+    <div className="category-bar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '5px', WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+        {categories.map(cat => (
+            <button key={cat} className={`cat-btn ${activeCat === cat ? 'active' : ''}`} onClick={() => setActiveCat(cat)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>{cat}</button>
+        ))}
+    </div>
+</div>
+
 
             {/* Menu Grid */}
             <div className="content-area">
@@ -236,36 +262,63 @@ export default function CustomerMenu() {
                 </div>
             )}
 
-            {/* Success Voucher */}
+            {/* ၂။ Success Voucher Section */}
             {orderSuccess && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
-                    <div style={{ background: 'white', width: '100%', maxWidth: '400px', borderRadius: '20px', padding: '20px', boxSizing: 'border-box' }}>
-                        <div style={{ textAlign: 'center', color: '#34C759' }}>
-                            <i className="fas fa-check-circle" style={{ fontSize: '50px' }}></i>
-                            <h2 style={{ margin: '10px 0' }}>Order Success!</h2>
+                <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 5000, overflowY: 'auto', padding: '20px' }}>
+                    <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+                        {/* Header Area */}
+                        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                            <div style={{ background: '#34C759', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
+                                <i className="fas fa-check" style={{ color: 'white', fontSize: '30px' }}></i>
+                            </div>
+                            <h2 style={{ margin: 0, fontWeight: '900' }}>ORDER SUCCESS</h2>
+                            <p style={{ color: '#8E8E93', fontSize: '13px' }}>Thank you for your order!</p>
                         </div>
-                        <div style={{ fontSize: '13px', lineHeight: '1.8', borderTop: '1px dashed #DDD', paddingTop: '15px' }}>
-                            <div><b>Order ID:</b> {orderSuccess.orderId}</div>
-                            <div><b>Name:</b> {orderSuccess.name}</div>
-                            <div><b>Phone:</b> {orderSuccess.phone}</div>
-                            <div><b>Date/Time:</b> {orderSuccess.date} | {orderSuccess.time}</div>
-                            {orderSuccess.note && <div><b>Note:</b> {orderSuccess.note}</div>}
-                            <div style={{ borderTop: '1px solid #F2F2F7', margin: '10px 0' }}></div>
+
+                        {/* Customer Details Section */}
+                        <div style={{ borderBottom: '1px dashed #E5E5EA', paddingBottom: '15px', marginBottom: '15px' }}>
+                            <div style={detailRowStyle}><span>Order ID:</span> <b>{orderSuccess.orderId}</b></div>
+                            <div style={detailRowStyle}><span>Customer:</span> <b>{orderSuccess.name}</b></div>
+                            <div style={detailRowStyle}><span>Phone:</span> <b>{orderSuccess.phone}</b></div>
+                            <div style={detailRowStyle}><span>Order Time:</span> <b>{new Date().toLocaleTimeString()}</b></div>
+                            <div style={detailRowStyle}><span>Pick up Date:</span> <b>{orderSuccess.date}</b></div>
+                            <div style={detailRowStyle}><span>Pick up Time:</span> <b>{orderSuccess.time}</b></div>
+                            {orderSuccess.note && (
+                                <div style={{ ...detailRowStyle, alignItems: 'flex-start' }}>
+                                    <span>Note:</span> 
+                                    <b style={{ textAlign: 'right', flex: 1, marginLeft: '20px' }}>{orderSuccess.note}</b>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Items Table Section */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', borderBottom: '2px solid #F2F2F7', paddingBottom: '8px', fontSize: '11px', fontWeight: 'bold', color: '#8E8E93', letterSpacing: '0.5px' }}>
+                                <span style={{ flex: 2 }}>ITEM NAME</span>
+                                <span style={{ flex: 1, textAlign: 'center' }}>QTY</span>
+                                <span style={{ flex: 1, textAlign: 'right' }}>PRICE</span>
+                            </div>
                             {orderSuccess.items.map((it, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>{it.name} x {it.qty}</span>
-                                    <span>{(it.price * it.qty).toLocaleString()} Ks</span>
+                                <div key={idx} style={{ display: 'flex', padding: '12px 0', borderBottom: '1px solid #F2F2F7', fontSize: '14px', alignItems: 'center' }}>
+                                    <span style={{ flex: 2, fontWeight: '600', color: '#1C1C1E' }}>{it.name}</span>
+                                    <span style={{ flex: 1, textAlign: 'center', color: '#8E8E93' }}>{it.qty}</span>
+                                    <span style={{ flex: 1, textAlign: 'right', fontWeight: '800' }}>{(it.price * it.qty).toLocaleString()}K</span>
                                 </div>
                             ))}
-                            <div style={{ borderTop: '2px solid #007AFF', marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
-                                <span>Total Amount:</span>
+                        </div>
+
+                        {/* Total Section */}
+                        <div style={{ background: '#F2F2F7', padding: '20px', borderRadius: '15px', marginBottom: '30px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '900', alignItems: 'center' }}>
+                                <span style={{ fontSize: '14px', color: '#1C1C1E' }}>TOTAL AMOUNT</span>
                                 <span style={{ color: '#007AFF' }}>{orderSuccess.totalPrice.toLocaleString()} Ks</span>
                             </div>
                         </div>
-                        <p style={{ textAlign: 'center', fontSize: '12px', color: '#8E8E93', marginTop: '20px' }}>Thank you for choosing YNS Kitchen!</p>
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                            <Link href="/history" style={{ flex: 1, padding: '12px', background: '#F2F2F7', textAlign: 'center', borderRadius: '10px', textDecoration: 'none', color: '#1C1C1E', fontWeight: 'bold' }}>History</Link>
-                            <button onClick={() => setOrderSuccess(null)} style={{ flex: 1, padding: '12px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>Home</button>
+
+                        {/* Footer Buttons */}
+                        <div style={{ display: 'flex', gap: '15px', paddingBottom: '30px' }}>
+                            <Link href="/history" style={footerBtnStyle('#F2F2F7', '#1C1C1E')}>History</Link>
+                            <button onClick={() => setOrderSuccess(null)} style={footerBtnStyle('#007AFF', '#fff')}>Order More</button>
                         </div>
                     </div>
                 </div>
