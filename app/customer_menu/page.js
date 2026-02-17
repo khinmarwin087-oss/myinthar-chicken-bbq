@@ -6,27 +6,9 @@ import { db, auth } from "../../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth"; 
 // ၁။ Style Constants တွေကို Function ရဲ့ အပြင်မှာ ထားပါ
-const detailRowStyle = { 
-    display: 'flex', 
-    justifyContent: 'space-between', 
-    fontSize: '13px', 
-    marginBottom: '8px', 
-    color: '#1C1C1E' 
-};
+const detailRowStyle = { display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px', color: '#1C1C1E' };
+const footerBtnStyle = (bg, color) => ({ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', background: bg, color: color, fontWeight: 'bold', textAlign: 'center', textDecoration: 'none', fontSize: '15px', cursor: 'pointer' });
 
-const footerBtnStyle = (bg, color) => ({
-    flex: 1,
-    padding: '16px',
-    borderRadius: '12px',
-    border: 'none',
-    background: bg,
-    color: color,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    textDecoration: 'none',
-    fontSize: '15px',
-    cursor: 'pointer'
-});
 export default function CustomerMenu() {
     const [menuData, setMenuData] = useState([]);
     const [filteredMenu, setFilteredMenu] = useState([]);
@@ -148,7 +130,7 @@ export default function CustomerMenu() {
                 .category-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
                 .cat-btn { padding: 6px 15px; border-radius: 15px; background: #F2F2F7; color: #8E8E93; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: none; }
                 .cat-btn.active { background: #007AFF; color: white; }
-                .content-area { padding: 130px 15px 100px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+                .content-area { padding: 155px 15px 100px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
                 .menu-card { background: white; border-radius: 15px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
                 .cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #1C1C1E; padding: 15px; border-radius: 15px; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
                 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: flex-end; }
