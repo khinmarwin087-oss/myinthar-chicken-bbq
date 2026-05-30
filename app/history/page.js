@@ -43,7 +43,7 @@ export default function OrderHistory() {
             case 'Pending': return { bg: '#FFF9E6', color: '#FFB800', step: 1, label: 'မှာယူမှုကို လက်ခံရရှိပါပြီ' };
             case 'Cooking': return { bg: '#E6F7FF', color: '#1890FF', step: 2, label: 'ချက်ပြုတ်နေပါသည်' };
             case 'Ready':   return { bg: '#F6FFED', color: '#52C41A', step: 3, label: 'အော်ဒါ အဆင်သင့်ဖြစ်ပါပြီ' };
-            default:        return { bg: '#F5F5F5', color: '#8C8C8C', step: 1, label: 'စောင့်ဆိုင်းနေပါသည်' };
+            default:        return { bg: '#F5F5F5', color: '#8C8C8C', step: 1, label: 'အမှာစာ ရယူပြီးပါပြီ' };
         }
     };
 
